@@ -10,14 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
       - name: Checkout TWIR
         uses: actions/checkout@v4
         with:
           repository: rust-lang/this-week-in-rust
           path: twir
+
       - uses: actions/setup-rust@v1
         with:
           rust-version: stable
+
       - name: Send latest post to Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
@@ -34,9 +39,10 @@ jobs:
             echo "$latest_post" > last_sent.txt
             git config user.name github-actions
             git config user.email github-actions@github.com
+            git pull --rebase
             git add last_sent.txt
             git commit -m "Update last_sent.txt"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:master
+            git push
           else
             echo "No new release. Skipping Telegram notification."
           fi
