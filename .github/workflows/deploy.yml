@@ -38,12 +38,12 @@ jobs:
               --data-urlencode "text=$text" \
               -d "parse_mode=Markdown"
             echo "$latest_post" > last_sent.txt
-            git config user.name github-actions
-            git config user.email github-actions@github.com
-            git pull --rebase
-            git add last_sent.txt
-            git commit -m "Update last_sent.txt"
-            git push
+          git config user.name github-actions
+          git config user.email github-actions@github.com
+          git add last_sent.txt
+          git commit -m "Update last_sent.txt"
+          git pull --rebase
+          git push
           else
             echo "No new release. Skipping Telegram notification."
           fi
