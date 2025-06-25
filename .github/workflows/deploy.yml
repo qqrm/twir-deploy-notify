@@ -19,7 +19,7 @@ jobs:
           repository: rust-lang/this-week-in-rust
           path: twir
 
-      - uses: actions/setup-rust@v1
+      - uses: rust-lang/setup-rust@v1
         with:
           rust-version: stable
 
