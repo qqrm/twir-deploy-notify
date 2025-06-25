@@ -1,8 +1,10 @@
 use regex::Regex;
-use std::fs;
+use std::{env, fs};
 
 fn main() -> std::io::Result<()> {
-    let input = fs::read_to_string("input.md")?;
+    let args: Vec<String> = env::args().collect();
+    let input_path = args.get(1).map(String::as_str).unwrap_or("input.md");
+    let input = fs::read_to_string(input_path)?;
     let mut output = String::new();
 
     // Заголовок и дата
@@ -52,7 +54,8 @@ fn main() -> std::io::Result<()> {
     output.push_str("\n---\n\n");
     output.push_str("_Полный выпуск: ссылка_\n");
 
-    fs::write("output.md", output)?;
+    fs::write("output.md", &output)?;
+    println!("{}", output);
 
     Ok(())
 }

@@ -1,21 +1,42 @@
-- name: Send latest post to Telegram
-  env:
-    TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-    TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-  run: |
-    latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n1)
-    last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
-    if [ "$latest_post" != "$last_sent" ]; then
-      text=$(cat "$latest_post")
-      curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-        -d "chat_id=${TELEGRAM_CHAT_ID}" \
-        --data-urlencode "text=$text"
-      echo "$latest_post" > last_sent.txt
-      git config user.name github-actions
-      git config user.email github-actions@github.com
-      git add last_sent.txt
-      git commit -m "Update last_sent.txt"
-      git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:master
-    else
-      echo "No new release. Skipping Telegram notification."
-    fi
+name: Send TWIR summary
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout TWIR
+        uses: actions/checkout@v4
+        with:
+          repository: rust-lang/this-week-in-rust
+          path: twir
+      - uses: actions/setup-rust@v1
+        with:
+          rust-version: stable
+      - name: Send latest post to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n1)
+          last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
+          if [ "$latest_post" != "$last_sent" ]; then
+            text=$(cargo run -- "$latest_post")
+            curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              -d "chat_id=${TELEGRAM_CHAT_ID}" \
+              --data-urlencode "text=$text" \
+              -d "parse_mode=Markdown"
+            echo "$latest_post" > last_sent.txt
+            git config user.name github-actions
+            git config user.email github-actions@github.com
+            git add last_sent.txt
+            git commit -m "Update last_sent.txt"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:master
+          else
+            echo "No new release. Skipping Telegram notification."
+          fi
