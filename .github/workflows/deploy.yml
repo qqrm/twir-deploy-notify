@@ -19,9 +19,10 @@ jobs:
           repository: rust-lang/this-week-in-rust
           path: twir
 
-      - uses: rust-lang/setup-rust@v1
+      - uses: actions-rs/toolchain@v1
         with:
-          rust-version: stable
+          toolchain: stable
+          profile: minimal
 
       - name: Send latest post to Telegram
         env:
