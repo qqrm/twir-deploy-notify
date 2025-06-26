@@ -54,7 +54,7 @@ fn main() -> std::io::Result<()> {
     let mut input = fs::read_to_string(input_path)?;
     let mut output = String::new();
 
-    // Title and date
+    // Title and metadata
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
@@ -71,6 +71,13 @@ fn main() -> std::io::Result<()> {
         .captures(&input)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
+
+    if let Some(ref t) = title {
+        output.push_str(&format!("**{}**", escape_markdown(t)));
+    }
+    if let Some(ref n) = number {
+        output.push_str(&format!(" — #{}", escape_markdown(n)));
+    }
     if let Some(ref d) = date {
         output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(d)));
     }
