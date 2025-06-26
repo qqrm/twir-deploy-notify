@@ -67,16 +67,12 @@ fn main() -> std::io::Result<()> {
         output.push_str(&format!(" — #{}", escape_markdown(number.as_str())));
     }
     
-    if let Some(date) = date_re.captures(&input).and_then(|c| c.get(1)) {
-        output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(date.as_str())));
-    }
-  
     let date = date_re
         .captures(&input)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
     if let Some(ref d) = date {
-        output.push_str(&format!(" — {}\n\n---\n\n", d));
+        output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(d)));
     }
 
     let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
