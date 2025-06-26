@@ -1,10 +1,10 @@
 use regex::Regex;
-use std::{env, fs};
+use std::{env, fs, path::Path};
 
 const TELEGRAM_LIMIT: usize = 4000;
 
 /// Escape characters that have special meaning in Telegram MarkdownV2.
-fn escape_markdown(text: &str) -> String {
+pub fn escape_markdown(text: &str) -> String {
     let mut escaped = String::with_capacity(text.len());
     for ch in text.chars() {
         match ch {
@@ -18,7 +18,7 @@ fn escape_markdown(text: &str) -> String {
     escaped
 }
 
-fn split_posts(text: &str, limit: usize) -> Vec<String> {
+pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
 
@@ -48,25 +48,23 @@ fn split_posts(text: &str, limit: usize) -> Vec<String> {
     posts
 }
 
-fn main() -> std::io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let input_path = args.get(1).map(String::as_str).unwrap_or("input.md");
-    let mut input = fs::read_to_string(input_path)?;
+/// Convert the provided markdown input into numbered Telegram posts without
+/// writing them to disk. The logic mirrors the one used by `main`.
+pub fn generate_posts(mut input: String) -> Vec<String> {
     let mut output = String::new();
 
-    // Title and metadata
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
 
-    if let Some(title) = title_re.captures(&input).and_then(|c| c.get(1)) {
-        output.push_str(&format!("**{}**", escape_markdown(title.as_str())));
-    }
-    
-    if let Some(number) = number_re.captures(&input).and_then(|c| c.get(1)) {
-        output.push_str(&format!(" — #{}", escape_markdown(number.as_str())));
-    }
-    
+    let title = title_re
+        .captures(&input)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().trim().to_string());
+    let number = number_re
+        .captures(&input)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().trim().to_string());
     let date = date_re
         .captures(&input)
         .and_then(|c| c.get(1))
@@ -100,13 +98,11 @@ fn main() -> std::io::Result<()> {
         input = input.replace("_Полный выпуск: ссылка_", &format!("_Полный выпуск: {}_", link));
     }
 
-    // Sections and links
     let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
     let link_re = Regex::new(r"^[*-] \[(.+?)\]\((.+?)\)").unwrap();
     let cotw_re = Regex::new(r"^\[(.+?)\]\((.+?)\)\s*[—-]\s*(.+)$").unwrap();
 
     let mut lines = input.lines().peekable();
-    // Current section name and collected links
     let mut current_section: Option<String> = None;
     let mut section_links: Vec<String> = Vec::new();
     let mut first_section = true;
@@ -173,22 +169,67 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    // Summary
     output.push_str("\n---\n\n");
     if let Some(link) = url {
         output.push_str(&format!("_Полный выпуск: {}_\n", link));
     }
 
-    let posts = split_posts(&output, TELEGRAM_LIMIT);
-    let total = posts.len();
+    let raw_posts = split_posts(&output, TELEGRAM_LIMIT);
+    let total = raw_posts.len();
+    raw_posts
+        .into_iter()
+        .enumerate()
+        .map(|(i, post)| format!("*Часть {}/{}*\n{}", i + 1, total, post))
+        .collect()
+}
 
-    // Add part number prefix to each fragment
+/// Write provided posts to files named `output_N.md` under `dir`.
+pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     for (i, post) in posts.iter().enumerate() {
-        let numbered = format!("*Часть {}/{}*\n{}", i + 1, total, post);
-        let file_name = format!("output_{}.md", i + 1);
-        fs::write(&file_name, numbered)?;
-        println!("Generated {}", file_name);
+        let file_name = dir.join(format!("output_{}.md", i + 1));
+        fs::write(&file_name, post)?;
+    }
+    Ok(())
+}
+
+fn main() -> std::io::Result<()> {
+    let args: Vec<String> = env::args().collect();
+    let input_path = args.get(1).map(String::as_str).unwrap_or("input.md");
+    let input = fs::read_to_string(input_path)?;
+    let posts = generate_posts(input);
+    write_posts(&posts, Path::new("."))?;
+    for (i, _) in posts.iter().enumerate() {
+        println!("Generated output_{}.md", i + 1);
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+
+    #[test]
+    fn split_posts_basic() {
+        let text = "aaa\nbbb\nccc";
+        let parts = split_posts(text, 7);
+        assert_eq!(parts, vec!["aaa\nbbb", "ccc"]);
     }
 
-    Ok(())
+    #[test]
+    fn generate_and_write_files() {
+        let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## News\n- [Link](https://example.com)\n";
+        let posts = generate_posts(input.to_string());
+        let mut dir = std::env::temp_dir();
+        dir.push("twir_test");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir(&dir).unwrap();
+        write_posts(&posts, &dir).unwrap();
+        let first = dir.join("output_1.md");
+        assert!(first.exists());
+        let content = fs::read_to_string(first).unwrap();
+        assert!(content.contains("*Часть 1/1*"));
+        assert!(content.contains("**News**"));
+        let _ = fs::remove_dir_all(&dir);
+    }
 }
