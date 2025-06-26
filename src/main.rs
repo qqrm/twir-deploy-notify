@@ -1,6 +1,38 @@
 use regex::Regex;
 use std::{env, fs};
 
+const TELEGRAM_LIMIT: usize = 4000;
+
+fn split_posts(text: &str, limit: usize) -> Vec<String> {
+    let mut posts = Vec::new();
+    let mut current = String::new();
+
+    for line in text.lines() {
+        // calculate length if we were to add this line
+        let new_len = if current.is_empty() {
+            line.len()
+        } else {
+            current.len() + 1 + line.len()
+        };
+
+        if new_len > limit && !current.is_empty() {
+            posts.push(current.clone());
+            current.clear();
+        }
+
+        if !current.is_empty() {
+            current.push('\n');
+        }
+        current.push_str(line);
+    }
+
+    if !current.is_empty() {
+        posts.push(current);
+    }
+
+    posts
+}
+
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let input_path = args.get(1).map(String::as_str).unwrap_or("input.md");
@@ -54,8 +86,13 @@ fn main() -> std::io::Result<()> {
     output.push_str("\n---\n\n");
     output.push_str("_Полный выпуск: ссылка_\n");
 
-    fs::write("output.md", &output)?;
-    println!("{}", output);
+    let posts = split_posts(&output, TELEGRAM_LIMIT);
+
+    for (i, post) in posts.iter().enumerate() {
+        let file_name = format!("output_{}.md", i + 1);
+        fs::write(&file_name, post)?;
+        println!("Generated {}", file_name);
+    }
 
     Ok(())
 }
