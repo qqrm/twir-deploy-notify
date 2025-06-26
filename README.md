@@ -2,7 +2,7 @@
 
 This repository contains a small tool and workflow for sending summaries of the latest **This Week in Rust** post to Telegram.
 
-The GitHub Actions workflow checks out the [`rust-lang/this-week-in-rust`](https://github.com/rust-lang/this-week-in-rust) repository and detects the newest Markdown file in its `content` directory. If a new issue is found, it is parsed with the Rust application in `src/main.rs`, and the generated message is posted to the configured Telegram chat.
+The GitHub Actions workflow checks out the [`rust-lang/this-week-in-rust`](https://github.com/rust-lang/this-week-in-rust) repository and detects the newest Markdown file in its `content` directory. If a new issue is found, it is parsed with the Rust application in `src/main.rs`, and the generated message is posted to the configured Telegram chat. Messages longer than Telegram's limit are split into several posts automatically.
 
 To run the workflow locally you must clone the `this-week-in-rust` repository into a `twir` subdirectory:
 
