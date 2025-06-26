@@ -23,8 +23,8 @@ fn main() -> std::io::Result<()> {
     }
 
     // Разделы и ссылки
-    let section_re = Regex::new(r"(?m)^##+ ([^\n]+)\n").unwrap();
-    let link_re = Regex::new(r"^\* \[(.+?)\]\((.+?)\)").unwrap();
+    let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
+    let link_re = Regex::new(r"^[*-] \[(.+?)\]\((.+?)\)").unwrap();
 
     let mut lines = input.lines().peekable();
     let mut in_section = false;
