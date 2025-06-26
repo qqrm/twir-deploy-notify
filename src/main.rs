@@ -59,25 +59,48 @@ fn main() -> std::io::Result<()> {
     let link_re = Regex::new(r"^[*-] \[(.+?)\]\((.+?)\)").unwrap();
 
     let mut lines = input.lines().peekable();
-    let mut in_section = false;
-    let mut current_section = String::new();
+    // Название текущего раздела и накопленные ссылки
+    let mut current_section: Option<String> = None;
+    let mut section_links: Vec<String> = Vec::new();
+    let mut first_section = true;
 
     while let Some(line) = lines.next() {
         if let Some(sec) = section_re.captures(line) {
-            if in_section {
-                output.push('\n');
+            if !section_links.is_empty() {
+                if !first_section {
+                    output.push('\n');
+                } else {
+                    first_section = false;
+                }
+                if let Some(title) = current_section.take() {
+                    output.push_str(&format!("**{}**\n", title));
+                    for link in &section_links {
+                        output.push_str(link);
+                        output.push('\n');
+                    }
+                }
+                section_links.clear();
             }
-            current_section = sec[1].trim().to_string();
-            output.push_str(&format!("**{}**\n", current_section));
-            in_section = true;
+            current_section = Some(sec[1].trim().to_string());
             continue;
         }
 
-        if in_section {
-            if let Some(caps) = link_re.captures(line) {
-                let title = &caps[1];
-                let url = &caps[2];
-                output.push_str(&format!("- [{}]({})\n", title, url));
+        if let Some(caps) = link_re.captures(line) {
+            let title = &caps[1];
+            let url = &caps[2];
+            section_links.push(format!("- [{}]({})", title, url));
+        }
+    }
+
+    if !section_links.is_empty() {
+        if !first_section {
+            output.push('\n');
+        }
+        if let Some(title) = current_section.take() {
+            output.push_str(&format!("**{}**\n", title));
+            for link in &section_links {
+                output.push_str(link);
+                output.push('\n');
             }
         }
     }
