@@ -3,6 +3,21 @@ use std::{env, fs};
 
 const TELEGRAM_LIMIT: usize = 4000;
 
+/// Escape characters that have special meaning in Telegram MarkdownV2.
+fn escape_markdown(text: &str) -> String {
+    let mut escaped = String::with_capacity(text.len());
+    for ch in text.chars() {
+        match ch {
+            '_' | '*' | '[' | ']' | '(' | ')' => {
+                escaped.push('\\');
+                escaped.push(ch);
+            }
+            _ => escaped.push(ch),
+        }
+    }
+    escaped
+}
+
 fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
@@ -45,15 +60,17 @@ fn main() -> std::io::Result<()> {
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
 
     if let Some(title) = title_re.captures(&input).and_then(|c| c.get(1)) {
-        output.push_str(&format!("**{}**", title.as_str()));
+        output.push_str(&format!("**{}**", escape_markdown(title.as_str())));
     }
-    let number = number_re
-        .captures(&input)
-        .and_then(|c| c.get(1))
-        .map(|m| m.as_str().trim().to_string());
-    if let Some(ref num) = number {
-        output.push_str(&format!(" — #{}", num));
+    
+    if let Some(number) = number_re.captures(&input).and_then(|c| c.get(1)) {
+        output.push_str(&format!(" — #{}", escape_markdown(number.as_str())));
     }
+    
+    if let Some(date) = date_re.captures(&input).and_then(|c| c.get(1)) {
+        output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(date.as_str())));
+    }
+  
     let date = date_re
         .captures(&input)
         .and_then(|c| c.get(1))
@@ -99,7 +116,7 @@ fn main() -> std::io::Result<()> {
                     first_section = false;
                 }
                 if let Some(title) = current_section.take() {
-                    output.push_str(&format!("**{}**\n", title));
+                    output.push_str(&format!("**{}**\n", escape_markdown(&title)));
                     for link in &section_links {
                         output.push_str(link);
                         output.push('\n');
@@ -114,7 +131,11 @@ fn main() -> std::io::Result<()> {
         if let Some(caps) = link_re.captures(line) {
             let title = &caps[1];
             let url = &caps[2];
-            section_links.push(format!("- [{}]({})", title, url));
+            section_links.push(format!(
+                "- [{}]({})",
+                escape_markdown(title),
+                escape_markdown(url)
+            ));
         }
     }
 
@@ -123,7 +144,7 @@ fn main() -> std::io::Result<()> {
             output.push('\n');
         }
         if let Some(title) = current_section.take() {
-            output.push_str(&format!("**{}**\n", title));
+            output.push_str(&format!("**{}**\n", escape_markdown(&title)));
             for link in &section_links {
                 output.push_str(link);
                 output.push('\n');
@@ -138,10 +159,13 @@ fn main() -> std::io::Result<()> {
     }
 
     let posts = split_posts(&output, TELEGRAM_LIMIT);
+    let total = posts.len();
 
+    // Add part number prefix to each fragment
     for (i, post) in posts.iter().enumerate() {
+        let numbered = format!("*Часть {}/{}*\n{}", i + 1, total, post);
         let file_name = format!("output_{}.md", i + 1);
-        fs::write(&file_name, post)?;
+        fs::write(&file_name, numbered)?;
         println!("Generated {}", file_name);
     }
 
