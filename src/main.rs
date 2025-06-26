@@ -43,6 +43,7 @@ fn main() -> std::io::Result<()> {
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
+    let url_re = Regex::new(r"(?mi)^URL: (.+)$").unwrap();
 
     if let Some(title) = title_re.captures(&input).and_then(|c| c.get(1)) {
         output.push_str(&format!("**{}**", title.as_str()));
@@ -53,6 +54,11 @@ fn main() -> std::io::Result<()> {
     if let Some(date) = date_re.captures(&input).and_then(|c| c.get(1)) {
         output.push_str(&format!(" — {}\n\n---\n\n", date.as_str()));
     }
+
+    let url = url_re
+        .captures(&input)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().trim().to_string());
 
     // Разделы и ссылки
     let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
@@ -107,7 +113,9 @@ fn main() -> std::io::Result<()> {
 
     // Итог
     output.push_str("\n---\n\n");
-    output.push_str("_Полный выпуск: ссылка_\n");
+    if let Some(link) = url {
+        output.push_str(&format!("_Полный выпуск: [{0}]({0})_\n", link));
+    }
 
     let posts = split_posts(&output, TELEGRAM_LIMIT);
 
