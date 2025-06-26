@@ -54,29 +54,32 @@ fn main() -> std::io::Result<()> {
     let mut input = fs::read_to_string(input_path)?;
     let mut output = String::new();
 
-    // Title and date
+    // Title and metadata
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
 
-    if let Some(title) = title_re.captures(&input).and_then(|c| c.get(1)) {
-        output.push_str(&format!("**{}**", escape_markdown(title.as_str())));
-    }
-    
-    if let Some(number) = number_re.captures(&input).and_then(|c| c.get(1)) {
-        output.push_str(&format!(" — #{}", escape_markdown(number.as_str())));
-    }
-    
-    if let Some(date) = date_re.captures(&input).and_then(|c| c.get(1)) {
-        output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(date.as_str())));
-    }
-  
+    let title = title_re
+        .captures(&input)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().trim().to_string());
+    let number = number_re
+        .captures(&input)
+        .and_then(|c| c.get(1))
+        .map(|m| m.as_str().trim().to_string());
     let date = date_re
         .captures(&input)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
+
+    if let Some(ref t) = title {
+        output.push_str(&format!("**{}**", escape_markdown(t)));
+    }
+    if let Some(ref n) = number {
+        output.push_str(&format!(" — #{}", escape_markdown(n)));
+    }
     if let Some(ref d) = date {
-        output.push_str(&format!(" — {}\n\n---\n\n", d));
+        output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(d)));
     }
 
     let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
