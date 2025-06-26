@@ -54,7 +54,7 @@ fn main() -> std::io::Result<()> {
     let mut input = fs::read_to_string(input_path)?;
     let mut output = String::new();
 
-    // Заголовок и дата
+    // Title and date
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
@@ -97,12 +97,13 @@ fn main() -> std::io::Result<()> {
         input = input.replace("_Полный выпуск: ссылка_", &format!("_Полный выпуск: {}_", link));
     }
 
-    // Разделы и ссылки
+    // Sections and links
     let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
     let link_re = Regex::new(r"^[*-] \[(.+?)\]\((.+?)\)").unwrap();
+    let cotw_re = Regex::new(r"^\[(.+?)\]\((.+?)\)\s*[—-]\s*(.+)$").unwrap();
 
     let mut lines = input.lines().peekable();
-    // Название текущего раздела и накопленные ссылки
+    // Current section name and collected links
     let mut current_section: Option<String> = None;
     let mut section_links: Vec<String> = Vec::new();
     let mut first_section = true;
@@ -124,7 +125,24 @@ fn main() -> std::io::Result<()> {
                 }
                 section_links.clear();
             }
-            current_section = Some(sec[1].trim().to_string());
+
+            let title = sec[1].trim();
+            if title == "Crate of the Week" {
+                if let Some(next_line) = lines.next() {
+                    if let Some(caps) = cotw_re.captures(next_line) {
+                        if !first_section {
+                            output.push('\n');
+                        } else {
+                            first_section = false;
+                        }
+                        output.push_str("**Crate of the Week**\n");
+                        output.push_str(&format!("- [{}]({}) — {}\n", &caps[1], &caps[2], &caps[3]));
+                    }
+                }
+                current_section = None;
+            } else {
+                current_section = Some(title.to_string());
+            }
             continue;
         }
 
@@ -152,7 +170,7 @@ fn main() -> std::io::Result<()> {
         }
     }
 
-    // Итог
+    // Summary
     output.push_str("\n---\n\n");
     if let Some(link) = url {
         output.push_str(&format!("_Полный выпуск: {}_\n", link));
