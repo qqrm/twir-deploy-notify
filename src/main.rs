@@ -137,10 +137,13 @@ fn main() -> std::io::Result<()> {
     }
 
     let posts = split_posts(&output, TELEGRAM_LIMIT);
+    let total = posts.len();
 
+    // Add part number prefix to each fragment
     for (i, post) in posts.iter().enumerate() {
+        let numbered = format!("*Часть {}/{}*\n{}", i + 1, total, post);
         let file_name = format!("output_{}.md", i + 1);
-        fs::write(&file_name, post)?;
+        fs::write(&file_name, numbered)?;
         println!("Generated {}", file_name);
     }
 
