@@ -59,14 +59,14 @@ fn main() -> std::io::Result<()> {
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
 
-    let title = title_re
-        .captures(&input)
-        .and_then(|c| c.get(1))
-        .map(|m| m.as_str().trim().to_string());
-    let number = number_re
-        .captures(&input)
-        .and_then(|c| c.get(1))
-        .map(|m| m.as_str().trim().to_string());
+    if let Some(title) = title_re.captures(&input).and_then(|c| c.get(1)) {
+        output.push_str(&format!("**{}**", escape_markdown(title.as_str())));
+    }
+    
+    if let Some(number) = number_re.captures(&input).and_then(|c| c.get(1)) {
+        output.push_str(&format!(" — #{}", escape_markdown(number.as_str())));
+    }
+    
     let date = date_re
         .captures(&input)
         .and_then(|c| c.get(1))
