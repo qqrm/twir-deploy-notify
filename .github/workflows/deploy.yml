@@ -34,7 +34,7 @@ jobs:
         run: |
           latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n1)
           last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
-          if [ "$latest_post" != "$last_sent" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ] || [ "$latest_post" != "$last_sent" ]; then
             rm -f output_*.md
             cargo run -- "$latest_post"
             for file in $(ls -v output_*.md 2>/dev/null); do
