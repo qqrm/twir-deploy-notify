@@ -3,12 +3,15 @@ use std::{env, fs, path::Path};
 
 const TELEGRAM_LIMIT: usize = 4000;
 
-/// Escape characters that have special meaning in Telegram MarkdownV2.
+/// Escape characters that have special meaning in Telegram MarkdownV2. The list
+/// follows the official specification and includes all symbols that require a
+/// leading backslash.
 pub fn escape_markdown(text: &str) -> String {
     let mut escaped = String::with_capacity(text.len());
     for ch in text.chars() {
         match ch {
-            '_' | '*' | '[' | ']' | '(' | ')' => {
+            '_' | '*' | '[' | ']' | '(' | ')' | '~' | '`' | '>' | '#' | '+' | '-' | '=' | '|'
+            | '{' | '}' | '.' | '!' => {
                 escaped.push('\\');
                 escaped.push(ch);
             }
@@ -95,7 +98,10 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     };
 
     if let Some(ref link) = url {
-        input = input.replace("_Полный выпуск: ссылка_", &format!("_Полный выпуск: {}_", link));
+        input = input.replace(
+            "_Полный выпуск: ссылка_",
+            &format!("_Полный выпуск: {}_", link),
+        );
     }
 
     let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
@@ -135,7 +141,8 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
                             first_section = false;
                         }
                         output.push_str("**Crate of the Week**\n");
-                        output.push_str(&format!("- [{}]({}) — {}\n", &caps[1], &caps[2], &caps[3]));
+                        output
+                            .push_str(&format!("- [{}]({}) — {}\n", &caps[1], &caps[2], &caps[3]));
                     }
                 }
                 current_section = None;
@@ -218,7 +225,8 @@ mod tests {
 
     #[test]
     fn generate_and_write_files() {
-        let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## News\n- [Link](https://example.com)\n";
+        let input =
+            "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## News\n- [Link](https://example.com)\n";
         let posts = generate_posts(input.to_string());
         let mut dir = std::env::temp_dir();
         dir.push("twir_test");
