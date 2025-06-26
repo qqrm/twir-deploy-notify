@@ -51,29 +51,51 @@ fn split_posts(text: &str, limit: usize) -> Vec<String> {
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
     let input_path = args.get(1).map(String::as_str).unwrap_or("input.md");
-    let input = fs::read_to_string(input_path)?;
+    let mut input = fs::read_to_string(input_path)?;
     let mut output = String::new();
 
     // Заголовок и дата
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
-    let url_re = Regex::new(r"(?mi)^URL: (.+)$").unwrap();
 
     if let Some(title) = title_re.captures(&input).and_then(|c| c.get(1)) {
         output.push_str(&format!("**{}**", escape_markdown(title.as_str())));
     }
+    
     if let Some(number) = number_re.captures(&input).and_then(|c| c.get(1)) {
         output.push_str(&format!(" — #{}", escape_markdown(number.as_str())));
     }
+    
     if let Some(date) = date_re.captures(&input).and_then(|c| c.get(1)) {
         output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(date.as_str())));
     }
-
-    let url = url_re
+  
+    let date = date_re
         .captures(&input)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
+    if let Some(ref d) = date {
+        output.push_str(&format!(" — {}\n\n---\n\n", d));
+    }
+
+    let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
+        let parts: Vec<&str> = d.split('-').collect();
+        if parts.len() >= 3 {
+            Some(format!(
+                "https://this-week-in-rust.org/blog/{}/{}/{}/this-week-in-rust-{}/",
+                parts[0], parts[1], parts[2], n
+            ))
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+
+    if let Some(ref link) = url {
+        input = input.replace("_Полный выпуск: ссылка_", &format!("_Полный выпуск: {}_", link));
+    }
 
     // Разделы и ссылки
     let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
@@ -133,7 +155,7 @@ fn main() -> std::io::Result<()> {
     // Итог
     output.push_str("\n---\n\n");
     if let Some(link) = url {
-        output.push_str(&format!("_Полный выпуск: [{0}]({0})_\n", link));
+        output.push_str(&format!("_Полный выпуск: {}_\n", link));
     }
 
     let posts = split_posts(&output, TELEGRAM_LIMIT);
