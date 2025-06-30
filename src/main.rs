@@ -141,8 +141,10 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
                             first_section = false;
                         }
                         output.push_str("**Crate of the Week**\n");
-                        output
-                            .push_str(&format!("- [{}]({}) — {}\n", &caps[1], &caps[2], &caps[3]));
+                        output.push_str(&format!(
+                            "\\- [{}]({}) — {}\n",
+                            &caps[1], &caps[2], &caps[3]
+                        ));
                     }
                 }
                 current_section = None;
@@ -156,7 +158,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             let title = &caps[1];
             let url = &caps[2];
             section_links.push(format!(
-                "- [{}]({})",
+                "\\- [{}]({})",
                 escape_markdown(title),
                 escape_markdown(url)
             ));
