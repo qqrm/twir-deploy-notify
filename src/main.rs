@@ -3,9 +3,7 @@ use std::{env, fs, path::Path};
 
 const TELEGRAM_LIMIT: usize = 4000;
 
-/// Escape characters that have special meaning in Telegram MarkdownV2. The list
-/// follows the official specification and includes all symbols that require a
-/// leading backslash.
+/// Escape characters for MarkdownV2
 pub fn escape_markdown(text: &str) -> String {
     let mut escaped = String::with_capacity(text.len());
     for ch in text.chars() {
@@ -21,10 +19,7 @@ pub fn escape_markdown(text: &str) -> String {
     escaped
 }
 
-/// Escape only the characters that may terminate a Telegram MarkdownV2 link.
-/// This function is intended for URLs inside the `(url)` part of `[text](url)`
-/// constructs. It leaves characters like `#` and `+` untouched so that such
-/// links remain valid.
+/// Escape characters for the URL part in [text](url)
 pub fn escape_markdown_url(url: &str) -> String {
     let mut escaped = String::with_capacity(url.len());
     for ch in url.chars() {
@@ -39,12 +34,12 @@ pub fn escape_markdown_url(url: &str) -> String {
     escaped
 }
 
+/// Split long text into multiple messages
 pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
 
     for line in text.lines() {
-        // calculate length if we were to add this line
         let new_len = if current.is_empty() {
             line.len()
         } else {
@@ -69,16 +64,8 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     posts
 }
 
-/// Convert the provided markdown input into numbered Telegram posts without
-/// writing them to disk. The logic mirrors the one used by `main`.
+/// Main function generating Telegram posts from Markdown
 pub fn generate_posts(mut input: String) -> Vec<String> {
-    let mut output = String::new();
-
-    let debug = env::var("DEBUG").is_ok();
-    if debug {
-        eprintln!("Debug mode enabled");
-    }
-
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
@@ -96,16 +83,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
 
-    if let Some(ref t) = title {
-        output.push_str(&format!("**{}**", escape_markdown(t)));
-    }
-    if let Some(ref n) = number {
-        output.push_str(&format!(" — \\#{}", escape_markdown(n)));
-    }
-    if let Some(ref d) = date {
-        output.push_str(&format!(" — {}\n\n\\-\\-\\-\n\n", escape_markdown(d)));
-    }
-
+    // Generate link to the full edition
     let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
         let parts: Vec<&str> = d.split('-').collect();
         if parts.len() >= 3 {
@@ -120,24 +98,27 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         None
     };
 
-    if let Some(ref link) = url {
-        if debug {
-            eprintln!("detected URL: {link}");
-        }
-        input = input.replace(
-            "_Полный выпуск: ссылка_",
-            &format!(
-                "Полный выпуск: [{}]({})",
-                escape_markdown(link),
-                escape_markdown_url(link)
-            ),
-        );
-    }
+    // Remove placeholder for full edition link
+    input = input.replace("_Полный выпуск: ссылка_", "");
 
     let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
     let header_link_re = Regex::new(r"^\[(.+?)\]\((.+?)\)$").unwrap();
-    let link_re = Regex::new(r"^[*-] \[(.+?)\]\((.+?)\)").unwrap();
+    let bullet_link_re = Regex::new(r"^[*-] \[(.+?)\]\((.+?)\)").unwrap();
     let cotw_re = Regex::new(r"^\[(.+?)\]\((.+?)\)\s*[—-]\s*(.+)$").unwrap();
+    let single_link_re = Regex::new(r"^\[(.+?)\]\((.+?)\)$").unwrap();
+
+    let mut output = String::new();
+
+    // Header
+    if let Some(ref t) = title {
+        output.push_str(&format!("**{}**", escape_markdown(t)));
+    }
+    if let Some(ref n) = number {
+        output.push_str(&format!(" — \\#{}", escape_markdown(n)));
+    }
+    if let Some(ref d) = date {
+        output.push_str(&format!(" — {}\n\n\\-\\-\\-\n", escape_markdown(d)));
+    }
 
     let mut lines = input.lines().peekable();
     let mut current_section: Option<String> = None;
@@ -145,13 +126,8 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     let mut first_section = true;
 
     while let Some(line) = lines.next() {
-        if debug {
-            eprintln!("line: {line}");
-        }
         if let Some(sec) = section_re.captures(line) {
-            if debug {
-                eprintln!("section header: {}", sec[1].trim());
-            }
+            // Finish previous section and output collected links
             if !section_links.is_empty() {
                 if !first_section {
                     output.push('\n');
@@ -177,10 +153,8 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             }
 
             let title = sec[1].trim();
+            // Crate of the Week processing
             if title == "Crate of the Week" {
-                if debug {
-                    eprintln!("processing Crate of the Week section");
-                }
                 if let Some(next_line) = lines.next() {
                     if let Some(caps) = cotw_re.captures(next_line) {
                         if !first_section {
@@ -204,10 +178,8 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             continue;
         }
 
-        if let Some(caps) = link_re.captures(line) {
-            if debug {
-                eprintln!("link detected: [{}]({})", &caps[1], &caps[2]);
-            }
+        // Bullet links: - [Text](url)
+        if let Some(caps) = bullet_link_re.captures(line) {
             let title = &caps[1];
             let url = &caps[2];
             section_links.push(format!(
@@ -215,11 +187,26 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
                 escape_markdown(title),
                 escape_markdown_url(url)
             ));
-        } else if debug {
-            eprintln!("unrecognized line: {line}");
+            continue;
+        }
+
+        // Single link line (e.g., [Rust](url))
+        if let Some(caps) = single_link_re.captures(line) {
+            section_links.push(format!(
+                "[{}]({})",
+                escape_markdown(&caps[1]),
+                escape_markdown_url(&caps[2])
+            ));
+            continue;
+        }
+
+        // Add remaining lines as is
+        if !line.trim().is_empty() {
+            section_links.push(escape_markdown(line));
         }
     }
 
+    // Output the last section if any
     if !section_links.is_empty() {
         if !first_section {
             output.push('\n');
@@ -241,18 +228,17 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         }
     }
 
-    output.push_str("\n\\-\\-\\-\n\n");
+    // Link to the full edition at the bottom as plain text
+    output.push_str("\n\\-\\-\\-\n");
     if let Some(link) = url {
         output.push_str(&format!(
-            "Полный выпуск: [{}]({})\n",
+            "\nПолный выпуск: [{}]({})\n",
             escape_markdown(&link),
             escape_markdown_url(&link)
         ));
     }
 
-    if debug {
-        eprintln!("final output before split:\n{output}");
-    }
+    // Split into messages by Telegram limit
     let raw_posts = split_posts(&output, TELEGRAM_LIMIT);
     let total = raw_posts.len();
     raw_posts
@@ -262,7 +248,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         .collect()
 }
 
-/// Write provided posts to files named `output_N.md` under `dir`.
+/// Write Telegram posts to files
 pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     for (i, post) in posts.iter().enumerate() {
         let file_name = dir.join(format!("output_{}.md", i + 1));
