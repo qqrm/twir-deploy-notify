@@ -102,10 +102,10 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     input = input.replace("_Полный выпуск: ссылка_", "");
 
     let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
-    let header_link_re = Regex::new(r"^\[(.+?)\]\((.+?)\)$").unwrap();
-    let bullet_link_re = Regex::new(r"^[*-] \[(.+?)\]\((.+?)\)").unwrap();
+    let bullet_link_re = Regex::new(r"^[*-] ([^\[]+?)\((https?://[^\s\)]+)\)").unwrap();
+    let star_bullet_link_re = Regex::new(r"^\* ([^\[]+?)\((https?://[^\s\)]+)\)").unwrap();
+    let markdown_link_re = Regex::new(r"\[([^\]]+)\]\((https?://[^\s\)]+)\)").unwrap();
     let cotw_re = Regex::new(r"^\[(.+?)\]\((.+?)\)\s*[—-]\s*(.+)$").unwrap();
-    let single_link_re = Regex::new(r"^\[(.+?)\]\((.+?)\)$").unwrap();
 
     let mut output = String::new();
 
@@ -122,34 +122,26 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     let mut lines = input.lines().peekable();
     let mut current_section: Option<String> = None;
-    let mut section_links: Vec<String> = Vec::new();
+    let mut section_lines: Vec<String> = Vec::new();
     let mut first_section = true;
 
     while let Some(line) = lines.next() {
         if let Some(sec) = section_re.captures(line) {
             // Finish previous section and output collected links
-            if !section_links.is_empty() {
+            if !section_lines.is_empty() {
                 if !first_section {
                     output.push('\n');
                 } else {
                     first_section = false;
                 }
                 if let Some(title) = current_section.take() {
-                    if let Some(caps) = header_link_re.captures(&title) {
-                        output.push_str(&format!(
-                            "**[{}]({})**\n",
-                            escape_markdown(&caps[1]),
-                            escape_markdown_url(&caps[2])
-                        ));
-                    } else {
-                        output.push_str(&format!("**{}**\n", escape_markdown(&title)));
-                    }
-                    for link in &section_links {
-                        output.push_str(link);
+                    output.push_str(&format!("**{}**\n", escape_markdown(&title)));
+                    for l in &section_lines {
+                        output.push_str(l);
                         output.push('\n');
                     }
                 }
-                section_links.clear();
+                section_lines.clear();
             }
 
             let title = sec[1].trim();
@@ -178,51 +170,52 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             continue;
         }
 
-        // Bullet links: - [Text](url)
+        // Bullet links: - Text (url)
         if let Some(caps) = bullet_link_re.captures(line) {
-            let title = &caps[1];
-            let url = &caps[2];
-            section_links.push(format!(
+            section_lines.push(format!(
                 "\\- [{}]({})",
-                escape_markdown(title),
-                escape_markdown_url(url)
+                escape_markdown(caps[1].trim()),
+                escape_markdown_url(&caps[2])
             ));
             continue;
         }
-
-        // Single link line (e.g., [Rust](url))
-        if let Some(caps) = single_link_re.captures(line) {
-            section_links.push(format!(
-                "[{}]({})",
-                escape_markdown(&caps[1]),
+        // Bullet links with asterisk: * Text (url)
+        if let Some(caps) = star_bullet_link_re.captures(line) {
+            section_lines.push(format!(
+                "\\- [{}]({})",
+                escape_markdown(caps[1].trim()),
                 escape_markdown_url(&caps[2])
             ));
             continue;
         }
 
+        // Markdown links outside bullet list
+        if let Some(caps) = markdown_link_re.captures(line) {
+            if !line.trim_start().starts_with('-') && !line.trim_start().starts_with('*') {
+                section_lines.push(format!(
+                    "[{}]({})",
+                    escape_markdown(&caps[1]),
+                    escape_markdown_url(&caps[2])
+                ));
+                continue;
+            }
+        }
+
         // Add remaining lines as is
         if !line.trim().is_empty() {
-            section_links.push(escape_markdown(line));
+            section_lines.push(escape_markdown(line));
         }
     }
 
     // Output the last section if any
-    if !section_links.is_empty() {
+    if !section_lines.is_empty() {
         if !first_section {
             output.push('\n');
         }
         if let Some(title) = current_section.take() {
-            if let Some(caps) = header_link_re.captures(&title) {
-                output.push_str(&format!(
-                    "**[{}]({})**\n",
-                    escape_markdown(&caps[1]),
-                    escape_markdown_url(&caps[2])
-                ));
-            } else {
-                output.push_str(&format!("**{}**\n", escape_markdown(&title)));
-            }
-            for link in &section_links {
-                output.push_str(link);
+            output.push_str(&format!("**{}**\n", escape_markdown(&title)));
+            for l in &section_lines {
+                output.push_str(l);
                 output.push('\n');
             }
         }
