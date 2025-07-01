@@ -80,7 +80,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         output.push_str(&format!(" — \\#{}", escape_markdown(n)));
     }
     if let Some(ref d) = date {
-        output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(d)));
+        output.push_str(&format!(" — {}\n\n\\-\\-\\-\n\n", escape_markdown(d)));
     }
 
     let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
@@ -180,7 +180,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         }
     }
 
-    output.push_str("\n---\n\n");
+    output.push_str("\n\\-\\-\\-\n\n");
     if let Some(link) = url {
         output.push_str(&format!("_Полный выпуск: {}_\n", escape_markdown(&link)));
     }
