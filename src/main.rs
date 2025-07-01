@@ -74,6 +74,11 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
 pub fn generate_posts(mut input: String) -> Vec<String> {
     let mut output = String::new();
 
+    let debug = env::var("DEBUG").is_ok();
+    if debug {
+        eprintln!("Debug mode enabled");
+    }
+
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
     let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
     let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
@@ -116,6 +121,9 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     };
 
     if let Some(ref link) = url {
+        if debug {
+            eprintln!("detected URL: {link}");
+        }
         input = input.replace(
             "_Полный выпуск: ссылка_",
             &format!(
@@ -137,7 +145,13 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     let mut first_section = true;
 
     while let Some(line) = lines.next() {
+        if debug {
+            eprintln!("line: {line}");
+        }
         if let Some(sec) = section_re.captures(line) {
+            if debug {
+                eprintln!("section header: {}", sec[1].trim());
+            }
             if !section_links.is_empty() {
                 if !first_section {
                     output.push('\n');
@@ -164,6 +178,9 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
             let title = sec[1].trim();
             if title == "Crate of the Week" {
+                if debug {
+                    eprintln!("processing Crate of the Week section");
+                }
                 if let Some(next_line) = lines.next() {
                     if let Some(caps) = cotw_re.captures(next_line) {
                         if !first_section {
@@ -188,6 +205,9 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         }
 
         if let Some(caps) = link_re.captures(line) {
+            if debug {
+                eprintln!("link detected: [{}]({})", &caps[1], &caps[2]);
+            }
             let title = &caps[1];
             let url = &caps[2];
             section_links.push(format!(
@@ -195,6 +215,8 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
                 escape_markdown(title),
                 escape_markdown_url(url)
             ));
+        } else if debug {
+            eprintln!("unrecognized line: {line}");
         }
     }
 
@@ -228,6 +250,9 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         ));
     }
 
+    if debug {
+        eprintln!("final output before split:\n{output}");
+    }
     let raw_posts = split_posts(&output, TELEGRAM_LIMIT);
     let total = raw_posts.len();
     raw_posts
