@@ -34,6 +34,14 @@ pub fn escape_markdown_url(url: &str) -> String {
     escaped
 }
 
+/// Convert Markdown-formatted text into plain text with URLs in parentheses
+pub fn markdown_to_plain(text: &str) -> String {
+    let without_escapes = text.replace('\\', "");
+    let link_re = Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap();
+    let replaced = link_re.replace_all(&without_escapes, "$1 ($2)");
+    replaced.replace('*', "")
+}
+
 /// Split long text into multiple messages
 pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
@@ -262,9 +270,24 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
 
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
-    let input_path = args.get(1).map(String::as_str).unwrap_or("input.md");
+    let mut input_path = "input.md";
+    let mut plain = false;
+
+    for arg in &args[1..] {
+        if arg == "--plain" {
+            plain = true;
+        } else {
+            input_path = arg;
+        }
+    }
+
     let input = fs::read_to_string(input_path)?;
-    let posts = generate_posts(input);
+    let mut posts = generate_posts(input);
+
+    if plain {
+        posts = posts.into_iter().map(|p| markdown_to_plain(&p)).collect();
+    }
+
     write_posts(&posts, Path::new("."))?;
     for (i, _) in posts.iter().enumerate() {
         println!("Generated output_{}.md", i + 1);
@@ -300,5 +323,12 @@ mod tests {
         assert!(content.contains("*Часть 1/1*"));
         assert!(content.contains("**News**"));
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn plain_conversion() {
+        let text = "*Часть 1/1*\n**News**\n\\- [Link](https://example.com)";
+        let plain = markdown_to_plain(text);
+        assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
     }
 }
