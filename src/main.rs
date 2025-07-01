@@ -21,6 +21,24 @@ pub fn escape_markdown(text: &str) -> String {
     escaped
 }
 
+/// Escape only the characters that may terminate a Telegram MarkdownV2 link.
+/// This function is intended for URLs inside the `(url)` part of `[text](url)`
+/// constructs. It leaves characters like `#` and `+` untouched so that such
+/// links remain valid.
+pub fn escape_markdown_url(url: &str) -> String {
+    let mut escaped = String::with_capacity(url.len());
+    for ch in url.chars() {
+        match ch {
+            '(' | ')' | '\\' => {
+                escaped.push('\\');
+                escaped.push(ch);
+            }
+            _ => escaped.push(ch),
+        }
+    }
+    escaped
+}
+
 pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
@@ -144,7 +162,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
                         output.push_str(&format!(
                             "\\- [{}]({}) — {}\n",
                             escape_markdown(&caps[1]),
-                            escape_markdown(&caps[2]),
+                            escape_markdown_url(&caps[2]),
                             escape_markdown(&caps[3])
                         ));
                     }
@@ -162,7 +180,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             section_links.push(format!(
                 "\\- [{}]({})",
                 escape_markdown(title),
-                escape_markdown(url)
+                escape_markdown_url(url)
             ));
         }
     }
@@ -182,7 +200,10 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     output.push_str("\n\\-\\-\\-\n\n");
     if let Some(link) = url {
-        output.push_str(&format!("_Полный выпуск: {}_\n", escape_markdown(&link)));
+        output.push_str(&format!(
+            "_Полный выпуск: {}_\n",
+            escape_markdown_url(&link)
+        ));
     }
 
     let raw_posts = split_posts(&output, TELEGRAM_LIMIT);
