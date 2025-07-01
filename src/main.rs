@@ -1,5 +1,13 @@
+use pulldown_cmark::{Event, Parser, Tag};
 use regex::Regex;
 use std::{env, fs, path::Path};
+
+/// Representation of a single TWIR section.
+#[derive(Default)]
+struct Section {
+    title: String,
+    lines: Vec<String>,
+}
 
 const TELEGRAM_LIMIT: usize = 4000;
 
@@ -72,6 +80,57 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     posts
 }
 
+/// Parse TWIR Markdown into sections using `pulldown-cmark`.
+fn parse_sections(text: &str) -> Vec<Section> {
+    let mut sections = Vec::new();
+    let mut current: Option<Section> = None;
+    let mut buffer = String::new();
+    let mut parser = Parser::new(text).into_iter().peekable();
+    while let Some(event) = parser.next() {
+        match event {
+            Event::Start(Tag::Heading(level, ..)) if level == 2 => {
+                if let Some(sec) = current.take() {
+                    sections.push(sec);
+                }
+                buffer.clear();
+            }
+            Event::End(Tag::Heading(level, ..)) if level == 2 => {
+                current = Some(Section {
+                    title: buffer.trim().to_string(),
+                    lines: Vec::new(),
+                });
+                buffer.clear();
+            }
+            Event::Start(Tag::Item) => {
+                buffer.clear();
+            }
+            Event::End(Tag::Item) => {
+                if let Some(ref mut sec) = current {
+                    let line = buffer.trim();
+                    if !line.is_empty() {
+                        sec.lines.push(format!("- {}", line));
+                    }
+                }
+                buffer.clear();
+            }
+            Event::Text(t) | Event::Code(t) => buffer.push_str(&t),
+            Event::SoftBreak | Event::HardBreak => buffer.push(' '),
+            _ => {}
+        }
+    }
+    if let Some(sec) = current {
+        if !buffer.trim().is_empty() {
+            sections.push(Section {
+                title: sec.title,
+                lines: vec![buffer.trim().to_string()],
+            });
+        } else {
+            sections.push(sec);
+        }
+    }
+    sections
+}
+
 /// Main function generating Telegram posts from Markdown
 pub fn generate_posts(mut input: String) -> Vec<String> {
     let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
@@ -91,7 +150,6 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
 
-    // Generate link to the full edition
     let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
         let parts: Vec<&str> = d.split('-').collect();
         if parts.len() >= 3 {
@@ -106,153 +164,63 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         None
     };
 
-    // Remove placeholder for full edition link
     input = input.replace("_Полный выпуск: ссылка_", "");
 
-    let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
-    let bullet_link_re = Regex::new(r"^[*-] ([^\[]+?)\((https?://[^\s\)]+)\)").unwrap();
-    let star_bullet_link_re = Regex::new(r"^\* ([^\[]+?)\((https?://[^\s\)]+)\)").unwrap();
-    let markdown_link_re = Regex::new(r"\[([^\]]+)\]\((https?://[^\s\)]+)\)").unwrap();
-    let cotw_re = Regex::new(r"^\[(.+?)\]\((.+?)\)\s*[—-]\s*(.+)$").unwrap();
+    let header_re = Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap();
+    let body = header_re.replace_all(&input, "");
+    let sections = parse_sections(&body);
 
-    let mut output = String::new();
+    let mut posts = Vec::new();
+    let mut current = String::new();
 
-    // Header
     if let Some(ref t) = title {
-        output.push_str(&format!("**{}**", escape_markdown(t)));
+        current.push_str(&format!("**{}**", escape_markdown(t)));
     }
     if let Some(ref n) = number {
-        output.push_str(&format!(" — \\#{}", escape_markdown(n)));
+        current.push_str(&format!(" — \\#{}", escape_markdown(n)));
     }
     if let Some(ref d) = date {
-        output.push_str(&format!(" — {}\n\n\\-\\-\\-\n", escape_markdown(d)));
+        current.push_str(&format!(" — {}\n\n\\-\\-\\-\n", escape_markdown(d)));
     }
 
-    let mut lines = input.lines().peekable();
-    let mut current_section: Option<String> = None;
-    let mut section_lines: Vec<String> = Vec::new();
-    let mut first_section = true;
-    let mut in_comment = false;
-
-    while let Some(line) = lines.next() {
-        if line.trim_start().starts_with("<!--") {
-            in_comment = true;
-        }
-        if in_comment {
-            if line.contains("-->") {
-                in_comment = false;
-            }
-            continue;
-        }
-        if let Some(sec) = section_re.captures(line) {
-            // Finish previous section and output collected links
-            if !section_lines.is_empty() {
-                if !first_section {
-                    output.push('\n');
-                } else {
-                    first_section = false;
-                }
-                if let Some(title) = current_section.take() {
-                    output.push_str(&format!("**{}**\n", escape_markdown(&title)));
-                    for l in &section_lines {
-                        output.push_str(l);
-                        output.push('\n');
-                    }
-                }
-                section_lines.clear();
-            }
-
-            let title = sec[1].trim();
-            // Crate of the Week processing
-            if title == "Crate of the Week" {
-                if let Some(next_line) = lines.next() {
-                    if let Some(caps) = cotw_re.captures(next_line) {
-                        if !first_section {
-                            output.push('\n');
-                        } else {
-                            first_section = false;
-                        }
-                        output.push_str("**Crate of the Week**\n");
-                        output.push_str(&format!(
-                            "\\- [{}]({}) — {}\n",
-                            escape_markdown(&caps[1]),
-                            escape_markdown_url(&caps[2]),
-                            escape_markdown(&caps[3])
-                        ));
-                    }
-                }
-                current_section = None;
-            } else {
-                current_section = Some(title.to_string());
-            }
-            continue;
+    for sec in &sections {
+        let mut section_text = String::new();
+        section_text.push_str(&format!("**{}**\n", escape_markdown(&sec.title)));
+        for line in &sec.lines {
+            section_text.push_str(line);
+            section_text.push('\n');
         }
 
-        // Bullet links: - Text (url)
-        if let Some(caps) = bullet_link_re.captures(line) {
-            section_lines.push(format!(
-                "\\- [{}]({})",
-                escape_markdown(caps[1].trim()),
-                escape_markdown_url(&caps[2])
-            ));
-            continue;
+        if current.len() + section_text.len() > TELEGRAM_LIMIT && !current.is_empty() {
+            posts.push(current.clone());
+            current.clear();
         }
-        // Bullet links with asterisk: * Text (url)
-        if let Some(caps) = star_bullet_link_re.captures(line) {
-            section_lines.push(format!(
-                "\\- [{}]({})",
-                escape_markdown(caps[1].trim()),
-                escape_markdown_url(&caps[2])
-            ));
-            continue;
+        if !current.is_empty() {
+            current.push('\n');
         }
-
-        // Markdown links outside bullet list
-        if let Some(caps) = markdown_link_re.captures(line) {
-            if !line.trim_start().starts_with('-') && !line.trim_start().starts_with('*') {
-                section_lines.push(format!(
-                    "[{}]({})",
-                    escape_markdown(&caps[1]),
-                    escape_markdown_url(&caps[2])
-                ));
-                continue;
-            }
-        }
-
-        // Add remaining lines as is
-        if !line.trim().is_empty() {
-            section_lines.push(escape_markdown(line));
-        }
+        current.push_str(&section_text);
     }
 
-    // Output the last section if any
-    if !section_lines.is_empty() {
-        if !first_section {
-            output.push('\n');
-        }
-        if let Some(title) = current_section.take() {
-            output.push_str(&format!("**{}**\n", escape_markdown(&title)));
-            for l in &section_lines {
-                output.push_str(l);
-                output.push('\n');
-            }
-        }
-    }
-
-    // Link to the full edition at the bottom as plain text
-    output.push_str("\n\\-\\-\\-\n");
     if let Some(link) = url {
-        output.push_str(&format!(
-            "\nПолный выпуск: [{}]({})\n",
+        let link_block = format!(
+            "\n---\n\nПолный выпуск: [{}]({})",
             escape_markdown(&link),
             escape_markdown_url(&link)
-        ));
+        );
+        if current.len() + link_block.len() > TELEGRAM_LIMIT && !current.is_empty() {
+            posts.push(current.clone());
+            current = link_block;
+        } else {
+            current.push_str(&link_block);
+        }
     }
 
-    // Split into messages by Telegram limit
-    let raw_posts = split_posts(&output, TELEGRAM_LIMIT);
-    let total = raw_posts.len();
-    raw_posts
+    if !current.is_empty() {
+        posts.push(current);
+    }
+
+    let total = posts.len();
+    posts
         .into_iter()
         .enumerate()
         .map(|(i, post)| format!("*Часть {}/{}*\n{}", i + 1, total, post))
