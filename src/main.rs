@@ -124,8 +124,18 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     let mut current_section: Option<String> = None;
     let mut section_lines: Vec<String> = Vec::new();
     let mut first_section = true;
+    let mut in_comment = false;
 
     while let Some(line) = lines.next() {
+        if line.trim_start().starts_with("<!--") {
+            in_comment = true;
+        }
+        if in_comment {
+            if line.contains("-->") {
+                in_comment = false;
+            }
+            continue;
+        }
         if let Some(sec) = section_re.captures(line) {
             // Finish previous section and output collected links
             if !section_lines.is_empty() {
