@@ -200,7 +200,8 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     output.push_str("\n\\-\\-\\-\n\n");
     if let Some(link) = url {
-        output.push_str(&format!("_Полный выпуск: {}_\n", link));
+        // Italicize only the prefix so that the URL remains valid.
+        output.push_str(&format!("_Полный выпуск:_ {}\n", link));
     }
 
     let raw_posts = split_posts(&output, TELEGRAM_LIMIT);
