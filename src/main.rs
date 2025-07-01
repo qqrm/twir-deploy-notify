@@ -119,7 +119,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         input = input.replace(
             "_Полный выпуск: ссылка_",
             &format!(
-                "_Полный выпуск: [{}]({})_",
+                "Полный выпуск: [{}]({})",
                 escape_markdown(link),
                 escape_markdown_url(link)
             ),
@@ -127,6 +127,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     }
 
     let section_re = Regex::new(r"^##+\s+(.+)$").unwrap();
+    let header_link_re = Regex::new(r"^\[(.+?)\]\((.+?)\)$").unwrap();
     let link_re = Regex::new(r"^[*-] \[(.+?)\]\((.+?)\)").unwrap();
     let cotw_re = Regex::new(r"^\[(.+?)\]\((.+?)\)\s*[—-]\s*(.+)$").unwrap();
 
@@ -144,7 +145,15 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
                     first_section = false;
                 }
                 if let Some(title) = current_section.take() {
-                    output.push_str(&format!("**{}**\n", escape_markdown(&title)));
+                    if let Some(caps) = header_link_re.captures(&title) {
+                        output.push_str(&format!(
+                            "**[{}]({})**\n",
+                            escape_markdown(&caps[1]),
+                            escape_markdown_url(&caps[2])
+                        ));
+                    } else {
+                        output.push_str(&format!("**{}**\n", escape_markdown(&title)));
+                    }
                     for link in &section_links {
                         output.push_str(link);
                         output.push('\n');
@@ -194,7 +203,15 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             output.push('\n');
         }
         if let Some(title) = current_section.take() {
-            output.push_str(&format!("**{}**\n", escape_markdown(&title)));
+            if let Some(caps) = header_link_re.captures(&title) {
+                output.push_str(&format!(
+                    "**[{}]({})**\n",
+                    escape_markdown(&caps[1]),
+                    escape_markdown_url(&caps[2])
+                ));
+            } else {
+                output.push_str(&format!("**{}**\n", escape_markdown(&title)));
+            }
             for link in &section_links {
                 output.push_str(link);
                 output.push('\n');
@@ -205,7 +222,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     output.push_str("\n\\-\\-\\-\n\n");
     if let Some(link) = url {
         output.push_str(&format!(
-            "_Полный выпуск:_ [{}]({})\n",
+            "Полный выпуск: [{}]({})\n",
             escape_markdown(&link),
             escape_markdown_url(&link)
         ));
