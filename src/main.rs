@@ -77,7 +77,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         output.push_str(&format!("**{}**", escape_markdown(t)));
     }
     if let Some(ref n) = number {
-        output.push_str(&format!(" — #{}", escape_markdown(n)));
+        output.push_str(&format!(" — \\#{}", escape_markdown(n)));
     }
     if let Some(ref d) = date {
         output.push_str(&format!(" — {}\n\n---\n\n", escape_markdown(d)));
@@ -143,7 +143,9 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
                         output.push_str("**Crate of the Week**\n");
                         output.push_str(&format!(
                             "\\- [{}]({}) — {}\n",
-                            &caps[1], &caps[2], &caps[3]
+                            escape_markdown(&caps[1]),
+                            escape_markdown(&caps[2]),
+                            escape_markdown(&caps[3])
                         ));
                     }
                 }
@@ -180,7 +182,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     output.push_str("\n---\n\n");
     if let Some(link) = url {
-        output.push_str(&format!("_Полный выпуск: {}_\n", link));
+        output.push_str(&format!("_Полный выпуск: {}_\n", escape_markdown(&link)));
     }
 
     let raw_posts = split_posts(&output, TELEGRAM_LIMIT);
