@@ -47,12 +47,26 @@ pub fn escape_url(url: &str) -> String {
     escape_markdown_url(url)
 }
 
+/// Format a section heading with an emoji and uppercase text
+pub fn format_heading(title: &str) -> String {
+    let upper = title.to_uppercase();
+    format!("📰 **{}**", escape_markdown(&upper))
+}
+
 /// Convert Markdown-formatted text into plain text with URLs in parentheses
 pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
     let link_re = Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap();
     let replaced = link_re.replace_all(&without_escapes, "$1 ($2)");
-    replaced.replace('*', "")
+    let mut result = String::with_capacity(replaced.len());
+    for (i, line) in replaced.lines().enumerate() {
+        if i > 0 {
+            result.push('\n');
+        }
+        let line_no_format = line.replace('*', "");
+        result.push_str(&line_no_format);
+    }
+    result
 }
 
 /// Split long text into multiple messages
@@ -124,15 +138,32 @@ fn parse_sections(text: &str) -> Vec<Section> {
                 });
                 buffer.clear();
             }
+            Event::Start(Tag::List(_)) => {
+                if let Some(ref mut sec) = current {
+                    let line = buffer.trim_end();
+                    if !line.is_empty() {
+                        let fixed = fix_bare_link(line);
+                        let indent = "  ".repeat(list_depth.saturating_sub(1));
+                        sec.lines.push(format!("{}• {}", indent, fixed));
+                        buffer.clear();
+                    }
+                }
+                list_depth += 1;
+            }
+            Event::End(Tag::List(_)) => {
+                list_depth = list_depth.saturating_sub(1);
+            }
             Event::Start(Tag::Item) => {
                 buffer.clear();
             }
             Event::End(Tag::Item) => {
                 if let Some(ref mut sec) = current {
-                    let line = buffer.trim();
+                    let line = buffer.trim_end();
                     if !line.is_empty() {
                         let fixed = fix_bare_link(line);
-                        sec.lines.push(format!("\\- {}", fixed));
+                        let indent = "  ".repeat(list_depth.saturating_sub(1));
+                        sec.lines.push(format!("{}• {}", indent, fixed));
+
                     }
                 }
                 buffer.clear();
@@ -199,8 +230,33 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     buffer.push(')');
                 }
             }
-            Event::Text(t) | Event::Code(t) => buffer.push_str(&escape_markdown(&t)),
-            Event::SoftBreak | Event::HardBreak => buffer.push(' '),
+            Event::Start(Tag::BlockQuote) => {
+                buffer.push_str("> ");
+            }
+            Event::End(Tag::BlockQuote) => {
+                buffer.push('\n');
+            }
+            Event::Start(Tag::CodeBlock(_)) => {
+                in_code_block = true;
+                buffer.push_str("```\n");
+            }
+            Event::End(Tag::CodeBlock(_)) => {
+                in_code_block = false;
+                if !buffer.ends_with('\n') {
+                    buffer.push('\n');
+                }
+                buffer.push_str("```");
+            }
+            Event::Text(t) | Event::Code(t) => {
+                buffer.push_str(&escape_markdown(&t));
+            }
+            Event::SoftBreak | Event::HardBreak => {
+                if in_code_block {
+                    buffer.push('\n');
+                } else {
+                    buffer.push(' ');
+                }
+            }
             _ => {}
         }
     }
@@ -271,7 +327,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     for sec in &sections {
         let mut section_text = String::new();
-        section_text.push_str(&format!("**{}**\n", escape_markdown(&sec.title)));
+        section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
         for line in &sec.lines {
             section_text.push_str(line);
             section_text.push('\n');
@@ -375,16 +431,16 @@ mod tests {
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
         assert!(content.contains("*Часть 1/1*"));
-        assert!(content.contains("**News**"));
+        assert!(content.contains("📰 **NEWS**"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn plain_conversion() {
-        let text = "*Часть 1/1*\n**News**\n\\- [Link](https://example.com)";
+        let text = "*Часть 1/1*\n**News**\n• [Link](https://example.com)";
         let plain = markdown_to_plain(text);
-        assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
+        assert_eq!(plain, "Часть 1/1\nNews\n• Link (https://example.com)");
     }
 
     #[test]
@@ -393,7 +449,19 @@ mod tests {
         let secs = parse_sections(text);
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Links");
-        assert_eq!(secs[0].lines, vec!["\\- [Rust](https://rust-lang.org)"]);
+        assert_eq!(secs[0].lines, vec!["• [Rust](https://rust-lang.org)"]);
+    }
+
+    #[test]
+    fn nested_list_parsing() {
+        let text = "## News\n- Item 1\n  - Sub 1\n  - Sub 2\n- Item 2\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].title, "News");
+        assert_eq!(
+            secs[0].lines,
+            vec!["• Item 1", "  • Sub 1", "  • Sub 2", "• Item 2",]
+        );
     }
 
     #[test]
@@ -417,5 +485,33 @@ mod tests {
         assert!(posts[0].contains("| Name | Score |"));
         assert!(posts[0].contains("| Foo  | 10    |"));
         assert!(posts[0].contains("| Bar  | 20    |"));
+    }
+  
+    #[test]
+    fn quote_and_code_blocks() {
+        let text = "## Test\n> quoted text\n\n```\ncode line\n```\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].title, "Test");
+        assert_eq!(secs[0].lines, vec!["> quoted text\n```\ncode line\n```"]);
+        let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{}", text));
+        let combined = posts.join("\n");
+        assert!(combined.contains("> quoted text"));
+        assert!(combined.contains("```\ncode line\n```"));
+    }
+
+    #[test]
+    fn bullet_formatting() {
+        let text = "## Items\n- example\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs[0].lines, vec!["• example"]);
+        let plain = markdown_to_plain(&secs[0].lines[0]);
+        assert!(plain.starts_with("- "));
+    }
+
+    #[test]
+    fn heading_formatter() {
+        let formatted = format_heading("My Title");
+        assert_eq!(formatted, "📰 **MY TITLE**");
     }
 }
