@@ -105,17 +105,17 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
-    let mut parser = Parser::new(text).into_iter().peekable();
     let mut link_dest: Option<String> = None;
-    while let Some(event) = parser.next() {
+    let mut in_code_block = false;
+    for event in Parser::new(text) {
         match event {
-            Event::Start(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
+            Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
                 if let Some(sec) = current.take() {
                     sections.push(sec);
                 }
                 buffer.clear();
             }
-            Event::End(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
+            Event::End(Tag::Heading(HeadingLevel::H2, ..)) => {
                 current = Some(Section {
                     title: buffer.trim().to_string(),
                     lines: Vec::new(),
@@ -146,8 +146,33 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     buffer.push(')');
                 }
             }
-            Event::Text(t) | Event::Code(t) => buffer.push_str(&escape_markdown(&t)),
-            Event::SoftBreak | Event::HardBreak => buffer.push(' '),
+            Event::Start(Tag::BlockQuote) => {
+                buffer.push_str("> ");
+            }
+            Event::End(Tag::BlockQuote) => {
+                buffer.push('\n');
+            }
+            Event::Start(Tag::CodeBlock(_)) => {
+                in_code_block = true;
+                buffer.push_str("```\n");
+            }
+            Event::End(Tag::CodeBlock(_)) => {
+                in_code_block = false;
+                if !buffer.ends_with('\n') {
+                    buffer.push('\n');
+                }
+                buffer.push_str("```");
+            }
+            Event::Text(t) | Event::Code(t) => {
+                buffer.push_str(&escape_markdown(&t));
+            }
+            Event::SoftBreak | Event::HardBreak => {
+                if in_code_block {
+                    buffer.push('\n');
+                } else {
+                    buffer.push(' ');
+                }
+            }
             _ => {}
         }
     }
@@ -183,7 +208,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
 
-    let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
+    let url = if let (Some(d), Some(n)) = (date.as_ref(), number.as_ref()) {
         let parts: Vec<&str> = d.split('-').collect();
         if parts.len() >= 3 {
             Some(format!(
@@ -355,5 +380,18 @@ mod tests {
         let url = "https://example.com/path(1)";
         let escaped = escape_url(url);
         assert_eq!(escaped, "https://example.com/path\\(1\\)");
+    }
+
+    #[test]
+    fn quote_and_code_blocks() {
+        let text = "## Test\n> quoted text\n\n```\ncode line\n```\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].title, "Test");
+        assert_eq!(secs[0].lines, vec!["> quoted text\n```\ncode line\n```"]);
+        let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{}", text));
+        let combined = posts.join("\n");
+        assert!(combined.contains("> quoted text"));
+        assert!(combined.contains("```\ncode line\n```"));
     }
 }
