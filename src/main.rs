@@ -58,8 +58,15 @@ pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
     let link_re = Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap();
     let replaced = link_re.replace_all(&without_escapes, "$1 ($2)");
-    let replaced = replaced.replace('•', "-");
-    replaced.replace('*', "")
+    let mut result = String::with_capacity(replaced.len());
+    for (i, line) in replaced.lines().enumerate() {
+        if i > 0 {
+            result.push('\n');
+        }
+        let line_no_format = line.replace('*', "");
+        result.push_str(&line_no_format);
+    }
+    result
 }
 
 /// Split long text into multiple messages
@@ -112,9 +119,11 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
+
+    let parser = Parser::new(text).peekable();
     let mut link_dest: Option<String> = None;
-    let mut in_code_block = false;
-    for event in Parser::new(text) {
+    let mut list_depth: usize = 0;
+    for event in parser {
         match event {
             Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
                 if let Some(sec) = current.take() {
@@ -129,15 +138,32 @@ fn parse_sections(text: &str) -> Vec<Section> {
                 });
                 buffer.clear();
             }
+            Event::Start(Tag::List(_)) => {
+                if let Some(ref mut sec) = current {
+                    let line = buffer.trim_end();
+                    if !line.is_empty() {
+                        let fixed = fix_bare_link(line);
+                        let indent = "  ".repeat(list_depth.saturating_sub(1));
+                        sec.lines.push(format!("{}• {}", indent, fixed));
+                        buffer.clear();
+                    }
+                }
+                list_depth += 1;
+            }
+            Event::End(Tag::List(_)) => {
+                list_depth = list_depth.saturating_sub(1);
+            }
             Event::Start(Tag::Item) => {
                 buffer.clear();
             }
             Event::End(Tag::Item) => {
                 if let Some(ref mut sec) = current {
-                    let line = buffer.trim();
+                    let line = buffer.trim_end();
                     if !line.is_empty() {
                         let fixed = fix_bare_link(line);
-                        sec.lines.push(format!("• {}", fixed));
+                        let indent = "  ".repeat(list_depth.saturating_sub(1));
+                        sec.lines.push(format!("{}• {}", indent, fixed));
+
                     }
                 }
                 buffer.clear();
@@ -363,7 +389,7 @@ mod tests {
     fn plain_conversion() {
         let text = "*Часть 1/1*\n**News**\n• [Link](https://example.com)";
         let plain = markdown_to_plain(text);
-        assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
+        assert_eq!(plain, "Часть 1/1\nNews\n• Link (https://example.com)");
     }
 
     #[test]
@@ -373,6 +399,18 @@ mod tests {
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Links");
         assert_eq!(secs[0].lines, vec!["• [Rust](https://rust-lang.org)"]);
+    }
+
+    #[test]
+    fn nested_list_parsing() {
+        let text = "## News\n- Item 1\n  - Sub 1\n  - Sub 2\n- Item 2\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].title, "News");
+        assert_eq!(
+            secs[0].lines,
+            vec!["• Item 1", "  • Sub 1", "  • Sub 2", "• Item 2",]
+        );
     }
 
     #[test]
