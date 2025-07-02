@@ -48,10 +48,15 @@ jobs:
             cargo run -- "$latest_post"
             for file in $(ls -v output_*.md 2>/dev/null); do
               text=$(cat "$file")
-              curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+              resp=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
                 -d "chat_id=${TELEGRAM_CHAT_ID}" \
                 --data-urlencode "text=$text" \
-                -d "parse_mode=MarkdownV2"
+                -d "parse_mode=MarkdownV2")
+              ok=$(echo "$resp" | jq -r '.ok')
+              if [ "$ok" != "true" ]; then
+                echo "Telegram API error: $resp"
+                exit 1
+              fi
             done
             echo "$latest_post" > last_sent.txt
           else
