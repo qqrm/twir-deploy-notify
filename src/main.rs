@@ -505,7 +505,7 @@ mod tests {
         let text = "## Items\n- example\n";
         let secs = parse_sections(text);
         assert_eq!(secs[0].lines, vec!["• example"]);
-        let plain = markdown_to_plain(&secs[0].lines[0]);
+        let plain = markdown_to_plain(&secs[0].lines[0].to_string());
         assert!(plain.starts_with("- "));
     }
 
