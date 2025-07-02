@@ -7,3 +7,6 @@ edition = "2024"
 regex = "1"
 pulldown-cmark = "0.9"
 teloxide = { version = "0.12", default-features = false }
+
+[dev-dependencies]
+tempfile = "3"
