@@ -1,7 +1,6 @@
 use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
 use regex::Regex;
 use std::{env, fs, path::Path};
-use teloxide::utils::markdown as tl_m;
 
 /// Representation of a single TWIR section.
 #[derive(Default)]
