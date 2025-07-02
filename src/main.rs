@@ -45,7 +45,7 @@ pub fn escape_markdown_url(url: &str) -> String {
 
 /// Escape characters for MarkdownV2 URLs using `teloxide` utilities.
 pub fn escape_url(url: &str) -> String {
-    tl_m::escape_url(url)
+    escape_markdown_url(url)
 }
 
 /// Convert Markdown-formatted text into plain text with URLs in parentheses
@@ -124,7 +124,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                 buffer.push('[');
                 link_dest = Some(dest.to_string());
             }
-            Event::End(Tag::Link) => {
+            Event::End(Tag::Link(_, _, _)) => {
                 if let Some(d) = link_dest.take() {
                     buffer.push_str("](");
                     buffer.push_str(&escape_markdown_url(&d));
