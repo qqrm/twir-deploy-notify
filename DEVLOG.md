@@ -1,0 +1,12 @@
+# Development Log
+
+## 2025-06-26
+- Initial project setup and scheduled GitHub Actions workflow.
+- Implemented basic Telegram notifier and bug fixes.
+
+## 2025-07-01
+- Added Markdown converter and plain text output option.
+- Switched parsing to `pulldown-cmark` and filtered HTML comments.
+
+## 2025-07-02
+- Expanded unit tests and continuous integration workflow.
