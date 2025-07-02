@@ -47,6 +47,12 @@ pub fn escape_url(url: &str) -> String {
     escape_markdown_url(url)
 }
 
+/// Format a section heading with an emoji and uppercase text
+pub fn format_heading(title: &str) -> String {
+    let upper = title.to_uppercase();
+    format!("📰 **{}**", escape_markdown(&upper))
+}
+
 /// Convert Markdown-formatted text into plain text with URLs in parentheses
 pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
@@ -105,8 +111,9 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
+    let parser = Parser::new(text);
     let mut link_dest: Option<String> = None;
-    for event in Parser::new(text) {
+    for event in parser {
         match event {
             Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
                 if let Some(sec) = current.take() {
@@ -217,7 +224,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     for sec in &sections {
         let mut section_text = String::new();
-        section_text.push_str(&format!("**{}**\n", escape_markdown(&sec.title)));
+        section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
         for line in &sec.lines {
             section_text.push_str(line);
             section_text.push('\n');
@@ -321,7 +328,7 @@ mod tests {
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
         assert!(content.contains("*Часть 1/1*"));
-        assert!(content.contains("**News**"));
+        assert!(content.contains("📰 **NEWS**"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
     }
@@ -354,5 +361,11 @@ mod tests {
         let url = "https://example.com/path(1)";
         let escaped = escape_url(url);
         assert_eq!(escaped, "https://example.com/path\\(1\\)");
+    }
+
+    #[test]
+    fn heading_formatter() {
+        let formatted = format_heading("My Title");
+        assert_eq!(formatted, "📰 **MY TITLE**");
     }
 }
