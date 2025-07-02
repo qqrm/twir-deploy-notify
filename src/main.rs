@@ -1,4 +1,4 @@
-use pulldown_cmark::{Event, Parser, Tag};
+use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
 use regex::Regex;
 use std::{env, fs, path::Path};
 
@@ -88,13 +88,13 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut parser = Parser::new(text).into_iter().peekable();
     while let Some(event) = parser.next() {
         match event {
-            Event::Start(Tag::Heading(level, ..)) if level == 2 => {
+            Event::Start(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
                 if let Some(sec) = current.take() {
                     sections.push(sec);
                 }
                 buffer.clear();
             }
-            Event::End(Tag::Heading(level, ..)) if level == 2 => {
+            Event::End(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
                 current = Some(Section {
                     title: buffer.trim().to_string(),
                     lines: Vec::new(),
