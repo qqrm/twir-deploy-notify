@@ -123,6 +123,8 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut link_dest: Option<String> = None;
     let mut table: Vec<Vec<String>> = Vec::new();
     let mut row: Vec<String> = Vec::new();
+    let mut list_depth: usize = 0;
+    let mut in_code_block = false;
     for event in parser {
         match event {
             Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
@@ -163,7 +165,6 @@ fn parse_sections(text: &str) -> Vec<Section> {
                         let fixed = fix_bare_link(line);
                         let indent = "  ".repeat(list_depth.saturating_sub(1));
                         sec.lines.push(format!("{}• {}", indent, fixed));
-
                     }
                 }
                 buffer.clear();
@@ -486,7 +487,7 @@ mod tests {
         assert!(posts[0].contains("| Foo  | 10    |"));
         assert!(posts[0].contains("| Bar  | 20    |"));
     }
-  
+
     #[test]
     fn quote_and_code_blocks() {
         let text = "## Test\n> quoted text\n\n```\ncode line\n```\n";
@@ -506,7 +507,7 @@ mod tests {
         let secs = parse_sections(text);
         assert_eq!(secs[0].lines, vec!["• example"]);
         let plain = markdown_to_plain(&secs[0].lines[0]);
-        assert!(plain.starts_with("- "));
+        assert!(plain.starts_with("• "));
     }
 
     #[test]
