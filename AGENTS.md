@@ -7,3 +7,4 @@
 - Fix every issue reported by these commands before committing or submitting pull requests.
 - A pull request is complete only when formatting, linting, `cargo check`, and tests all succeed.
 - Always review `DEVLOG.md` and `ARCHITECTURE.md` before making any modifications.
+- Clone the repository from https://github.com/qqrm/twir-deploy-notify and work from the latest commit on the `main` branch. Fetch history if necessary to ensure the repository is up to date.
