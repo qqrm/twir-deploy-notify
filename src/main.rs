@@ -63,7 +63,8 @@ pub fn markdown_to_plain(text: &str) -> String {
         if i > 0 {
             result.push('\n');
         }
-        let line_no_format = line.replace('*', "");
+        let mut line_no_format = line.replace('*', "");
+        line_no_format = line_no_format.replace('•', "-");
         result.push_str(&line_no_format);
     }
     result
@@ -121,6 +122,8 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut buffer = String::new();
     let parser = Parser::new_ext(text, Options::ENABLE_TABLES);
     let mut link_dest: Option<String> = None;
+    let mut list_depth: usize = 0;
+    let mut in_code_block = false;
     let mut table: Vec<Vec<String>> = Vec::new();
     let mut row: Vec<String> = Vec::new();
     for event in parser {
@@ -163,7 +166,6 @@ fn parse_sections(text: &str) -> Vec<Section> {
                         let fixed = fix_bare_link(line);
                         let indent = "  ".repeat(list_depth.saturating_sub(1));
                         sec.lines.push(format!("{}• {}", indent, fixed));
-
                     }
                 }
                 buffer.clear();
@@ -440,7 +442,7 @@ mod tests {
     fn plain_conversion() {
         let text = "*Часть 1/1*\n**News**\n• [Link](https://example.com)";
         let plain = markdown_to_plain(text);
-        assert_eq!(plain, "Часть 1/1\nNews\n• Link (https://example.com)");
+        assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
     }
 
     #[test]
@@ -486,7 +488,7 @@ mod tests {
         assert!(posts[0].contains("| Foo  | 10    |"));
         assert!(posts[0].contains("| Bar  | 20    |"));
     }
-  
+
     #[test]
     fn quote_and_code_blocks() {
         let text = "## Test\n> quoted text\n\n```\ncode line\n```\n";
