@@ -220,7 +220,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     if let Some(link) = url {
         let link_block = format!(
-            "\n---\n\nПолный выпуск: [{}]({})",
+            "\n\\-\\-\\-\n\nПолный выпуск: [{}]({})",
             escape_markdown(&link),
             escape_url(&link)
         );
