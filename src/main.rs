@@ -1,4 +1,4 @@
-use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
+use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
 use std::{env, fs, path::Path};
 
@@ -58,8 +58,15 @@ pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
     let link_re = Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap();
     let replaced = link_re.replace_all(&without_escapes, "$1 ($2)");
-    let replaced = replaced.replace('•', "-");
-    replaced.replace('*', "")
+    let mut result = String::with_capacity(replaced.len());
+    for (i, line) in replaced.lines().enumerate() {
+        if i > 0 {
+            result.push('\n');
+        }
+        let line_no_format = line.replace('*', "");
+        result.push_str(&line_no_format);
+    }
+    result
 }
 
 /// Split long text into multiple messages
@@ -112,8 +119,10 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
-    let parser = Parser::new(text);
+    let parser = Parser::new_ext(text, Options::ENABLE_TABLES);
     let mut link_dest: Option<String> = None;
+    let mut table: Vec<Vec<String>> = Vec::new();
+    let mut row: Vec<String> = Vec::new();
     for event in parser {
         match event {
             Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
@@ -129,17 +138,85 @@ fn parse_sections(text: &str) -> Vec<Section> {
                 });
                 buffer.clear();
             }
+            Event::Start(Tag::List(_)) => {
+                if let Some(ref mut sec) = current {
+                    let line = buffer.trim_end();
+                    if !line.is_empty() {
+                        let fixed = fix_bare_link(line);
+                        let indent = "  ".repeat(list_depth.saturating_sub(1));
+                        sec.lines.push(format!("{}• {}", indent, fixed));
+                        buffer.clear();
+                    }
+                }
+                list_depth += 1;
+            }
+            Event::End(Tag::List(_)) => {
+                list_depth = list_depth.saturating_sub(1);
+            }
             Event::Start(Tag::Item) => {
                 buffer.clear();
             }
             Event::End(Tag::Item) => {
                 if let Some(ref mut sec) = current {
-                    let line = buffer.trim();
+                    let line = buffer.trim_end();
                     if !line.is_empty() {
                         let fixed = fix_bare_link(line);
-                        sec.lines.push(format!("• {}", fixed));
+                        let indent = "  ".repeat(list_depth.saturating_sub(1));
+                        sec.lines.push(format!("{}• {}", indent, fixed));
+
                     }
                 }
+                buffer.clear();
+            }
+            Event::Start(Tag::Table(_)) => {
+                table.clear();
+                if !buffer.trim().is_empty() {
+                    if let Some(ref mut sec) = current {
+                        sec.lines.push(buffer.trim().to_string());
+                    }
+                    buffer.clear();
+                }
+            }
+            Event::Start(Tag::TableHead) => {
+                row.clear();
+            }
+            Event::End(Tag::TableHead) => {
+                table.push(row.clone());
+            }
+            Event::End(Tag::Table(_)) => {
+                if let Some(ref mut sec) = current {
+                    // compute column widths
+                    let mut widths: Vec<usize> = vec![];
+                    for r in &table {
+                        for (i, cell) in r.iter().enumerate() {
+                            if i >= widths.len() {
+                                widths.push(cell.len());
+                            } else if widths[i] < cell.len() {
+                                widths[i] = cell.len();
+                            }
+                        }
+                    }
+                    for r in table.drain(..) {
+                        let mut line = String::from("|");
+                        for (i, cell) in r.into_iter().enumerate() {
+                            let width = widths[i];
+                            line.push_str(&format!(" {:width$} |", cell, width = width));
+                        }
+                        sec.lines.push(line);
+                    }
+                }
+            }
+            Event::Start(Tag::TableRow) => {
+                row.clear();
+            }
+            Event::End(Tag::TableRow) => {
+                table.push(row.clone());
+            }
+            Event::Start(Tag::TableCell) => {
+                buffer.clear();
+            }
+            Event::End(Tag::TableCell) => {
+                row.push(buffer.trim().to_string());
                 buffer.clear();
             }
             Event::Start(Tag::Link(_, dest, _)) => {
@@ -153,8 +230,33 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     buffer.push(')');
                 }
             }
-            Event::Text(t) | Event::Code(t) => buffer.push_str(&escape_markdown(&t)),
-            Event::SoftBreak | Event::HardBreak => buffer.push(' '),
+            Event::Start(Tag::BlockQuote) => {
+                buffer.push_str("> ");
+            }
+            Event::End(Tag::BlockQuote) => {
+                buffer.push('\n');
+            }
+            Event::Start(Tag::CodeBlock(_)) => {
+                in_code_block = true;
+                buffer.push_str("```\n");
+            }
+            Event::End(Tag::CodeBlock(_)) => {
+                in_code_block = false;
+                if !buffer.ends_with('\n') {
+                    buffer.push('\n');
+                }
+                buffer.push_str("```");
+            }
+            Event::Text(t) | Event::Code(t) => {
+                buffer.push_str(&escape_markdown(&t));
+            }
+            Event::SoftBreak | Event::HardBreak => {
+                if in_code_block {
+                    buffer.push('\n');
+                } else {
+                    buffer.push(' ');
+                }
+            }
             _ => {}
         }
     }
@@ -338,7 +440,7 @@ mod tests {
     fn plain_conversion() {
         let text = "*Часть 1/1*\n**News**\n• [Link](https://example.com)";
         let plain = markdown_to_plain(text);
-        assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
+        assert_eq!(plain, "Часть 1/1\nNews\n• Link (https://example.com)");
     }
 
     #[test]
@@ -348,6 +450,18 @@ mod tests {
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Links");
         assert_eq!(secs[0].lines, vec!["• [Rust](https://rust-lang.org)"]);
+    }
+
+    #[test]
+    fn nested_list_parsing() {
+        let text = "## News\n- Item 1\n  - Sub 1\n  - Sub 2\n- Item 2\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].title, "News");
+        assert_eq!(
+            secs[0].lines,
+            vec!["• Item 1", "  • Sub 1", "  • Sub 2", "• Item 2",]
+        );
     }
 
     #[test]
@@ -362,6 +476,28 @@ mod tests {
         let url = "https://example.com/path(1)";
         let escaped = escape_url(url);
         assert_eq!(escaped, "https://example.com/path\\(1\\)");
+    }
+
+    #[test]
+    fn table_rendering() {
+        let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
+        let posts = generate_posts(input.to_string());
+        assert!(posts[0].contains("| Name | Score |"));
+        assert!(posts[0].contains("| Foo  | 10    |"));
+        assert!(posts[0].contains("| Bar  | 20    |"));
+    }
+  
+    #[test]
+    fn quote_and_code_blocks() {
+        let text = "## Test\n> quoted text\n\n```\ncode line\n```\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].title, "Test");
+        assert_eq!(secs[0].lines, vec!["> quoted text\n```\ncode line\n```"]);
+        let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{}", text));
+        let combined = posts.join("\n");
+        assert!(combined.contains("> quoted text"));
+        assert!(combined.contains("```\ncode line\n```"));
     }
 
     #[test]
