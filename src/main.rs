@@ -52,6 +52,7 @@ pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
     let link_re = Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap();
     let replaced = link_re.replace_all(&without_escapes, "$1 ($2)");
+    let replaced = replaced.replace('•', "-");
     replaced.replace('*', "")
 }
 
@@ -105,17 +106,17 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
-    let mut parser = Parser::new(text).into_iter().peekable();
+    let parser = Parser::new(text);
     let mut link_dest: Option<String> = None;
-    while let Some(event) = parser.next() {
+    for event in parser {
         match event {
-            Event::Start(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
+            Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
                 if let Some(sec) = current.take() {
                     sections.push(sec);
                 }
                 buffer.clear();
             }
-            Event::End(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
+            Event::End(Tag::Heading(HeadingLevel::H2, ..)) => {
                 current = Some(Section {
                     title: buffer.trim().to_string(),
                     lines: Vec::new(),
@@ -130,7 +131,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     let line = buffer.trim();
                     if !line.is_empty() {
                         let fixed = fix_bare_link(line);
-                        sec.lines.push(format!("\\- {}", fixed));
+                        sec.lines.push(format!("• {}", fixed));
                     }
                 }
                 buffer.clear();
@@ -183,7 +184,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
 
-    let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
+    let url = if let (Some(d), Some(n)) = (date.as_ref(), number.as_ref()) {
         let parts: Vec<&str> = d.split('-').collect();
         if parts.len() >= 3 {
             Some(format!(
@@ -329,7 +330,7 @@ mod tests {
 
     #[test]
     fn plain_conversion() {
-        let text = "*Часть 1/1*\n**News**\n\\- [Link](https://example.com)";
+        let text = "*Часть 1/1*\n**News**\n• [Link](https://example.com)";
         let plain = markdown_to_plain(text);
         assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
     }
@@ -340,7 +341,7 @@ mod tests {
         let secs = parse_sections(text);
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Links");
-        assert_eq!(secs[0].lines, vec!["\\- [Rust](https://rust-lang.org)"]);
+        assert_eq!(secs[0].lines, vec!["• [Rust](https://rust-lang.org)"]);
     }
 
     #[test]
@@ -355,5 +356,14 @@ mod tests {
         let url = "https://example.com/path(1)";
         let escaped = escape_url(url);
         assert_eq!(escaped, "https://example.com/path\\(1\\)");
+    }
+
+    #[test]
+    fn bullet_formatting() {
+        let text = "## Items\n- example\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs[0].lines, vec!["• example"]);
+        let plain = markdown_to_plain(&format!("{}", secs[0].lines[0]));
+        assert!(plain.starts_with("- "));
     }
 }
