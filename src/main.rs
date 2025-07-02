@@ -327,4 +327,18 @@ mod tests {
         assert_eq!(secs[0].title, "Links");
         assert_eq!(secs[0].lines, vec!["- [Rust](https://rust-lang.org)"]);
     }
+
+    #[test]
+    fn escape_markdown_basic() {
+        let text = "_bold_ *italic*";
+        let escaped = escape_markdown(text);
+        assert_eq!(escaped, "\\_bold\\_ \\*italic\\*");
+    }
+
+    #[test]
+    fn escape_url_parentheses() {
+        let url = "https://example.com/path(1)";
+        let escaped = escape_url(url);
+        assert_eq!(escaped, "https://example.com/path\\(1\\)");
+    }
 }
