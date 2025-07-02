@@ -126,6 +126,8 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut in_code_block = false;
     let mut table: Vec<Vec<String>> = Vec::new();
     let mut row: Vec<String> = Vec::new();
+    let mut list_depth: usize = 0;
+    let mut in_code_block = false;
     for event in parser {
         match event {
             Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
@@ -507,8 +509,8 @@ mod tests {
         let text = "## Items\n- example\n";
         let secs = parse_sections(text);
         assert_eq!(secs[0].lines, vec!["• example"]);
-        let plain = markdown_to_plain(&secs[0].lines[0].to_string());
-        assert!(plain.starts_with("- "));
+        let plain = markdown_to_plain(&secs[0].lines[0]);
+        assert!(plain.starts_with("• "));
     }
 
     #[test]
