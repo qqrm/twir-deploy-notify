@@ -1,0 +1,25 @@
+# Project Architecture
+
+This tool processes weekly "This Week in Rust" Markdown files and prepares messages for Telegram.
+
+## Structure
+- **src/main.rs**: Contains all application code including parsing, message generation, and tests.
+- **Cargo.toml**: Defines dependencies such as `pulldown-cmark`, `regex`, and `teloxide`.
+- **last_sent.txt**: Records the last processed issue for the workflow.
+
+## Parsing Flow
+1. The input Markdown includes metadata lines beginning with `Title:`, `Number:`, and `Date:`.
+2. `pulldown-cmark` parses the rest of the file into sections based on `##` headings and list items.
+3. Each list item is converted to Telegram Markdown while escaping special characters.
+4. Links are preserved using parentheses format, and a final link to the full issue is generated from the date and number.
+
+## Message Generation
+- Each section becomes part of a Telegram post capped at 4000 characters.
+- Long messages are split, and each post is prefixed with `*Часть X/Y*`.
+- The optional `--plain` flag removes Markdown formatting for channels that require plain text.
+
+## Dependencies
+- `pulldown-cmark` handles Markdown parsing.
+- `regex` extracts metadata and processes links.
+- `teloxide` utilities assist with escaping text for Telegram Markdown.
+
