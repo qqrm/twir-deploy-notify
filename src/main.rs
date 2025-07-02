@@ -86,6 +86,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
     let mut parser = Parser::new(text).into_iter().peekable();
+    let mut link_dest: Option<String> = None;
     while let Some(event) = parser.next() {
         match event {
             Event::Start(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
@@ -112,6 +113,17 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     }
                 }
                 buffer.clear();
+            }
+            Event::Start(Tag::Link(_, dest, _)) => {
+                buffer.push('[');
+                link_dest = Some(dest.to_string());
+            }
+            Event::End(Tag::Link) => {
+                if let Some(d) = link_dest.take() {
+                    buffer.push_str("](");
+                    buffer.push_str(&escape_markdown_url(&d));
+                    buffer.push(')');
+                }
             }
             Event::Text(t) | Event::Code(t) => buffer.push_str(&t),
             Event::SoftBreak | Event::HardBreak => buffer.push(' '),
@@ -290,6 +302,7 @@ mod tests {
         let content = fs::read_to_string(first).unwrap();
         assert!(content.contains("*Часть 1/1*"));
         assert!(content.contains("**News**"));
+        assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
     }
 
@@ -298,5 +311,14 @@ mod tests {
         let text = "*Часть 1/1*\n**News**\n\\- [Link](https://example.com)";
         let plain = markdown_to_plain(text);
         assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
+    }
+
+    #[test]
+    fn link_parsing() {
+        let text = "## Links\n- [Rust](https://rust-lang.org)\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].title, "Links");
+        assert_eq!(secs[0].lines, vec!["- [Rust](https://rust-lang.org)"]);
     }
 }
