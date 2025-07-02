@@ -17,4 +17,4 @@ After that you can run the tool manually with:
 cargo run -- twir/content/<file-name>.md
 ```
 
-The workflow keeps track of the last processed file in `last_sent.txt`.
+The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.

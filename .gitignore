@@ -1,3 +1,5 @@
 /target
 output_*.md
 twir/
+
+last_sent.txt

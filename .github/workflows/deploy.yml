@@ -16,6 +16,15 @@ jobs:
         with:
           persist-credentials: true
 
+      - name: Download last_sent artifact from previous run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          prev=$(gh run list -w "${{ github.workflow }}" -L 2 --json databaseId -q '.[1].databaseId' || echo "")
+          if [ -n "$prev" ]; then
+            gh run download "$prev" -n last-sent || true
+          fi
+
       - name: Checkout TWIR
         uses: actions/checkout@v4
         with:
@@ -45,14 +54,13 @@ jobs:
                 -d "parse_mode=MarkdownV2"
             done
             echo "$latest_post" > last_sent.txt
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git add last_sent.txt
-          if ! git diff --staged --quiet; then
-            git commit -m "Update last_sent.txt"
-            git pull --rebase
-            git push
-          fi
           else
             echo "No new release. Skipping Telegram notification."
           fi
+
+      - name: Upload last_sent artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: last-sent
+          path: last_sent.txt
+          if-no-files-found: ignore
