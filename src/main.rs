@@ -417,7 +417,8 @@ mod tests {
     fn escape_markdown_basic() {
         let text = "_bold_ *italic*";
         let escaped = escape_markdown(text);
-        assert_eq!(escaped, "\\_bold\\_ \\*italic\\*");`
+        assert_eq!(escaped, "\\_bold\\_ \\*italic\\*");
+    }
 
     #[test]
     fn escape_url_parentheses() {
@@ -437,17 +438,17 @@ mod tests {
         let combined = posts.join("\n");
         assert!(combined.contains("> quoted text"));
         assert!(combined.contains("```\ncode line\n```"));
-   }
-  
+    }
+
     #[test]
     fn bullet_formatting() {
         let text = "## Items\n- example\n";
         let secs = parse_sections(text);
         assert_eq!(secs[0].lines, vec!["• example"]);
-        let plain = markdown_to_plain(&format!("{}", secs[0].lines[0]));
+        let plain = markdown_to_plain(&secs[0].lines[0]);
         assert!(plain.starts_with("- "));
-   }
-  
+    }
+
     #[test]
     fn heading_formatter() {
         let formatted = format_heading("My Title");
