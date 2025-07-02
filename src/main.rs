@@ -112,9 +112,9 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
-    let parser = Parser::new(text);
     let mut link_dest: Option<String> = None;
-    for event in parser {
+    let mut in_code_block = false;
+    for event in Parser::new(text) {
         match event {
             Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
                 if let Some(sec) = current.take() {
@@ -153,8 +153,33 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     buffer.push(')');
                 }
             }
-            Event::Text(t) | Event::Code(t) => buffer.push_str(&escape_markdown(&t)),
-            Event::SoftBreak | Event::HardBreak => buffer.push(' '),
+            Event::Start(Tag::BlockQuote) => {
+                buffer.push_str("> ");
+            }
+            Event::End(Tag::BlockQuote) => {
+                buffer.push('\n');
+            }
+            Event::Start(Tag::CodeBlock(_)) => {
+                in_code_block = true;
+                buffer.push_str("```\n");
+            }
+            Event::End(Tag::CodeBlock(_)) => {
+                in_code_block = false;
+                if !buffer.ends_with('\n') {
+                    buffer.push('\n');
+                }
+                buffer.push_str("```");
+            }
+            Event::Text(t) | Event::Code(t) => {
+                buffer.push_str(&escape_markdown(&t));
+            }
+            Event::SoftBreak | Event::HardBreak => {
+                if in_code_block {
+                    buffer.push('\n');
+                } else {
+                    buffer.push(' ');
+                }
+            }
             _ => {}
         }
     }
@@ -354,8 +379,7 @@ mod tests {
     fn escape_markdown_basic() {
         let text = "_bold_ *italic*";
         let escaped = escape_markdown(text);
-        assert_eq!(escaped, "\\_bold\\_ \\*italic\\*");
-    }
+        assert_eq!(escaped, "\\_bold\\_ \\*italic\\*");`
 
     #[test]
     fn escape_url_parentheses() {
@@ -365,12 +389,27 @@ mod tests {
     }
 
     #[test]
+    fn quote_and_code_blocks() {
+        let text = "## Test\n> quoted text\n\n```\ncode line\n```\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs.len(), 1);
+        assert_eq!(secs[0].title, "Test");
+        assert_eq!(secs[0].lines, vec!["> quoted text\n```\ncode line\n```"]);
+        let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{}", text));
+        let combined = posts.join("\n");
+        assert!(combined.contains("> quoted text"));
+        assert!(combined.contains("```\ncode line\n```"));
+   }
+  
+    #[test]
     fn bullet_formatting() {
         let text = "## Items\n- example\n";
         let secs = parse_sections(text);
         assert_eq!(secs[0].lines, vec!["• example"]);
         let plain = markdown_to_plain(&format!("{}", secs[0].lines[0]));
         assert!(plain.starts_with("- "));
+   }
+  
     #[test]
     fn heading_formatter() {
         let formatted = format_heading("My Title");
