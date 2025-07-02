@@ -1,4 +1,4 @@
-use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
+use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
 use std::{env, fs, path::Path};
 
@@ -119,10 +119,10 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
-
-    let parser = Parser::new(text).peekable();
+    let parser = Parser::new_ext(text, Options::ENABLE_TABLES);
     let mut link_dest: Option<String> = None;
-    let mut list_depth: usize = 0;
+    let mut table: Vec<Vec<String>> = Vec::new();
+    let mut row: Vec<String> = Vec::new();
     for event in parser {
         match event {
             Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
@@ -166,6 +166,57 @@ fn parse_sections(text: &str) -> Vec<Section> {
 
                     }
                 }
+                buffer.clear();
+            }
+            Event::Start(Tag::Table(_)) => {
+                table.clear();
+                if !buffer.trim().is_empty() {
+                    if let Some(ref mut sec) = current {
+                        sec.lines.push(buffer.trim().to_string());
+                    }
+                    buffer.clear();
+                }
+            }
+            Event::Start(Tag::TableHead) => {
+                row.clear();
+            }
+            Event::End(Tag::TableHead) => {
+                table.push(row.clone());
+            }
+            Event::End(Tag::Table(_)) => {
+                if let Some(ref mut sec) = current {
+                    // compute column widths
+                    let mut widths: Vec<usize> = vec![];
+                    for r in &table {
+                        for (i, cell) in r.iter().enumerate() {
+                            if i >= widths.len() {
+                                widths.push(cell.len());
+                            } else if widths[i] < cell.len() {
+                                widths[i] = cell.len();
+                            }
+                        }
+                    }
+                    for r in table.drain(..) {
+                        let mut line = String::from("|");
+                        for (i, cell) in r.into_iter().enumerate() {
+                            let width = widths[i];
+                            line.push_str(&format!(" {:width$} |", cell, width = width));
+                        }
+                        sec.lines.push(line);
+                    }
+                }
+            }
+            Event::Start(Tag::TableRow) => {
+                row.clear();
+            }
+            Event::End(Tag::TableRow) => {
+                table.push(row.clone());
+            }
+            Event::Start(Tag::TableCell) => {
+                buffer.clear();
+            }
+            Event::End(Tag::TableCell) => {
+                row.push(buffer.trim().to_string());
                 buffer.clear();
             }
             Event::Start(Tag::Link(_, dest, _)) => {
@@ -427,6 +478,15 @@ mod tests {
         assert_eq!(escaped, "https://example.com/path\\(1\\)");
     }
 
+    #[test]
+    fn table_rendering() {
+        let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
+        let posts = generate_posts(input.to_string());
+        assert!(posts[0].contains("| Name | Score |"));
+        assert!(posts[0].contains("| Foo  | 10    |"));
+        assert!(posts[0].contains("| Bar  | 20    |"));
+    }
+  
     #[test]
     fn quote_and_code_blocks() {
         let text = "## Test\n> quoted text\n\n```\ncode line\n```\n";
