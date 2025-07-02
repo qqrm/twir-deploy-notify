@@ -6,3 +6,4 @@ edition = "2024"
 [dependencies]
 regex = "1"
 pulldown-cmark = "0.9"
+teloxide = { version = "0.12", default-features = false }

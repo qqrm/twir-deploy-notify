@@ -1,6 +1,7 @@
 use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
 use regex::Regex;
 use std::{env, fs, path::Path};
+use teloxide::utils::markdown as tl_m;
 
 /// Representation of a single TWIR section.
 #[derive(Default)]
@@ -40,6 +41,11 @@ pub fn escape_markdown_url(url: &str) -> String {
         }
     }
     escaped
+}
+
+/// Escape characters for MarkdownV2 URLs using `teloxide` utilities.
+pub fn escape_url(url: &str) -> String {
+    tl_m::escape_url(url)
 }
 
 /// Convert Markdown-formatted text into plain text with URLs in parentheses
@@ -205,7 +211,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         let link_block = format!(
             "\n---\n\nПолный выпуск: [{}]({})",
             escape_markdown(&link),
-            escape_markdown_url(&link)
+            escape_url(&link)
         );
         if current.len() + link_block.len() > TELEGRAM_LIMIT && !current.is_empty() {
             posts.push(current.clone());
