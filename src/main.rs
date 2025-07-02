@@ -85,6 +85,21 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     posts
 }
 
+/// Convert "text (url)" into "[text](url)" if no link formatting is present.
+fn fix_bare_link(line: &str) -> String {
+    if line.contains("](") {
+        return line.to_string();
+    }
+    let re = Regex::new(r"\\((https?://[^\\)]+)\\)\s*$").unwrap();
+    if let Some(caps) = re.captures(line) {
+        let url = caps.get(1).unwrap().as_str();
+        let text = line[..caps.get(0).unwrap().start()].trim_end();
+        format!("[{}]({})", text, url)
+    } else {
+        line.to_string()
+    }
+}
+
 /// Parse TWIR Markdown into sections using `pulldown-cmark`.
 fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
@@ -114,7 +129,8 @@ fn parse_sections(text: &str) -> Vec<Section> {
                 if let Some(ref mut sec) = current {
                     let line = buffer.trim();
                     if !line.is_empty() {
-                        sec.lines.push(format!("\\- {}", line));
+                        let fixed = fix_bare_link(line);
+                        sec.lines.push(format!("\\- {}", fixed));
                     }
                 }
                 buffer.clear();
