@@ -114,7 +114,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                 if let Some(ref mut sec) = current {
                     let line = buffer.trim();
                     if !line.is_empty() {
-                        sec.lines.push(format!("- {}", line));
+                        sec.lines.push(format!("\\- {}", line));
                     }
                 }
                 buffer.clear();
@@ -130,7 +130,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     buffer.push(')');
                 }
             }
-            Event::Text(t) | Event::Code(t) => buffer.push_str(&t),
+            Event::Text(t) | Event::Code(t) => buffer.push_str(&escape_markdown(&t)),
             Event::SoftBreak | Event::HardBreak => buffer.push(' '),
             _ => {}
         }
@@ -324,7 +324,7 @@ mod tests {
         let secs = parse_sections(text);
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Links");
-        assert_eq!(secs[0].lines, vec!["- [Rust](https://rust-lang.org)"]);
+        assert_eq!(secs[0].lines, vec!["\\- [Rust](https://rust-lang.org)"]);
     }
 
     #[test]
