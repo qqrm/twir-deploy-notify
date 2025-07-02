@@ -47,11 +47,18 @@ pub fn escape_url(url: &str) -> String {
     escape_markdown_url(url)
 }
 
+/// Format a section heading with an emoji and uppercase text
+pub fn format_heading(title: &str) -> String {
+    let upper = title.to_uppercase();
+    format!("📰 **{}**", escape_markdown(&upper))
+}
+
 /// Convert Markdown-formatted text into plain text with URLs in parentheses
 pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
     let link_re = Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap();
     let replaced = link_re.replace_all(&without_escapes, "$1 ($2)");
+    let replaced = replaced.replace('•', "-");
     replaced.replace('*', "")
 }
 
@@ -130,7 +137,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     let line = buffer.trim();
                     if !line.is_empty() {
                         let fixed = fix_bare_link(line);
-                        sec.lines.push(format!("\\- {}", fixed));
+                        sec.lines.push(format!("• {}", fixed));
                     }
                 }
                 buffer.clear();
@@ -243,7 +250,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     for sec in &sections {
         let mut section_text = String::new();
-        section_text.push_str(&format!("**{}**\n", escape_markdown(&sec.title)));
+        section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
         for line in &sec.lines {
             section_text.push_str(line);
             section_text.push('\n');
@@ -347,14 +354,14 @@ mod tests {
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
         assert!(content.contains("*Часть 1/1*"));
-        assert!(content.contains("**News**"));
+        assert!(content.contains("📰 **NEWS**"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
     }
 
     #[test]
     fn plain_conversion() {
-        let text = "*Часть 1/1*\n**News**\n\\- [Link](https://example.com)";
+        let text = "*Часть 1/1*\n**News**\n• [Link](https://example.com)";
         let plain = markdown_to_plain(text);
         assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
     }
@@ -365,15 +372,14 @@ mod tests {
         let secs = parse_sections(text);
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Links");
-        assert_eq!(secs[0].lines, vec!["\\- [Rust](https://rust-lang.org)"]);
+        assert_eq!(secs[0].lines, vec!["• [Rust](https://rust-lang.org)"]);
     }
 
     #[test]
     fn escape_markdown_basic() {
         let text = "_bold_ *italic*";
         let escaped = escape_markdown(text);
-        assert_eq!(escaped, "\\_bold\\_ \\*italic\\*");
-    }
+        assert_eq!(escaped, "\\_bold\\_ \\*italic\\*");`
 
     #[test]
     fn escape_url_parentheses() {
@@ -393,5 +399,20 @@ mod tests {
         let combined = posts.join("\n");
         assert!(combined.contains("> quoted text"));
         assert!(combined.contains("```\ncode line\n```"));
+   }
+  
+    #[test]
+    fn bullet_formatting() {
+        let text = "## Items\n- example\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs[0].lines, vec!["• example"]);
+        let plain = markdown_to_plain(&format!("{}", secs[0].lines[0]));
+        assert!(plain.starts_with("- "));
+   }
+  
+    #[test]
+    fn heading_formatter() {
+        let formatted = format_heading("My Title");
+        assert_eq!(formatted, "📰 **MY TITLE**");
     }
 }
