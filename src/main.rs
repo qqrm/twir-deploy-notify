@@ -9,7 +9,7 @@ struct Section {
     lines: Vec<String>,
 }
 
-const TELEGRAM_LIMIT: usize = 4000;
+pub const TELEGRAM_LIMIT: usize = 4000;
 
 /// Escape characters for MarkdownV2
 pub fn escape_markdown(text: &str) -> String {
