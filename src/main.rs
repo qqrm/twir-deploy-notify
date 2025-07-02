@@ -58,6 +58,7 @@ pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
     let link_re = Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap();
     let replaced = link_re.replace_all(&without_escapes, "$1 ($2)");
+    let replaced = replaced.replace('•', "-");
     replaced.replace('*', "")
 }
 
@@ -136,7 +137,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     let line = buffer.trim();
                     if !line.is_empty() {
                         let fixed = fix_bare_link(line);
-                        sec.lines.push(format!("\\- {}", fixed));
+                        sec.lines.push(format!("• {}", fixed));
                     }
                 }
                 buffer.clear();
@@ -335,7 +336,7 @@ mod tests {
 
     #[test]
     fn plain_conversion() {
-        let text = "*Часть 1/1*\n**News**\n\\- [Link](https://example.com)";
+        let text = "*Часть 1/1*\n**News**\n• [Link](https://example.com)";
         let plain = markdown_to_plain(text);
         assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
     }
@@ -346,7 +347,7 @@ mod tests {
         let secs = parse_sections(text);
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Links");
-        assert_eq!(secs[0].lines, vec!["\\- [Rust](https://rust-lang.org)"]);
+        assert_eq!(secs[0].lines, vec!["• [Rust](https://rust-lang.org)"]);
     }
 
     #[test]
@@ -363,6 +364,13 @@ mod tests {
         assert_eq!(escaped, "https://example.com/path\\(1\\)");
     }
 
+    #[test]
+    fn bullet_formatting() {
+        let text = "## Items\n- example\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs[0].lines, vec!["• example"]);
+        let plain = markdown_to_plain(&format!("{}", secs[0].lines[0]));
+        assert!(plain.starts_with("- "));
     #[test]
     fn heading_formatter() {
         let formatted = format_heading("My Title");
