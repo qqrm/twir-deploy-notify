@@ -1,4 +1,4 @@
-use pulldown_cmark::{Event, HeadingLevel, Parser, Tag};
+use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
 use std::{env, fs, path::Path};
 
@@ -105,17 +105,19 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
-    let mut parser = Parser::new(text).into_iter().peekable();
+    let parser = Parser::new_ext(text, Options::ENABLE_TABLES);
     let mut link_dest: Option<String> = None;
-    while let Some(event) = parser.next() {
+    let mut table: Vec<Vec<String>> = Vec::new();
+    let mut row: Vec<String> = Vec::new();
+    for event in parser {
         match event {
-            Event::Start(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
+            Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
                 if let Some(sec) = current.take() {
                     sections.push(sec);
                 }
                 buffer.clear();
             }
-            Event::End(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
+            Event::End(Tag::Heading(HeadingLevel::H2, ..)) => {
                 current = Some(Section {
                     title: buffer.trim().to_string(),
                     lines: Vec::new(),
@@ -133,6 +135,57 @@ fn parse_sections(text: &str) -> Vec<Section> {
                         sec.lines.push(format!("\\- {}", fixed));
                     }
                 }
+                buffer.clear();
+            }
+            Event::Start(Tag::Table(_)) => {
+                table.clear();
+                if !buffer.trim().is_empty() {
+                    if let Some(ref mut sec) = current {
+                        sec.lines.push(buffer.trim().to_string());
+                    }
+                    buffer.clear();
+                }
+            }
+            Event::Start(Tag::TableHead) => {
+                row.clear();
+            }
+            Event::End(Tag::TableHead) => {
+                table.push(row.clone());
+            }
+            Event::End(Tag::Table(_)) => {
+                if let Some(ref mut sec) = current {
+                    // compute column widths
+                    let mut widths: Vec<usize> = vec![];
+                    for r in &table {
+                        for (i, cell) in r.iter().enumerate() {
+                            if i >= widths.len() {
+                                widths.push(cell.len());
+                            } else if widths[i] < cell.len() {
+                                widths[i] = cell.len();
+                            }
+                        }
+                    }
+                    for r in table.drain(..) {
+                        let mut line = String::from("|");
+                        for (i, cell) in r.into_iter().enumerate() {
+                            let width = widths[i];
+                            line.push_str(&format!(" {:width$} |", cell, width = width));
+                        }
+                        sec.lines.push(line);
+                    }
+                }
+            }
+            Event::Start(Tag::TableRow) => {
+                row.clear();
+            }
+            Event::End(Tag::TableRow) => {
+                table.push(row.clone());
+            }
+            Event::Start(Tag::TableCell) => {
+                buffer.clear();
+            }
+            Event::End(Tag::TableCell) => {
+                row.push(buffer.trim().to_string());
                 buffer.clear();
             }
             Event::Start(Tag::Link(_, dest, _)) => {
@@ -183,7 +236,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
 
-    let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
+    let url = if let (Some(d), Some(n)) = (date.as_ref(), number.as_ref()) {
         let parts: Vec<&str> = d.split('-').collect();
         if parts.len() >= 3 {
             Some(format!(
@@ -355,5 +408,14 @@ mod tests {
         let url = "https://example.com/path(1)";
         let escaped = escape_url(url);
         assert_eq!(escaped, "https://example.com/path\\(1\\)");
+    }
+
+    #[test]
+    fn table_rendering() {
+        let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
+        let posts = generate_posts(input.to_string());
+        assert!(posts[0].contains("| Name | Score |"));
+        assert!(posts[0].contains("| Foo  | 10    |"));
+        assert!(posts[0].contains("| Bar  | 20    |"));
     }
 }
