@@ -105,17 +105,16 @@ fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
-    let mut parser = Parser::new(text).into_iter().peekable();
     let mut link_dest: Option<String> = None;
-    while let Some(event) = parser.next() {
+    for event in Parser::new(text) {
         match event {
-            Event::Start(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
+            Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
                 if let Some(sec) = current.take() {
                     sections.push(sec);
                 }
                 buffer.clear();
             }
-            Event::End(Tag::Heading(level, ..)) if level == HeadingLevel::H2 => {
+            Event::End(Tag::Heading(HeadingLevel::H2, ..)) => {
                 current = Some(Section {
                     title: buffer.trim().to_string(),
                     lines: Vec::new(),
@@ -183,7 +182,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
 
-    let url = if let (Some(ref d), Some(ref n)) = (date.as_ref(), number.as_ref()) {
+    let url = if let (Some(d), Some(n)) = (date.as_ref(), number.as_ref()) {
         let parts: Vec<&str> = d.split('-').collect();
         if parts.len() >= 3 {
             Some(format!(
