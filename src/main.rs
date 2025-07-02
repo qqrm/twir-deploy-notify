@@ -47,6 +47,12 @@ pub fn escape_url(url: &str) -> String {
     escape_markdown_url(url)
 }
 
+/// Format a section heading with an emoji and uppercase text
+pub fn format_heading(title: &str) -> String {
+    let upper = title.to_uppercase();
+    format!("📰 **{}**", escape_markdown(&upper))
+}
+
 /// Convert Markdown-formatted text into plain text with URLs in parentheses
 pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
@@ -219,7 +225,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     for sec in &sections {
         let mut section_text = String::new();
-        section_text.push_str(&format!("**{}**\n", escape_markdown(&sec.title)));
+        section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
         for line in &sec.lines {
             section_text.push_str(line);
             section_text.push('\n');
@@ -323,7 +329,7 @@ mod tests {
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
         assert!(content.contains("*Часть 1/1*"));
-        assert!(content.contains("**News**"));
+        assert!(content.contains("📰 **NEWS**"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
     }
@@ -365,5 +371,9 @@ mod tests {
         assert_eq!(secs[0].lines, vec!["• example"]);
         let plain = markdown_to_plain(&format!("{}", secs[0].lines[0]));
         assert!(plain.starts_with("- "));
+    #[test]
+    fn heading_formatter() {
+        let formatted = format_heading("My Title");
+        assert_eq!(formatted, "📰 **MY TITLE**");
     }
 }
