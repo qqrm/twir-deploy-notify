@@ -1,5 +1,5 @@
-use once_cell::sync::Lazy;
 use clap::Parser as ClapParser;
+use once_cell::sync::Lazy;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
 use reqwest::blocking::Client;
@@ -326,8 +326,6 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     input = input.replace("_Полный выпуск: ссылка_", "");
 
     let body = HEADER_RE.replace_all(&input, "");
-    let sections = parse_sections(&body);
-    let header_re = Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap();
     let mut sections = parse_sections(&body);
 
     if let Some(link) = url.as_ref() {
