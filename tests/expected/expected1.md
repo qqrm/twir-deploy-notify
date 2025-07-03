@@ -1,4 +1,4 @@
-*Часть 1/9*
+*Часть 1/10*
 **This Week in Rust 605** — \#605 — 2025\-06\-25
 
 \-\-\-
@@ -31,11 +31,6 @@
 • [The Complete Rust Security Handbook](https://yevh.github.io/rust-security-handbook/)
 
 📰 **CRATE OF THE WEEK**
-
-📰 **CALLS FOR TESTING**
-• An important step for RFC implementation is for people to experiment with the implementation and give feedback, especially before stabilization\.If you are a feature implementer and would like your RFC to appear in this list, add a call\-for\-testing label to your RFC along with a comment providing testing instructions and/or guidance on which aspect\(s\) of the feature need testing\.
-• No calls for testing were issued this week by [Rust](https://github.com/rust-lang/rust/labels/call-for-testing), [Rust language RFCs](https://github.com/rust-lang/rfcs/issues?q=label%3Acall-for-testing), [Cargo](https://github.com/rust-lang/cargo/labels/call-for-testing) or [Rustup](https://github.com/rust-lang/rustup/labels/call-for-testing)\.
-[Let us know](https://github.com/rust-lang/this-week-in-rust/issues) if you would like your feature to be tracked as a part of this list\.
-**\[RFCs\]\(https://github\.com/rust\-lang/rfcs/issues?q\=label%3Acall\-for\-testing\)**
-**\[Rust\]\(https://github\.com/rust\-lang/rust/labels/call\-for\-testing\)**
-**\[Rustup\]\(https://github\.com/rust\-lang/rustup/labels/call\-for\-testing\)**
+This week's crate is [primitive\_fixed\_point\_decimal](https://docs.rs/primitive_fixed_point_decimal), a crate of real fixed\-point decimal types\.
+Thanks to [Wu Bingzheng](https://users.rust-lang.org/t/crate-of-the-week/2704/1445) for the self\-suggestion\!
+[Please submit your suggestions and votes for next week](https://users.rust-lang.org/t/crate-of-the-week/2704)\!
