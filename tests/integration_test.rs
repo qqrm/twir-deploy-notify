@@ -1,8 +1,11 @@
 #[allow(dead_code)]
-#[path = "../src/main.rs"]
-mod app;
+#[path = "../src/generator.rs"]
+mod generator;
+#[allow(dead_code)]
+#[path = "../src/parser.rs"]
+mod parser;
 
-use app::generate_posts;
+use generator::generate_posts;
 
 #[test]
 fn parse_latest_issue_full() {
