@@ -1,6 +1,9 @@
 use once_cell::sync::Lazy;
+use clap::Parser as ClapParser;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
+use reqwest::blocking::Client;
+use serde::Deserialize;
 use std::{env, fs, path::Path};
 use teloxide::utils::markdown::{escape, escape_link_url};
 
@@ -324,6 +327,20 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     let body = HEADER_RE.replace_all(&input, "");
     let sections = parse_sections(&body);
+    let header_re = Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap();
+    let mut sections = parse_sections(&body);
+
+    if let Some(link) = url.as_ref() {
+        let mut link_section = Section::default();
+        link_section.lines.push("\\-\\-\\-".to_string());
+        link_section.lines.push(String::new());
+        link_section.lines.push(format!(
+            "Полный выпуск: [{}]({})",
+            escape_markdown(link),
+            escape_url(link)
+        ));
+        sections.push(link_section);
+    }
 
     let mut posts = Vec::new();
     let mut current = String::new();
@@ -340,7 +357,9 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     for sec in &sections {
         let mut section_text = String::new();
-        section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
+        if !sec.title.is_empty() {
+            section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
+        }
         for line in &sec.lines {
             section_text.push_str(line);
             section_text.push('\n');
@@ -354,20 +373,6 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             current.push('\n');
         }
         current.push_str(&section_text);
-    }
-
-    if let Some(link) = url {
-        let link_block = format!(
-            "\n\\-\\-\\-\n\nПолный выпуск: [{}]({})",
-            escape_markdown(&link),
-            escape_url(&link)
-        );
-        if current.len() + link_block.len() > TELEGRAM_LIMIT && !current.is_empty() {
-            posts.push(current.clone());
-            current = link_block;
-        } else {
-            current.push_str(&link_block);
-        }
     }
 
     if !current.is_empty() {
@@ -405,29 +410,73 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
-fn main() -> std::io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let mut input_path = "input.md";
-    let mut plain = false;
+#[derive(Deserialize)]
+struct TelegramResponse {
+    ok: bool,
+}
 
-    for arg in &args[1..] {
-        if arg == "--plain" {
-            plain = true;
-        } else {
-            input_path = arg;
+/// Send generated posts to Telegram using the bot API.
+pub fn send_to_telegram(
+    posts: &[String],
+    base_url: &str,
+    token: &str,
+    chat_id: &str,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let client = Client::new();
+    for post in posts {
+        let url = format!(
+            "{}/bot{}/sendMessage",
+            base_url.trim_end_matches('/'),
+            token
+        );
+        let resp = client
+            .post(&url)
+            .form(&[
+                ("chat_id", chat_id),
+                ("text", post),
+                ("parse_mode", "MarkdownV2"),
+                ("disable_web_page_preview", "true"),
+            ])
+            .send()?;
+        let data: TelegramResponse = resp.json()?;
+        if !data.ok {
+            return Err("Telegram API returned error".into());
         }
     }
+    Ok(())
+}
 
-    let input = fs::read_to_string(input_path)?;
+/// Command line arguments.
+#[derive(ClapParser)]
+struct Cli {
+    /// Input Markdown file
+    input: String,
+
+    /// Generate plain text output
+    #[arg(long)]
+    plain: bool,
+}
+
+fn main() -> std::io::Result<()> {
+    let cli = Cli::parse();
+
+    let input = fs::read_to_string(&cli.input)?;
     let mut posts = generate_posts(input);
 
-    if plain {
+    if cli.plain {
         posts = posts.into_iter().map(|p| markdown_to_plain(&p)).collect();
     }
 
     write_posts(&posts, Path::new("."))?;
     for (i, _) in posts.iter().enumerate() {
         println!("Generated output_{}.md", i + 1);
+    }
+    if let (Ok(token), Ok(chat_id)) = (env::var("TELEGRAM_BOT_TOKEN"), env::var("TELEGRAM_CHAT_ID"))
+    {
+        let base = env::var("TELEGRAM_API_BASE")
+            .unwrap_or_else(|_| "https://api.telegram.org".to_string());
+        send_to_telegram(&posts, &base, &token, &chat_id)
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
     }
     Ok(())
 }
@@ -543,5 +592,59 @@ mod tests {
     fn heading_formatter() {
         let formatted = format_heading("My Title");
         assert_eq!(formatted, "📰 **MY TITLE**");
+    }
+
+    mod property {
+        use super::*;
+        use proptest::prelude::*;
+
+        fn arb_heading() -> impl Strategy<Value = String> {
+            "[A-Za-z0-9 ]{1,20}".prop_map(|s| format!("## {}", s))
+        }
+
+        fn arb_list() -> impl Strategy<Value = String> {
+            prop::collection::vec("[A-Za-z0-9 ]{1,20}", 1..5).prop_map(|items| {
+                items
+                    .into_iter()
+                    .map(|s| format!("- {}", s))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            })
+        }
+
+        fn arb_table() -> impl Strategy<Value = String> {
+            prop::collection::vec(("[A-Za-z0-9 ]{1,10}", "[A-Za-z0-9 ]{1,10}"), 1..4).prop_map(
+                |rows| {
+                    let mut table = String::from("| Col1 | Col2 |\n|------|------|\n");
+                    for (c1, c2) in rows {
+                        table.push_str(&format!("| {} | {} |\n", c1, c2));
+                    }
+                    table
+                },
+            )
+        }
+
+        fn arb_body() -> impl Strategy<Value = String> {
+            prop::collection::vec(prop_oneof![arb_heading(), arb_list(), arb_table()], 1..8)
+                .prop_map(|parts| parts.join("\n"))
+        }
+
+        fn arb_markdown() -> impl Strategy<Value = String> {
+            arb_body()
+                .prop_map(|body| format!("Title: Test\nNumber: 1\nDate: 2025-01-01\n\n{}", body))
+        }
+
+        proptest! {
+            #![proptest_config(ProptestConfig::with_cases(32))]
+
+            #[test]
+            fn random_inputs_are_split_correctly(input in arb_markdown()) {
+                let posts = generate_posts(input);
+                prop_assert!(!posts.is_empty());
+                for p in posts {
+                    prop_assert!(p.len() <= TELEGRAM_LIMIT + 50);
+                }
+            }
+        }
     }
 }
