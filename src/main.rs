@@ -236,7 +236,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                 }
             }
             Event::Start(Tag::BlockQuote) => {
-                buffer.push_str("> ");
+                buffer.push_str("\\> ");
             }
             Event::End(Tag::BlockQuote) => {
                 buffer.push('\n');
@@ -512,7 +512,7 @@ mod tests {
         let secs = parse_sections(text);
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Test");
-        assert_eq!(secs[0].lines, vec!["> quoted text\n```\ncode line\n```"]);
+        assert_eq!(secs[0].lines, vec!["\\> quoted text\n```\ncode line\n```"]);
         let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{text}"));
         let combined = posts.join("\n");
         assert!(combined.contains("> quoted text"));
