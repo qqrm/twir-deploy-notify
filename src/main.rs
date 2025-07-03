@@ -1,7 +1,9 @@
 use clap::Parser as ClapParser;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
-use std::{fs, path::Path};
+use reqwest::blocking::Client;
+use serde::Deserialize;
+use std::{env, fs, path::Path};
 use teloxide::utils::markdown::{escape, escape_link_url};
 
 /// Representation of a single TWIR section.
@@ -404,6 +406,42 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+#[derive(Deserialize)]
+struct TelegramResponse {
+    ok: bool,
+}
+
+/// Send generated posts to Telegram using the bot API.
+pub fn send_to_telegram(
+    posts: &[String],
+    base_url: &str,
+    token: &str,
+    chat_id: &str,
+) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let client = Client::new();
+    for post in posts {
+        let url = format!(
+            "{}/bot{}/sendMessage",
+            base_url.trim_end_matches('/'),
+            token
+        );
+        let resp = client
+            .post(&url)
+            .form(&[
+                ("chat_id", chat_id),
+                ("text", post),
+                ("parse_mode", "MarkdownV2"),
+                ("disable_web_page_preview", "true"),
+            ])
+            .send()?;
+        let data: TelegramResponse = resp.json()?;
+        if !data.ok {
+            return Err("Telegram API returned error".into());
+        }
+    }
+    Ok(())
+}
+
 /// Command line arguments.
 #[derive(ClapParser)]
 struct Cli {
@@ -428,6 +466,13 @@ fn main() -> std::io::Result<()> {
     write_posts(&posts, Path::new("."))?;
     for (i, _) in posts.iter().enumerate() {
         println!("Generated output_{}.md", i + 1);
+    }
+    if let (Ok(token), Ok(chat_id)) = (env::var("TELEGRAM_BOT_TOKEN"), env::var("TELEGRAM_CHAT_ID"))
+    {
+        let base = env::var("TELEGRAM_API_BASE")
+            .unwrap_or_else(|_| "https://api.telegram.org".to_string());
+        send_to_telegram(&posts, &base, &token, &chat_id)
+            .map_err(|e| std::io::Error::other(e.to_string()))?;
     }
     Ok(())
 }
