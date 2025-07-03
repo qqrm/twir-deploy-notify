@@ -1,6 +1,9 @@
 use std::fs;
 use std::process::Command;
 
+#[cfg(feature = "integration")]
+use mockito::Matcher;
+
 #[test]
 fn crate_of_the_week_is_preserved() {
     let dir = tempfile::tempdir().unwrap();
@@ -38,4 +41,37 @@ fn crate_of_week_followed_by_section() {
     assert!(combined.contains("📰 **CRATE OF THE WEEK**"));
     assert!(combined.contains("[demo](https://example.com)"));
     assert!(combined.contains("📰 **NEXT**"));
+}
+
+#[cfg(feature = "integration")]
+#[test]
+fn telegram_request_sent() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- item\n";
+    let input_path = dir.path().join("input.md");
+    fs::write(&input_path, input).unwrap();
+
+    let mut server = mockito::Server::new();
+    let m = server
+        .mock("POST", "/botTEST/sendMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+            Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+        ]))
+        .with_status(200)
+        .with_body("{\"ok\":true}")
+        .create();
+
+    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
+        .arg(&input_path)
+        .current_dir(dir.path())
+        .env("TELEGRAM_BOT_TOKEN", "TEST")
+        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_API_BASE", server.url())
+        .status()
+        .expect("failed to run binary");
+    assert!(status.success());
+    m.assert();
 }
