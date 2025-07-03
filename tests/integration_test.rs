@@ -5,12 +5,20 @@ mod app;
 use app::generate_posts;
 
 #[test]
-fn parse_latest_issue() {
+fn parse_latest_issue_full() {
     let input = include_str!("2025-06-25-this-week-in-rust.md");
     let posts = generate_posts(input.to_string());
-    assert!(!posts.is_empty());
-    // Ensure all posts contain text
-    assert!(posts.iter().all(|p| !p.is_empty()));
-    let combined = posts.join("\n");
-    assert!(combined.contains("Полный выпуск"));
+
+    let expected = [
+        include_str!("expected/expected1.md"),
+        include_str!("expected/expected2.md"),
+        include_str!("expected/expected3.md"),
+        include_str!("expected/expected4.md"),
+        include_str!("expected/expected5.md"),
+    ];
+
+    assert_eq!(posts.len(), expected.len(), "post count mismatch");
+    for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
+        assert_eq!(post, exp, "Mismatch in post {}", i + 1);
+    }
 }
