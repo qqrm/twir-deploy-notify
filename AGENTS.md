@@ -12,3 +12,5 @@
   check whether `origin/main` contains new commits. Rebase your branch onto the
   latest `origin/main` if needed so all development starts from the most recent
   commit.
+- Read all Markdown (`*.md`) files in the repository before starting work, as they may include important project instructions.
+- Follow the guidelines in `PARSING.md`, especially the requirement to rely on crates for Markdown processing instead of custom parsing code.
