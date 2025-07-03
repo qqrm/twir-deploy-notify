@@ -2,6 +2,7 @@
 
 - Responses may be in Russian or English as appropriate.
 - All code comments and technical documentation must be written in English.
+- Interpret user questions as tasks whenever possible and prefer providing a full merge request solution instead of a short code snippet.
 - Install required Rust components with `rustup component add clippy rustfmt`.
 - After making any changes, run `cargo fmt --all`, `cargo check --all-targets --all-features`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test`.
 - Fix every issue reported by these commands before committing or submitting pull requests.
