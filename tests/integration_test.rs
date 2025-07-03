@@ -19,6 +19,7 @@ fn parse_latest_issue_full() {
         include_str!("expected/expected7.md"),
         include_str!("expected/expected8.md"),
         include_str!("expected/expected9.md"),
+        include_str!("expected/expected10.md"),
     ];
 
     assert_eq!(posts.len(), expected.len(), "post count mismatch");

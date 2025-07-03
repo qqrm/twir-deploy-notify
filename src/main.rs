@@ -224,6 +224,16 @@ fn parse_sections(text: &str) -> Vec<Section> {
                 row.push(buffer.trim().to_string());
                 buffer.clear();
             }
+            Event::End(Tag::Paragraph) => {
+                if let Some(ref mut sec) = current {
+                    let line = buffer.trim_end();
+                    if !line.is_empty() {
+                        let fixed = fix_bare_link(line);
+                        sec.lines.push(fixed);
+                    }
+                }
+                buffer.clear();
+            }
             Event::Start(Tag::Link(_, dest, _)) => {
                 buffer.push('[');
                 link_dest = Some(dest.to_string());
@@ -265,15 +275,11 @@ fn parse_sections(text: &str) -> Vec<Section> {
             _ => {}
         }
     }
-    if let Some(sec) = current {
+    if let Some(mut sec) = current {
         if !buffer.trim().is_empty() {
-            sections.push(Section {
-                title: sec.title,
-                lines: vec![buffer.trim().to_string()],
-            });
-        } else {
-            sections.push(sec);
+            sec.lines.push(buffer.trim().to_string());
         }
+        sections.push(sec);
     }
     sections
 }
@@ -512,7 +518,10 @@ mod tests {
         let secs = parse_sections(text);
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Test");
-        assert_eq!(secs[0].lines, vec!["\\> quoted text\n```\ncode line\n```"]);
+        assert_eq!(
+            secs[0].lines,
+            vec!["\\> quoted text", "```\ncode line\n```"]
+        );
         let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{text}"));
         let combined = posts.join("\n");
         assert!(combined.contains("> quoted text"));
