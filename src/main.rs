@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use clap::Parser as ClapParser;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
@@ -14,6 +15,14 @@ struct Section {
 }
 
 pub const TELEGRAM_LIMIT: usize = 4000;
+
+static LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap());
+static BARE_LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\((https?://[^\)]+)\)\s*$").unwrap());
+static TITLE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^Title: (.+)$").unwrap());
+static NUMBER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^Number: (.+)$").unwrap());
+static DATE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^Date: (.+)$").unwrap());
+static HEADER_RE: Lazy<Regex> =
+    Lazy::new(|| Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap());
 
 /// Escape characters for MarkdownV2
 pub fn escape_markdown(text: &str) -> String {
@@ -44,8 +53,7 @@ pub fn format_subheading(title: &str) -> String {
 /// Convert Markdown-formatted text into plain text with URLs in parentheses
 pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
-    let link_re = Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap();
-    let replaced = link_re.replace_all(&without_escapes, "$1 ($2)");
+    let replaced = LINK_RE.replace_all(&without_escapes, "$1 ($2)");
     let mut result = String::with_capacity(replaced.len());
     for (i, line) in replaced.lines().enumerate() {
         if i > 0 {
@@ -93,8 +101,7 @@ fn fix_bare_link(line: &str) -> String {
     if line.contains("](") {
         return line.to_string();
     }
-    let re = Regex::new(r"\\((https?://[^\\)]+)\\)\s*$").unwrap();
-    if let Some(caps) = re.captures(line) {
+    if let Some(caps) = BARE_LINK_RE.captures(line) {
         let url = caps.get(1).unwrap().as_str();
         let text = line[..caps.get(0).unwrap().start()].trim_end();
         format!("[{text}]({url})")
@@ -289,19 +296,15 @@ fn parse_sections(text: &str) -> Vec<Section> {
 
 /// Main function generating Telegram posts from Markdown
 pub fn generate_posts(mut input: String) -> Vec<String> {
-    let title_re = Regex::new(r"(?m)^Title: (.+)$").unwrap();
-    let number_re = Regex::new(r"(?m)^Number: (.+)$").unwrap();
-    let date_re = Regex::new(r"(?m)^Date: (.+)$").unwrap();
-
-    let title = title_re
+    let title = TITLE_RE
         .captures(&input)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
-    let number = number_re
+    let number = NUMBER_RE
         .captures(&input)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
-    let date = date_re
+    let date = DATE_RE
         .captures(&input)
         .and_then(|c| c.get(1))
         .map(|m| m.as_str().trim().to_string());
@@ -322,8 +325,9 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     input = input.replace("_Полный выпуск: ссылка_", "");
 
+    let body = HEADER_RE.replace_all(&input, "");
+    let sections = parse_sections(&body);
     let header_re = Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap();
-    let body = header_re.replace_all(&input, "");
     let mut sections = parse_sections(&body);
 
     if let Some(link) = url.as_ref() {
