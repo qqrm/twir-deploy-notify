@@ -1,5 +1,5 @@
-use once_cell::sync::Lazy;
 use clap::Parser as ClapParser;
+use once_cell::sync::Lazy;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
 use reqwest::blocking::Client;
@@ -32,11 +32,6 @@ pub fn escape_markdown(text: &str) -> String {
 /// Escape characters for the URL part in [text](url)
 pub fn escape_markdown_url(url: &str) -> String {
     escape_link_url(url)
-}
-
-/// Escape characters for MarkdownV2 URLs using `teloxide` utilities.
-pub fn escape_url(url: &str) -> String {
-    escape_markdown_url(url)
 }
 
 /// Format a section heading with an emoji and uppercase text
@@ -326,8 +321,6 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     input = input.replace("_Полный выпуск: ссылка_", "");
 
     let body = HEADER_RE.replace_all(&input, "");
-    let sections = parse_sections(&body);
-    let header_re = Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap();
     let mut sections = parse_sections(&body);
 
     if let Some(link) = url.as_ref() {
@@ -337,7 +330,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         link_section.lines.push(format!(
             "Полный выпуск: [{}]({})",
             escape_markdown(link),
-            escape_url(link)
+            escape_markdown_url(link)
         ));
         sections.push(link_section);
     }
@@ -550,7 +543,7 @@ mod tests {
     #[test]
     fn escape_url_parentheses() {
         let url = "https://example.com/path(1)";
-        let escaped = escape_url(url);
+        let escaped = escape_markdown_url(url);
         assert_eq!(escaped, "https://example.com/path(1\\)");
     }
 
