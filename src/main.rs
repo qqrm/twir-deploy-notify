@@ -1,11 +1,12 @@
-use once_cell::sync::Lazy;
 use clap::Parser as ClapParser;
+use once_cell::sync::Lazy;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{env, fs, path::Path};
 use teloxide::utils::markdown::{escape, escape_link_url};
+use unicode_width::UnicodeWidthStr;
 
 /// Representation of a single TWIR section.
 #[derive(Default)]
@@ -204,10 +205,11 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     let mut widths: Vec<usize> = vec![];
                     for r in &table {
                         for (i, cell) in r.iter().enumerate() {
+                            let cell_width = UnicodeWidthStr::width(cell.as_str());
                             if i >= widths.len() {
-                                widths.push(cell.len());
-                            } else if widths[i] < cell.len() {
-                                widths[i] = cell.len();
+                                widths.push(cell_width);
+                            } else if widths[i] < cell_width {
+                                widths[i] = cell_width;
                             }
                         }
                     }
@@ -326,8 +328,6 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     input = input.replace("_Полный выпуск: ссылка_", "");
 
     let body = HEADER_RE.replace_all(&input, "");
-    let sections = parse_sections(&body);
-    let header_re = Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap();
     let mut sections = parse_sections(&body);
 
     if let Some(link) = url.as_ref() {
