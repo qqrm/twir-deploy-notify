@@ -89,7 +89,7 @@ fn fix_bare_link(line: &str) -> String {
     if let Some(caps) = re.captures(line) {
         let url = caps.get(1).unwrap().as_str();
         let text = line[..caps.get(0).unwrap().start()].trim_end();
-        format!("[{}]({})", text, url)
+        format!("[{text}]({url})")
     } else {
         line.to_string()
     }
@@ -127,7 +127,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     if !line.is_empty() {
                         let fixed = fix_bare_link(line);
                         let indent = "  ".repeat(list_depth.saturating_sub(1));
-                        sec.lines.push(format!("{}• {}", indent, fixed));
+                        sec.lines.push(format!("{indent}• {fixed}"));
                         buffer.clear();
                     }
                 }
@@ -145,7 +145,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     if !line.is_empty() {
                         let fixed = fix_bare_link(line);
                         let indent = "  ".repeat(list_depth.saturating_sub(1));
-                        sec.lines.push(format!("{}• {}", indent, fixed));
+                        sec.lines.push(format!("{indent}• {fixed}"));
                     }
                 }
                 buffer.clear();
@@ -182,7 +182,7 @@ fn parse_sections(text: &str) -> Vec<Section> {
                         let mut line = String::from("|");
                         for (i, cell) in r.into_iter().enumerate() {
                             let width = widths[i];
-                            line.push_str(&format!(" {:width$} |", cell, width = width));
+                            line.push_str(&format!(" {cell:width$} |"));
                         }
                         sec.lines.push(line);
                     }
@@ -347,7 +347,12 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     posts
         .into_iter()
         .enumerate()
-        .map(|(i, post)| format!("*Часть {}/{}*\n{}", i + 1, total, post))
+        .map(|(i, mut post)| {
+            if !post.ends_with('\n') {
+                post.push('\n');
+            }
+            format!("*Часть {}/{}*\n{}", i + 1, total, post)
+        })
         .collect()
 }
 
@@ -476,7 +481,7 @@ mod tests {
         assert_eq!(secs.len(), 1);
         assert_eq!(secs[0].title, "Test");
         assert_eq!(secs[0].lines, vec!["> quoted text\n```\ncode line\n```"]);
-        let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{}", text));
+        let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{text}"));
         let combined = posts.join("\n");
         assert!(combined.contains("> quoted text"));
         assert!(combined.contains("```\ncode line\n```"));
