@@ -544,4 +544,58 @@ mod tests {
         let formatted = format_heading("My Title");
         assert_eq!(formatted, "📰 **MY TITLE**");
     }
+
+    mod property {
+        use super::*;
+        use proptest::prelude::*;
+
+        fn arb_heading() -> impl Strategy<Value = String> {
+            "[A-Za-z0-9 ]{1,20}".prop_map(|s| format!("## {}", s))
+        }
+
+        fn arb_list() -> impl Strategy<Value = String> {
+            prop::collection::vec("[A-Za-z0-9 ]{1,20}", 1..5).prop_map(|items| {
+                items
+                    .into_iter()
+                    .map(|s| format!("- {}", s))
+                    .collect::<Vec<_>>()
+                    .join("\n")
+            })
+        }
+
+        fn arb_table() -> impl Strategy<Value = String> {
+            prop::collection::vec(("[A-Za-z0-9 ]{1,10}", "[A-Za-z0-9 ]{1,10}"), 1..4).prop_map(
+                |rows| {
+                    let mut table = String::from("| Col1 | Col2 |\n|------|------|\n");
+                    for (c1, c2) in rows {
+                        table.push_str(&format!("| {} | {} |\n", c1, c2));
+                    }
+                    table
+                },
+            )
+        }
+
+        fn arb_body() -> impl Strategy<Value = String> {
+            prop::collection::vec(prop_oneof![arb_heading(), arb_list(), arb_table()], 1..8)
+                .prop_map(|parts| parts.join("\n"))
+        }
+
+        fn arb_markdown() -> impl Strategy<Value = String> {
+            arb_body()
+                .prop_map(|body| format!("Title: Test\nNumber: 1\nDate: 2025-01-01\n\n{}", body))
+        }
+
+        proptest! {
+            #![proptest_config(ProptestConfig::with_cases(32))]
+
+            #[test]
+            fn random_inputs_are_split_correctly(input in arb_markdown()) {
+                let posts = generate_posts(input);
+                prop_assert!(!posts.is_empty());
+                for p in posts {
+                    prop_assert!(p.len() <= TELEGRAM_LIMIT + 50);
+                }
+            }
+        }
+    }
 }
