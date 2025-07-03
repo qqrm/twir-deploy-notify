@@ -1,6 +1,7 @@
+use clap::Parser as ClapParser;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
-use std::{env, fs, path::Path};
+use std::{fs, path::Path};
 use teloxide::utils::markdown::{escape, escape_link_url};
 
 /// Representation of a single TWIR section.
@@ -403,23 +404,24 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+/// Command line arguments.
+#[derive(ClapParser)]
+struct Cli {
+    /// Input Markdown file
+    input: String,
+
+    /// Generate plain text output
+    #[arg(long)]
+    plain: bool,
+}
+
 fn main() -> std::io::Result<()> {
-    let args: Vec<String> = env::args().collect();
-    let mut input_path = "input.md";
-    let mut plain = false;
+    let cli = Cli::parse();
 
-    for arg in &args[1..] {
-        if arg == "--plain" {
-            plain = true;
-        } else {
-            input_path = arg;
-        }
-    }
-
-    let input = fs::read_to_string(input_path)?;
+    let input = fs::read_to_string(&cli.input)?;
     let mut posts = generate_posts(input);
 
-    if plain {
+    if cli.plain {
         posts = posts.into_iter().map(|p| markdown_to_plain(&p)).collect();
     }
 
