@@ -1,6 +1,7 @@
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 use regex::Regex;
 use std::{env, fs, path::Path};
+use teloxide::utils::markdown::{escape, escape_link_url};
 
 /// Representation of a single TWIR section.
 #[derive(Default)]
@@ -13,33 +14,12 @@ pub const TELEGRAM_LIMIT: usize = 4000;
 
 /// Escape characters for MarkdownV2
 pub fn escape_markdown(text: &str) -> String {
-    let mut escaped = String::with_capacity(text.len());
-    for ch in text.chars() {
-        match ch {
-            '_' | '*' | '[' | ']' | '(' | ')' | '~' | '`' | '>' | '#' | '+' | '-' | '=' | '|'
-            | '{' | '}' | '.' | '!' => {
-                escaped.push('\\');
-                escaped.push(ch);
-            }
-            _ => escaped.push(ch),
-        }
-    }
-    escaped
+    escape(text)
 }
 
 /// Escape characters for the URL part in [text](url)
 pub fn escape_markdown_url(url: &str) -> String {
-    let mut escaped = String::with_capacity(url.len());
-    for ch in url.chars() {
-        match ch {
-            '(' | ')' | '\\' => {
-                escaped.push('\\');
-                escaped.push(ch);
-            }
-            _ => escaped.push(ch),
-        }
-    }
-    escaped
+    escape_link_url(url)
 }
 
 /// Escape characters for MarkdownV2 URLs using `teloxide` utilities.
@@ -477,7 +457,7 @@ mod tests {
     fn escape_url_parentheses() {
         let url = "https://example.com/path(1)";
         let escaped = escape_url(url);
-        assert_eq!(escaped, "https://example.com/path\\(1\\)");
+        assert_eq!(escaped, "https://example.com/path(1\\)");
     }
 
     #[test]
