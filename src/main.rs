@@ -33,6 +33,11 @@ pub fn format_heading(title: &str) -> String {
     format!("📰 **{}**", escape_markdown(&upper))
 }
 
+/// Format a subheading without emoji
+pub fn format_subheading(title: &str) -> String {
+    format!("**{}**", escape_markdown(title))
+}
+
 /// Convert Markdown-formatted text into plain text with URLs in parentheses
 pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
@@ -119,6 +124,24 @@ fn parse_sections(text: &str) -> Vec<Section> {
                     title: buffer.trim().to_string(),
                     lines: Vec::new(),
                 });
+                buffer.clear();
+            }
+            Event::Start(Tag::Heading(HeadingLevel::H3 | HeadingLevel::H4, ..)) => {
+                if let Some(ref mut sec) = current {
+                    let line = buffer.trim_end();
+                    if !line.is_empty() {
+                        sec.lines.push(line.to_string());
+                    }
+                }
+                buffer.clear();
+            }
+            Event::End(Tag::Heading(HeadingLevel::H3 | HeadingLevel::H4, ..)) => {
+                if let Some(ref mut sec) = current {
+                    let heading = buffer.trim();
+                    if !heading.is_empty() {
+                        sec.lines.push(format_subheading(heading));
+                    }
+                }
                 buffer.clear();
             }
             Event::Start(Tag::List(_)) => {

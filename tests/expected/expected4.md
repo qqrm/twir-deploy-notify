@@ -1,6 +1,7 @@
 *Часть 4/5*
 📰 **UPCOMING EVENTS**
-• Rusty Events between 2025\-06\-25 \- 2025\-07\-23 🦀Virtual
+Rusty Events between 2025\-06\-25 \- 2025\-07\-23 🦀
+**Virtual**
 • 2025\-06\-25 \| Virtual \(Lima, PE\)\| [Perú Rust User Group](https://www.meetup.com/peru-rust-user-group/)
   • [Interfaces y Costos en la nube con Rust](https://www.meetup.com/peru-rust-user-group/events/308543965/)
 • 2025\-06\-26 \| Virtual \(Girona, ES\) \| [Rust Girona](https://lu.ma/rust-girona)
@@ -37,12 +38,12 @@
   • [Fourth Tuesday](https://www.meetup.com/dallasrust/events/tgctrtyhckbdc)
 • 2025\-07\-22 \| Virtual \(London, GB\) \| [Women in Rust](https://www.meetup.com/women-in-rust/events/)
   • [Lunch & Learn: Crates, Tips & Tricks Lightning Talks \- Bring your ideas\!](https://www.meetup.com/women-in-rust/events/307560304)
-• Asia
+**Asia**
 • 2025\-06\-28 \| Bangalore/Bengaluru, IN \| [Rust Bangalore](https://hasgeek.com/rustbangalore)
   • [June 2025 Rustacean meetup](https://hasgeek.com/rustbangalore/june-2025-rustacean-meetup/)
 • 2025\-07\-02 \| Seoul, KR \| [Seoul Rust \(Programming Language\) Meetup](https://www.meetup.com/rust-seoul-meetup/events/)
   • [Seoul Rust Meetup](https://www.meetup.com/rust-seoul-meetup/events/308408246)
-• Europe
+**Europe**
 • 2025\-06\-25 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group)
   • [Lessons learnt from making a tiny game in nostd Rust](https://www.meetup.com/london-rust-project-group/events/306809962)
 • 2025\-06\-25 \| Paris, FR \| [Systematic Paris Region](https://systematic-paris-region.org/)
@@ -79,7 +80,7 @@
   • [Topic TBD](https://www.meetup.com/rust-modern-systems-programming-in-leipzig/events/308592246)
 • 2025\-07\-15 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group/events/)
   • [TUI Power: Simulating & Visualising Sensor Data with Rust](https://www.meetup.com/london-rust-project-group/events/308434768)
-• North America
+**North America**
 • 2025\-06\-25 \| Austin, TX, US \| [Rust ATX](https://www.meetup.com/rust-atx)
   • [Rust Lunch \- Fareground](https://www.meetup.com/rust-atx/events/xvkdgtyhcjbhc)
 • 2025\-06\-26 \| Chicago, IL, US \| [Chicago Rust Meetup](https://www.meetup.com/chicago-rust-meetup/events/)
@@ -110,11 +111,11 @@
   • [July, 2025 Computer Programming Language Panel \(Special Event\)](https://www.meetup.com/seattle-rust-user-group/events/307698855)
 • 2025\-07\-23 \| Austin, TX, US \| [Rust ATX](https://www.meetup.com/rust-atx/events/)
   • [Rust Lunch \- Fareground](https://www.meetup.com/rust-atx/events/xvkdgtyhckbfc)
-• Oceania
+**Oceania**
 • 2025\-06\-30 \| Collingwood, VI, AU \| [Rust Melbourne](https://www.meetup.com/rust-melbourne/events/)
   • [June 2025 Mini Rust Melbourne Meetup](https://www.meetup.com/rust-melbourne/events/308546374)
 • 2025\-07\-01 \| Christchurch, NZ \| [Christchurch Rust Meetup Group](https://www.meetup.com/christchurch-rustlang-meetup-group/events/)
   • [July 2025 Christchurch Rust Meetup](https://www.meetup.com/christchurch-rustlang-meetup-group/events/308605782)
-• South America
+**South America**
 • 2025\-07\-12 \| São Paulo, BR \| [Rust São Paulo Meetup](https://www.meetup.com/rust-sao-paulo-meetup/events/)
   • [Encontro do Rust\-SP na WillBank](https://www.meetup.com/rust-sao-paulo-meetup/events/307308851)
