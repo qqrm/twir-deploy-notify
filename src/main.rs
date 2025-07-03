@@ -322,7 +322,19 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     let header_re = Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap();
     let body = header_re.replace_all(&input, "");
-    let sections = parse_sections(&body);
+    let mut sections = parse_sections(&body);
+
+    if let Some(link) = url.as_ref() {
+        let mut link_section = Section::default();
+        link_section.lines.push("\\-\\-\\-".to_string());
+        link_section.lines.push(String::new());
+        link_section.lines.push(format!(
+            "Полный выпуск: [{}]({})",
+            escape_markdown(link),
+            escape_url(link)
+        ));
+        sections.push(link_section);
+    }
 
     let mut posts = Vec::new();
     let mut current = String::new();
@@ -339,7 +351,9 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
 
     for sec in &sections {
         let mut section_text = String::new();
-        section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
+        if !sec.title.is_empty() {
+            section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
+        }
         for line in &sec.lines {
             section_text.push_str(line);
             section_text.push('\n');
@@ -353,20 +367,6 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             current.push('\n');
         }
         current.push_str(&section_text);
-    }
-
-    if let Some(link) = url {
-        let link_block = format!(
-            "\n\\-\\-\\-\n\nПолный выпуск: [{}]({})",
-            escape_markdown(&link),
-            escape_url(&link)
-        );
-        if current.len() + link_block.len() > TELEGRAM_LIMIT && !current.is_empty() {
-            posts.push(current.clone());
-            current = link_block;
-        } else {
-            current.push_str(&link_block);
-        }
     }
 
     if !current.is_empty() {
