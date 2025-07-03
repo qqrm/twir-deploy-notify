@@ -24,10 +24,6 @@ pub fn escape_markdown_url(url: &str) -> String {
     escape_link_url(url)
 }
 
-pub fn escape_url(url: &str) -> String {
-    escape_markdown_url(url)
-}
-
 pub fn format_heading(title: &str) -> String {
     let upper = title.to_uppercase();
     format!("📰 **{}**", escape_markdown(&upper))
@@ -121,7 +117,7 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         link_section.lines.push(format!(
             "Полный выпуск: [{}]({})",
             escape_markdown(link),
-            escape_url(link)
+            escape_markdown_url(link)
         ));
         sections.push(link_section);
     }
@@ -298,7 +294,7 @@ mod tests {
     #[test]
     fn escape_url_parentheses() {
         let url = "https://example.com/path(1)";
-        let escaped = escape_url(url);
+        let escaped = escape_markdown_url(url);
         assert_eq!(escaped, "https://example.com/path(1\\)");
     }
 
