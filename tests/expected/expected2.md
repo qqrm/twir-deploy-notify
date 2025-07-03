@@ -1,4 +1,4 @@
-*Часть 2/5*
+*Часть 2/9*
 📰 **CALL FOR PARTICIPATION; PROJECTS AND SPEAKERS**
 **CFP \\- Projects**
 • Always wanted to contribute to open\-source projects but did not know where to start? Every week we highlight some tasks from the Rust community for you to pick and get started\!Some of these tasks may also have mentors available, visit the task page for more information\.

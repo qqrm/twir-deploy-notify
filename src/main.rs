@@ -366,8 +366,17 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
         posts.push(current);
     }
 
-    let total = posts.len();
-    posts
+    let mut final_posts = Vec::new();
+    for post in posts {
+        if post.len() > TELEGRAM_LIMIT {
+            final_posts.extend(split_posts(&post, TELEGRAM_LIMIT));
+        } else {
+            final_posts.push(post);
+        }
+    }
+
+    let total = final_posts.len();
+    final_posts
         .into_iter()
         .enumerate()
         .map(|(i, mut post)| {
