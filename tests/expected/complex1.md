@@ -17,6 +17,11 @@
 Back to first level
 
 📰 **CODE BLOCK**
+```
+fn greet\(\) \{
+    println\!\("Hello, world\!"\);
+\}
+```
 
 📰 **TABLE EXAMPLE**
 | Short | Much Longer Column | C  |
