@@ -14,13 +14,13 @@ git clone https://github.com/rust-lang/this-week-in-rust twir
 After that you can run the tool manually with:
 
 ```bash
-cargo run -- twir/content/<file-name>.md
+cargo run --bin twir-deploy-notify -- twir/content/<file-name>.md
 ```
 
 Set `RUST_LOG=info` to see detailed logs including Telegram API responses:
 
 ```bash
-RUST_LOG=info cargo run -- twir/content/<file-name>.md
+RUST_LOG=info cargo run --bin twir-deploy-notify -- twir/content/<file-name>.md
 ```
 
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
