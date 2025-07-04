@@ -14,6 +14,7 @@ struct Cli {
 }
 
 pub fn main() -> std::io::Result<()> {
+    env_logger::init();
     let cli = Cli::parse();
 
     let input = fs::read_to_string(&cli.input)?;
