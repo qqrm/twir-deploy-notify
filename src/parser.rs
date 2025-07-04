@@ -40,6 +40,12 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
     for event in parser {
         match event {
             Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
+                if let Some(ref mut sec) = current {
+                    let line = buffer.trim();
+                    if !line.is_empty() {
+                        sec.lines.push(line.to_string());
+                    }
+                }
                 if let Some(sec) = current.take() {
                     sections.push(sec);
                 }
