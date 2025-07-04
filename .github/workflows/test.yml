@@ -34,6 +34,7 @@ jobs:
       - run: cargo check --all-targets --all-features
       - run: cargo clippy --all-targets --all-features -- -D warnings
       - run: cargo test -- --test-threads=$(nproc)
+      - run: cargo run --bin check-docs
 
   coverage:
     runs-on: ubuntu-latest
