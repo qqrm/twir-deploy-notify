@@ -1,8 +1,7 @@
-*Часть 1/10*
+*Часть 1/13*
 **This Week in Rust 605** — \#605 — 2025\-06\-25
 
 \-\-\-
-
 📰 **UPDATES FROM RUST COMMUNITY**
 **Official**
 • [Announcing the Clippy feature freeze](https://blog.rust-lang.org/inside-rust/2025/06/21/announcing-the-clippy-feature-freeze/)
@@ -29,8 +28,3 @@
 • [Writing a basic Linux device driver when you know nothing about Linux drivers or USB](https://crescentro.se/posts/writing-drivers/)
 • [Rewriting Kafka in Rust Async: Insights and Lessons Learned in Rust](https://wangjunfei.com/2025/06/18/Rewriting-Kafka-in-Rust-Async-Insights-and-Lessons-Learned/)
 • [The Complete Rust Security Handbook](https://yevh.github.io/rust-security-handbook/)
-
-📰 **CRATE OF THE WEEK**
-This week's crate is [primitive\_fixed\_point\_decimal](https://docs.rs/primitive_fixed_point_decimal), a crate of real fixed\-point decimal types\.
-Thanks to [Wu Bingzheng](https://users.rust-lang.org/t/crate-of-the-week/2704/1445) for the self\-suggestion\!
-[Please submit your suggestions and votes for next week](https://users.rust-lang.org/t/crate-of-the-week/2704)\!

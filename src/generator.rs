@@ -136,20 +136,23 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     }
 
     let mut posts = Vec::new();
-    let mut current = String::new();
 
+    let mut header = String::new();
     if let Some(ref t) = title {
-        current.push_str(&format!("**{}**", escape_markdown(t)));
+        header.push_str(&format!("**{}**", escape_markdown(t)));
     }
     if let Some(ref n) = number {
-        current.push_str(&format!(" — \\#{}", escape_markdown(n)));
+        header.push_str(&format!(" — \\#{}", escape_markdown(n)));
     }
     if let Some(ref d) = date {
-        current.push_str(&format!(" — {}\n\n\\-\\-\\-\n", escape_markdown(d)));
+        header.push_str(&format!(" — {}\n\n\\-\\-\\-\n", escape_markdown(d)));
     }
 
-    for sec in &sections {
+    for (idx, sec) in sections.iter().enumerate() {
         let mut section_text = String::new();
+        if idx == 0 {
+            section_text.push_str(&header);
+        }
         if !sec.title.is_empty() {
             section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
         }
@@ -158,18 +161,11 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
             section_text.push('\n');
         }
 
-        if current.len() + section_text.len() > TELEGRAM_LIMIT && !current.is_empty() {
-            posts.push(current.clone());
-            current.clear();
+        if section_text.len() > TELEGRAM_LIMIT {
+            posts.extend(split_posts(&section_text, TELEGRAM_LIMIT));
+        } else {
+            posts.push(section_text);
         }
-        if !current.is_empty() {
-            current.push('\n');
-        }
-        current.push_str(&section_text);
-    }
-
-    if !current.is_empty() {
-        posts.push(current);
     }
 
     let mut final_posts = Vec::new();
@@ -283,7 +279,7 @@ mod tests {
         let first = dir.join("output_1.md");
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
-        assert!(content.contains("*Часть 1/1*"));
+        assert!(content.contains("*Часть 1/2*"));
         assert!(content.contains("📰 **NEWS**"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
