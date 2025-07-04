@@ -49,6 +49,34 @@ pub fn markdown_to_plain(text: &str) -> String {
     result
 }
 
+#[derive(Debug)]
+pub struct ValidationError(pub String);
+
+impl std::fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for ValidationError {}
+
+pub fn validate_telegram_markdown(text: &str) -> Result<(), ValidationError> {
+    use tbot::markup::markdown_v2::ESCAPED_TEXT_CHARACTERS;
+    let mut chars = text.chars().peekable();
+    while let Some(c) = chars.next() {
+        if c == '\\' {
+            chars.next();
+            continue;
+        }
+        if ESCAPED_TEXT_CHARACTERS.contains(&c) {
+            return Err(ValidationError(format!(
+                "unescaped markdown character '{c}'"
+            )));
+        }
+    }
+    Ok(())
+}
+
 pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
@@ -217,6 +245,7 @@ pub fn send_to_telegram(
         debug!("Posting message {} to {}", i + 1, url);
         let mut form = vec![("chat_id", chat_id), ("text", post)];
         if use_markdown {
+            validate_telegram_markdown(post)?;
             form.push(("parse_mode", "MarkdownV2"));
         }
         form.push(("disable_web_page_preview", "true"));
@@ -356,6 +385,12 @@ mod tests {
     fn heading_formatter() {
         let formatted = format_heading("My Title");
         assert_eq!(formatted, "📰 **MY TITLE**");
+    }
+
+    #[test]
+    fn markdown_validation() {
+        assert!(validate_telegram_markdown("simple text").is_ok());
+        assert!(validate_telegram_markdown("bad *text").is_err());
     }
 
     mod property {
