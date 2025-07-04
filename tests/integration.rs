@@ -3,6 +3,11 @@ use std::process::Command;
 
 #[cfg(feature = "integration")]
 use mockito::Matcher;
+#[allow(dead_code)]
+#[path = "../src/validator.rs"]
+mod validator;
+
+use validator::validate_telegram_markdown;
 
 #[test]
 fn crate_of_the_week_is_preserved() {
@@ -21,6 +26,7 @@ fn crate_of_the_week_is_preserved() {
     let output = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
     assert!(output.contains("📰 **CRATE OF THE WEEK**"));
     assert!(output.contains("primitive\\_fixed\\_point\\_decimal"));
+    validate_telegram_markdown(&output).unwrap();
 }
 
 #[test]
@@ -41,6 +47,7 @@ fn crate_of_week_followed_by_section() {
     assert!(combined.contains("📰 **CRATE OF THE WEEK**"));
     assert!(combined.contains("[demo](https://example.com)"));
     assert!(combined.contains("📰 **NEXT**"));
+    validate_telegram_markdown(&combined).unwrap();
 }
 
 #[cfg(feature = "integration")]
@@ -73,6 +80,8 @@ fn telegram_request_sent() {
         .status()
         .expect("failed to run binary");
     assert!(status.success());
+    let post = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
+    validate_telegram_markdown(&post).unwrap();
     m.assert();
 }
 
@@ -108,5 +117,7 @@ fn telegram_request_sent_plain() {
         .status()
         .expect("failed to run binary");
     assert!(status.success());
+    let post = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
+    validate_telegram_markdown(&post).unwrap();
     m.assert();
 }

@@ -442,6 +442,9 @@ mod tests {
                 prop_assert!(!posts.is_empty());
                 for p in posts {
                     prop_assert!(p.len() <= TELEGRAM_LIMIT + 50);
+                    if let Err(e) = crate::validator::validate_telegram_markdown(&p) {
+                        return Err(TestCaseError::fail(e.to_string()));
+                    }
                 }
             }
         }
