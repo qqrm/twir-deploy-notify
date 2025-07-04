@@ -20,13 +20,13 @@ jobs:
         with:
           persist-credentials: true
 
-      - name: Download last_sent artifact from previous run
+      - name: Download last_sent artifact from previous successful run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          prev=$(gh run list -w "${{ github.workflow }}" -L 2 --json databaseId -q '.[1].databaseId' || echo "")
+          prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success -L 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [ -n "$prev" ]; then
-            gh run download "$prev" -n last-sent || true
+            gh run download "$prev" -n last-sent --dir . || true
           fi
 
       - name: Checkout TWIR
