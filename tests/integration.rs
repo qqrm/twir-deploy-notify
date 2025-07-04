@@ -203,3 +203,48 @@ fn sends_valid_markdown() {
     validate_telegram_markdown(&post2).unwrap();
     m.assert();
 }
+
+#[cfg(feature = "integration")]
+#[test]
+fn full_issue_end_to_end() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = include_str!("2025-07-02-this-week-in-rust.md");
+    let input_path = dir.path().join("input.md");
+    fs::write(&input_path, input).unwrap();
+
+    let mut server = mockito::Server::new();
+    let mut mocks = Vec::new();
+    for _ in 0..8 {
+        mocks.push(
+            server
+                .mock("POST", "/botTEST/sendMessage")
+                .match_header("content-type", "application/x-www-form-urlencoded")
+                .match_body(Matcher::AllOf(vec![
+                    Matcher::UrlEncoded("chat_id".into(), "42".into()),
+                    Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+                    Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+                ]))
+                .with_status(200)
+                .with_body("{\"ok\":true}")
+                .create(),
+        );
+    }
+
+    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
+        .arg(&input_path)
+        .current_dir(dir.path())
+        .env("TELEGRAM_BOT_TOKEN", "TEST")
+        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_API_BASE", server.url())
+        .status()
+        .expect("failed to run binary");
+    assert!(status.success());
+
+    for i in 1..=8 {
+        let post = fs::read_to_string(dir.path().join(format!("output_{i}.md"))).unwrap();
+        validate_telegram_markdown(&post).unwrap();
+    }
+    for m in mocks {
+        m.assert();
+    }
+}
