@@ -7,6 +7,7 @@ use std::{fs, path::Path};
 use teloxide::utils::markdown::{escape, escape_link_url};
 
 use crate::parser::{Section, parse_sections};
+use crate::validator::validate_telegram_markdown;
 
 pub const TELEGRAM_LIMIT: usize = 4000;
 
@@ -48,6 +49,17 @@ pub fn markdown_to_plain(text: &str) -> String {
     }
     result
 }
+
+#[derive(Debug)]
+pub struct ValidationError(pub String);
+
+impl std::fmt::Display for ValidationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for ValidationError {}
 
 pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
@@ -217,7 +229,7 @@ pub fn send_to_telegram(
         debug!("Posting message {} to {}", i + 1, url);
         let mut form = vec![("chat_id", chat_id), ("text", post)];
         if use_markdown {
-            crate::validator::validate_telegram_markdown(post).map_err(std::io::Error::other)?;
+            validate_telegram_markdown(post).map_err(ValidationError)?;
             form.push(("parse_mode", "MarkdownV2"));
         }
         form.push(("disable_web_page_preview", "true"));
