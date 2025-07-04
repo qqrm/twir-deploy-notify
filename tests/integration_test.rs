@@ -43,3 +43,25 @@ fn parse_complex_markdown() {
         assert_eq!(post, exp, "Mismatch in post {}", i + 1);
     }
 }
+
+#[test]
+fn parse_issue_606_full() {
+    let input = include_str!("2025-07-02-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string());
+
+    let expected = [
+        include_str!("expected/606_1.md"),
+        include_str!("expected/606_2.md"),
+        include_str!("expected/606_3.md"),
+        include_str!("expected/606_4.md"),
+        include_str!("expected/606_5.md"),
+        include_str!("expected/606_6.md"),
+        include_str!("expected/606_7.md"),
+        include_str!("expected/606_8.md"),
+    ];
+
+    assert_eq!(posts.len(), expected.len(), "post count mismatch");
+    for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
+        assert_eq!(post, exp, "Mismatch in post {}", i + 1);
+    }
+}
