@@ -27,6 +27,9 @@ fn parse_latest_issue_full() {
         include_str!("expected/expected8.md"),
         include_str!("expected/expected9.md"),
         include_str!("expected/expected10.md"),
+        include_str!("expected/expected11.md"),
+        include_str!("expected/expected12.md"),
+        include_str!("expected/expected13.md"),
     ];
 
     assert_eq!(posts.len(), expected.len(), "post count mismatch");
@@ -40,7 +43,13 @@ fn parse_complex_markdown() {
     let input = include_str!("complex.md");
     let posts = generate_posts(input.to_string());
 
-    let expected = [include_str!("expected/complex1.md")];
+    let expected = [
+        include_str!("expected/complex1.md"),
+        include_str!("expected/complex2.md"),
+        include_str!("expected/complex3.md"),
+        include_str!("expected/complex4.md"),
+        include_str!("expected/complex5.md"),
+    ];
 
     assert_eq!(posts.len(), expected.len(), "post count mismatch");
     for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
@@ -62,6 +71,9 @@ fn parse_issue_606_full() {
         include_str!("expected/606_6.md"),
         include_str!("expected/606_7.md"),
         include_str!("expected/606_8.md"),
+        include_str!("expected/606_9.md"),
+        include_str!("expected/606_10.md"),
+        include_str!("expected/606_11.md"),
     ];
 
     assert_eq!(posts.len(), expected.len(), "post count mismatch");
