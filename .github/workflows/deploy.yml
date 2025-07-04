@@ -68,6 +68,13 @@ jobs:
             echo "No new release. Skipping Telegram notification."
           fi
 
+      - name: Upload generated posts
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-posts
+          path: output_*.md
+          if-no-files-found: ignore
+
       - name: Upload last_sent artifact
         uses: actions/upload-artifact@v4
         with:
