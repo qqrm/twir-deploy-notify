@@ -5,6 +5,7 @@
 - Interpret user questions as tasks whenever possible and prefer providing a full merge request solution instead of a short code snippet.
 - Install required Rust components with `rustup component add clippy rustfmt`.
 - After making any changes, run `cargo fmt --all`, `cargo check --all-targets --all-features`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test`.
+- Before creating a pull request, also run `cargo machete` to ensure there are no unused dependencies.
 - Fix every issue reported by these commands before committing or submitting pull requests.
 - A pull request is complete only when formatting, linting, `cargo check`, and tests all succeed.
 - Always review `DEVLOG.md` and `ARCHITECTURE.md` before making any modifications.
