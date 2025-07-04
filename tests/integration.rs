@@ -43,11 +43,13 @@ fn crate_of_week_followed_by_section() {
         .expect("failed to run binary");
     assert!(status.success());
 
-    let combined = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    assert!(combined.contains("📰 **CRATE OF THE WEEK**"));
-    assert!(combined.contains("[demo](https://example.com)"));
-    assert!(combined.contains("📰 **NEXT**"));
-    validate_telegram_markdown(&combined).unwrap();
+    let first = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
+    let second = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
+    assert!(first.contains("📰 **CRATE OF THE WEEK**"));
+    assert!(first.contains("[demo](https://example.com)"));
+    assert!(second.contains("📰 **NEXT**"));
+    validate_telegram_markdown(&first).unwrap();
+    validate_telegram_markdown(&second).unwrap();
 }
 
 #[cfg(feature = "integration")]
@@ -69,6 +71,7 @@ fn telegram_request_sent() {
         ]))
         .with_status(200)
         .with_body("{\"ok\":true}")
+        .expect(2)
         .create();
 
     let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
@@ -80,8 +83,10 @@ fn telegram_request_sent() {
         .status()
         .expect("failed to run binary");
     assert!(status.success());
-    let post = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    validate_telegram_markdown(&post).unwrap();
+    let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
+    let post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
+    validate_telegram_markdown(&post1).unwrap();
+    validate_telegram_markdown(&post2).unwrap();
     m.assert();
 }
 
@@ -141,6 +146,7 @@ fn telegram_request_sent_plain() {
         })
         .with_status(200)
         .with_body("{\"ok\":true}")
+        .expect(2)
         .create();
 
     let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
@@ -153,8 +159,10 @@ fn telegram_request_sent_plain() {
         .status()
         .expect("failed to run binary");
     assert!(status.success());
-    let post = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    validate_telegram_markdown(&post).unwrap();
+    let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
+    let post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
+    validate_telegram_markdown(&post1).unwrap();
+    validate_telegram_markdown(&post2).unwrap();
     m.assert();
 }
 
@@ -177,6 +185,7 @@ fn sends_valid_markdown() {
         ]))
         .with_status(200)
         .with_body("{\"ok\":true}")
+        .expect(2)
         .create();
 
     let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
@@ -188,7 +197,54 @@ fn sends_valid_markdown() {
         .status()
         .expect("failed to run binary");
     assert!(status.success());
-    let post = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    validate_telegram_markdown(&post).unwrap();
+    let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
+    let post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
+    validate_telegram_markdown(&post1).unwrap();
+    validate_telegram_markdown(&post2).unwrap();
     m.assert();
+}
+
+#[cfg(feature = "integration")]
+#[test]
+fn full_issue_end_to_end() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = include_str!("2025-07-02-this-week-in-rust.md");
+    let input_path = dir.path().join("input.md");
+    fs::write(&input_path, input).unwrap();
+
+    let mut server = mockito::Server::new();
+    let mut mocks = Vec::new();
+    for _ in 0..8 {
+        mocks.push(
+            server
+                .mock("POST", "/botTEST/sendMessage")
+                .match_header("content-type", "application/x-www-form-urlencoded")
+                .match_body(Matcher::AllOf(vec![
+                    Matcher::UrlEncoded("chat_id".into(), "42".into()),
+                    Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+                    Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+                ]))
+                .with_status(200)
+                .with_body("{\"ok\":true}")
+                .create(),
+        );
+    }
+
+    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
+        .arg(&input_path)
+        .current_dir(dir.path())
+        .env("TELEGRAM_BOT_TOKEN", "TEST")
+        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_API_BASE", server.url())
+        .status()
+        .expect("failed to run binary");
+    assert!(status.success());
+
+    for i in 1..=8 {
+        let post = fs::read_to_string(dir.path().join(format!("output_{i}.md"))).unwrap();
+        validate_telegram_markdown(&post).unwrap();
+    }
+    for m in mocks {
+        m.assert();
+    }
 }

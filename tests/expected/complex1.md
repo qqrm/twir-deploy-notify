@@ -1,8 +1,7 @@
-*Часть 1/1*
+*Часть 1/5*
 **Complex Example** — \#999 — 2025\-07\-10
 
 \-\-\-
-
 📰 **NESTED LIST**
 • Item 1
   • Sub Item 1
@@ -31,3 +30,4 @@ fn greet\(\) \{
 \-\-\-
 
 Полный выпуск: [https://this\-week\-in\-rust\.org/blog/2025/07/10/this\-week\-in\-rust\-999/](https://this-week-in-rust.org/blog/2025/07/10/this-week-in-rust-999/)
+
