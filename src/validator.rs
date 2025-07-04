@@ -76,7 +76,8 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
                 i += 1; // skip escaped char
             }
             '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!' => {
-                if i == 0 || chars[i - 1] != '\\' {
+                let prev = if i == 0 { None } else { Some(chars[i - 1]) };
+                if prev != Some('\\') {
                     return Err(format!("Unescaped {ch} at {i}"));
                 }
             }
