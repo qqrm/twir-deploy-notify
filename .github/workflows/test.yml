@@ -33,7 +33,7 @@ jobs:
       - run: cargo +${{ matrix.toolchain }} fmt --all -- --check
       - run: cargo +${{ matrix.toolchain }} check --all-targets --all-features
       - run: cargo +${{ matrix.toolchain }} clippy --all-targets --all-features -- -D warnings
-      - run: cargo +${{ matrix.toolchain }} test -- --test-threads=$(nproc)
+      - run: cargo +${{ matrix.toolchain }} test --all-targets --all-features -- --test-threads=$(nproc)
       - run: cargo +${{ matrix.toolchain }} run --bin check-docs
 
   coverage:
