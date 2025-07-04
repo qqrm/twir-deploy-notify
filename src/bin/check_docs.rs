@@ -8,7 +8,7 @@ fn function_exists(name: &str) -> std::io::Result<bool> {
         let entry = entry?;
         if entry.path().extension().and_then(|e| e.to_str()) == Some("rs") {
             let content = fs::read_to_string(entry.path())?;
-            if content.contains(&format!("fn {}", name)) {
+            if content.contains(&format!("fn {name}")) {
                 return Ok(true);
             }
         }
