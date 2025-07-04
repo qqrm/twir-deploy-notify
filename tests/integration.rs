@@ -75,3 +75,38 @@ fn telegram_request_sent() {
     assert!(status.success());
     m.assert();
 }
+
+#[cfg(feature = "integration")]
+#[test]
+fn telegram_request_sent_plain() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- item\n";
+    let input_path = dir.path().join("input.md");
+    fs::write(&input_path, input).unwrap();
+
+    let mut server = mockito::Server::new();
+    let m = server
+        .mock("POST", "/botTEST/sendMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_request(|req| {
+            let body = req.utf8_lossy_body().unwrap();
+            body.contains("chat_id=42")
+                && body.contains("disable_web_page_preview=true")
+                && !body.contains("parse_mode")
+        })
+        .with_status(200)
+        .with_body("{\"ok\":true}")
+        .create();
+
+    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
+        .arg(&input_path)
+        .arg("--plain")
+        .current_dir(dir.path())
+        .env("TELEGRAM_BOT_TOKEN", "TEST")
+        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_API_BASE", server.url())
+        .status()
+        .expect("failed to run binary");
+    assert!(status.success());
+    m.assert();
+}

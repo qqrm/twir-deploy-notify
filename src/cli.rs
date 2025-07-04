@@ -32,7 +32,7 @@ pub fn main() -> std::io::Result<()> {
     {
         let base = env::var("TELEGRAM_API_BASE")
             .unwrap_or_else(|_| "https://api.telegram.org".to_string());
-        send_to_telegram(&posts, &base, &token, &chat_id)
+        send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
     }
     Ok(())
