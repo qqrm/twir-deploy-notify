@@ -30,3 +30,16 @@ fn parse_latest_issue_full() {
         assert_eq!(post, exp, "Mismatch in post {}", i + 1);
     }
 }
+
+#[test]
+fn parse_complex_markdown() {
+    let input = include_str!("complex.md");
+    let posts = generate_posts(input.to_string());
+
+    let expected = [include_str!("expected/complex1.md")];
+
+    assert_eq!(posts.len(), expected.len(), "post count mismatch");
+    for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
+        assert_eq!(post, exp, "Mismatch in post {}", i + 1);
+    }
+}
