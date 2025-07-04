@@ -204,6 +204,7 @@ pub fn send_to_telegram(
     base_url: &str,
     token: &str,
     chat_id: &str,
+    use_markdown: bool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::new();
     info!("Sending {} posts", posts.len());
@@ -214,15 +215,13 @@ pub fn send_to_telegram(
             token
         );
         debug!("Posting message {} to {}", i + 1, url);
-        let resp = client
-            .post(&url)
-            .form(&[
-                ("chat_id", chat_id),
-                ("text", post),
-                ("parse_mode", "MarkdownV2"),
-                ("disable_web_page_preview", "true"),
-            ])
-            .send()?;
+        let mut form = vec![("chat_id", chat_id), ("text", post)];
+        if use_markdown {
+            form.push(("parse_mode", "MarkdownV2"));
+        }
+        form.push(("disable_web_page_preview", "true"));
+
+        let resp = client.post(&url).form(&form).send()?;
         let status = resp.status();
         let body = resp.text()?;
         debug!("Telegram response {status}: {body}");
