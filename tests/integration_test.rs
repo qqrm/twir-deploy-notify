@@ -92,3 +92,25 @@ fn validate_generated_posts() {
             .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
     }
 }
+
+#[test]
+fn validate_issue_606_posts() {
+    let input = include_str!("2025-07-02-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string());
+    assert!(!posts.is_empty());
+    for (i, post) in posts.iter().enumerate() {
+        validate_telegram_markdown(post)
+            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    }
+}
+
+#[test]
+fn validate_complex_posts() {
+    let input = include_str!("complex.md");
+    let posts = generate_posts(input.to_string());
+    assert!(!posts.is_empty());
+    for (i, post) in posts.iter().enumerate() {
+        validate_telegram_markdown(post)
+            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    }
+}
