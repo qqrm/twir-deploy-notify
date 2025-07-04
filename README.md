@@ -26,3 +26,7 @@ RUST_LOG=info cargo run -- twir/content/<file-name>.md
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
 
 The Telegram API response is checked with `jq`, and the workflow fails if the server does not return `{ "ok": true }`.
+
+## Development
+
+Continuous integration runs `cargo machete --check` to verify that `Cargo.toml` lists only used dependencies. Run this command locally before opening a pull request.
