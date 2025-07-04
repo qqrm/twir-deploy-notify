@@ -75,6 +75,11 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
             '\\' => {
                 i += 1; // skip escaped char
             }
+            '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!' => {
+                if i == 0 || chars[i - 1] != '\\' {
+                    return Err(format!("Unescaped {ch} at {i}"));
+                }
+            }
             _ => {}
         }
         i += 1;
@@ -108,5 +113,15 @@ mod tests {
     fn basic_validation() {
         validate_telegram_markdown("*bold*").unwrap();
         assert!(validate_telegram_markdown("*bold").is_err());
+    }
+
+    #[test]
+    fn rejects_unescaped_dash() {
+        assert!(validate_telegram_markdown("some - text").is_err());
+    }
+
+    #[test]
+    fn accepts_escaped_dash() {
+        assert!(validate_telegram_markdown("some \\- text").is_ok());
     }
 }
