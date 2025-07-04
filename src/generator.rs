@@ -225,7 +225,7 @@ pub fn send_to_telegram(
             .send()?;
         let status = resp.status();
         let body = resp.text()?;
-        debug!("Telegram response {}: {}", status, body);
+        debug!("Telegram response {status}: {body}");
         let data: TelegramResponse = serde_json::from_str(&body)
             .map_err(|e| format!("Failed to parse Telegram response: {e}: {body}"))?;
         if !data.ok {
@@ -364,14 +364,14 @@ mod tests {
         use proptest::prelude::*;
 
         fn arb_heading() -> impl Strategy<Value = String> {
-            "[A-Za-z0-9 ]{1,20}".prop_map(|s| format!("## {}", s))
+            "[A-Za-z0-9 ]{1,20}".prop_map(|s| format!("## {s}"))
         }
 
         fn arb_list() -> impl Strategy<Value = String> {
             prop::collection::vec("[A-Za-z0-9 ]{1,20}", 1..5).prop_map(|items| {
                 items
                     .into_iter()
-                    .map(|s| format!("- {}", s))
+                    .map(|s| format!("- {s}"))
                     .collect::<Vec<_>>()
                     .join("\n")
             })
@@ -382,7 +382,7 @@ mod tests {
                 |rows| {
                     let mut table = String::from("| Col1 | Col2 |\n|------|------|\n");
                     for (c1, c2) in rows {
-                        table.push_str(&format!("| {} | {} |\n", c1, c2));
+                        table.push_str(&format!("| {c1} | {c2} |\n"));
                     }
                     table
                 },
@@ -396,7 +396,7 @@ mod tests {
 
         fn arb_markdown() -> impl Strategy<Value = String> {
             arb_body()
-                .prop_map(|body| format!("Title: Test\nNumber: 1\nDate: 2025-01-01\n\n{}", body))
+                .prop_map(|body| format!("Title: Test\nNumber: 1\nDate: 2025-01-01\n\n{body}"))
         }
 
         proptest! {
