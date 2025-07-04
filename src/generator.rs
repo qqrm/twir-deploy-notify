@@ -1,3 +1,4 @@
+use log::{debug, error, info};
 use once_cell::sync::Lazy;
 use regex::Regex;
 use reqwest::blocking::Client;
@@ -192,6 +193,10 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
 #[derive(Deserialize)]
 struct TelegramResponse {
     ok: bool,
+    #[serde(default)]
+    error_code: Option<i32>,
+    #[serde(default)]
+    description: Option<String>,
 }
 
 pub fn send_to_telegram(
@@ -201,12 +206,14 @@ pub fn send_to_telegram(
     chat_id: &str,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::new();
-    for post in posts {
+    info!("Sending {} posts", posts.len());
+    for (i, post) in posts.iter().enumerate() {
         let url = format!(
             "{}/bot{}/sendMessage",
             base_url.trim_end_matches('/'),
             token
         );
+        debug!("Posting message {} to {}", i + 1, url);
         let resp = client
             .post(&url)
             .form(&[
@@ -216,9 +223,23 @@ pub fn send_to_telegram(
                 ("disable_web_page_preview", "true"),
             ])
             .send()?;
-        let data: TelegramResponse = resp.json()?;
+        let status = resp.status();
+        let body = resp.text()?;
+        debug!("Telegram response {}: {}", status, body);
+        let data: TelegramResponse = serde_json::from_str(&body)
+            .map_err(|e| format!("Failed to parse Telegram response: {e}: {body}"))?;
         if !data.ok {
-            return Err("Telegram API returned error".into());
+            error!(
+                "Telegram error {}: {}",
+                data.error_code.unwrap_or_default(),
+                data.description.as_deref().unwrap_or("unknown")
+            );
+            return Err(format!(
+                "Telegram API error {}: {}",
+                data.error_code.unwrap_or_default(),
+                data.description.unwrap_or_default()
+            )
+            .into());
         }
     }
     Ok(())
