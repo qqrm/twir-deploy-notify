@@ -85,6 +85,24 @@ fn telegram_request_sent() {
     m.assert();
 }
 
+#[test]
+fn fails_on_unescaped_markdown() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- bad *text\n";
+    let input_path = dir.path().join("input.md");
+    fs::write(&input_path, input).unwrap();
+
+    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
+        .arg(&input_path)
+        .current_dir(dir.path())
+        .env("TELEGRAM_BOT_TOKEN", "TEST")
+        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_API_BASE", "http://example.com")
+        .status()
+        .expect("failed to run binary");
+    assert!(!status.success());
+}
+
 #[cfg(feature = "integration")]
 #[test]
 fn telegram_request_sent_plain() {

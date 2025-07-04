@@ -393,6 +393,13 @@ mod tests {
         assert!(validate_telegram_markdown("bad *text").is_err());
     }
 
+    #[test]
+    fn send_to_telegram_errors_on_invalid_markdown() {
+        let posts = vec!["bad *text".to_string()];
+        let err = send_to_telegram(&posts, "http://example.com", "TOKEN", "42", true);
+        assert!(err.is_err());
+    }
+
     mod property {
         use super::*;
         use proptest::prelude::*;
