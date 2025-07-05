@@ -1,4 +1,4 @@
-*Part 3️⃣/5️⃣*
+*Part 3/5*
 📰 **CODE BLOCK**
 ```
 fn greet\(\) \{
