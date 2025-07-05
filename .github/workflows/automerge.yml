@@ -29,10 +29,9 @@ jobs:
         if: steps.pr.outputs.number
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ steps.pr.outputs.number }}
         run: |
           gh pr merge "$PR" --rebase --delete-branch
-        env:
-          PR: ${{ steps.pr.outputs.number }}
       - name: Rebase and merge remaining PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
