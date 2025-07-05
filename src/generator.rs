@@ -133,6 +133,29 @@ pub fn markdown_to_plain(text: &str) -> String {
     result
 }
 
+/// Convert an integer to a string of emoji digits.
+///
+/// Each decimal digit is replaced with its corresponding emoji, e.g. `12`
+/// becomes `1️⃣2️⃣`.
+pub fn digits_to_emoji(n: usize) -> String {
+    n.to_string()
+        .chars()
+        .map(|c| match c {
+            '0' => "0️⃣",
+            '1' => "1️⃣",
+            '2' => "2️⃣",
+            '3' => "3️⃣",
+            '4' => "4️⃣",
+            '5' => "5️⃣",
+            '6' => "6️⃣",
+            '7' => "7️⃣",
+            '8' => "8️⃣",
+            '9' => "9️⃣",
+            _ => "",
+        })
+        .collect()
+}
+
 #[derive(Debug)]
 pub struct ValidationError(pub String);
 
@@ -334,7 +357,12 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         if !post.ends_with('\n') {
             post.push('\n');
         }
-        let formatted = format!("*Часть {}/{}*\n{}", i + 1, total, post);
+        let formatted = format!(
+            "*Part {}/{}*\n{}",
+            digits_to_emoji(i + 1),
+            digits_to_emoji(total),
+            post
+        );
         validate_telegram_markdown(&formatted)
             .map_err(|e| ValidationError(format!("Generated post {} invalid: {e}", i + 1)))?;
         result.push(formatted);
@@ -454,7 +482,7 @@ mod tests {
         let first = dir.join("output_1.md");
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
-        assert!(content.contains("*Часть 1/2*"));
+        assert!(content.contains("*Part 1️⃣/2️⃣*"));
         assert!(content.contains("📰 **NEWS**"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
@@ -462,9 +490,9 @@ mod tests {
 
     #[test]
     fn plain_conversion() {
-        let text = "*Часть 1/1*\n**News**\n• [Link](https://example.com)";
+        let text = "*Part 1️⃣/1️⃣*\n**News**\n• [Link](https://example.com)";
         let plain = markdown_to_plain(text);
-        assert_eq!(plain, "Часть 1/1\nNews\n- Link (https://example.com)");
+        assert_eq!(plain, "Part 1️⃣/1️⃣\nNews\n- Link (https://example.com)");
     }
 
     #[test]

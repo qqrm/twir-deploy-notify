@@ -1,4 +1,4 @@
-*Часть 6/13*
+*Part 6️⃣/1️⃣3️⃣*
 • [rust\-analyzer: add fn parent\(self, db\) → GenericDef to hir::TypeParam](https://github.com/rust-lang/rust-analyzer/pull/20046)
 • [rust\-analyzer: cleanup folding\_ranges and support more things](https://github.com/rust-lang/rust-analyzer/pull/20080)
 • [rust\-analyzer: do not default to 'static for trait object lifetimes](https://github.com/rust-lang/rust-analyzer/pull/20036)
