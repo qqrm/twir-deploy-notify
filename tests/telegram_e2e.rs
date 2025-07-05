@@ -1,12 +1,11 @@
 #![cfg(feature = "integration")]
-#[allow(unused_imports)]
-use twir_deploy_notify::{generator, parser, validator};
+use twir_deploy_notify::generator;
 
 use generator::{generate_posts, send_to_telegram};
 use reqwest::blocking::Client;
 use serde_json::Value;
 use std::env;
-use validator::validate_telegram_markdown;
+mod common;
 
 #[test]
 fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -43,8 +42,8 @@ fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 
     let input = include_str!("2025-06-25-this-week-in-rust.md");
     let posts = generate_posts(input.to_string()).unwrap();
-    for (i, p) in posts.iter().enumerate() {
-        validate_telegram_markdown(p).unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    for p in &posts {
+        common::assert_valid_markdown(p);
     }
     send_to_telegram(&posts, &base, &token, &chat_id, true)?;
 

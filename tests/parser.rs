@@ -1,7 +1,7 @@
-#[allow(unused_imports)]
-use twir_deploy_notify::{generator, parser, validator};
+use twir_deploy_notify::parser;
 
 use parser::parse_sections;
+mod common;
 
 #[test]
 fn code_block_before_next_heading() {
@@ -22,5 +22,5 @@ fn bare_link_with_parentheses() {
         sections[0].lines,
         vec!["• [Some text](https://example.com/path(1\\))"]
     );
-    validator::validate_telegram_markdown(&sections[0].lines[0]).unwrap();
+    common::assert_valid_markdown(&sections[0].lines[0]);
 }
