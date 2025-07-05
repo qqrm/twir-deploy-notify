@@ -37,7 +37,7 @@ jobs:
       - run: cargo +${{ matrix.toolchain }} check --quiet --all-targets --all-features
       - run: cargo +${{ matrix.toolchain }} clippy --quiet --all-targets --all-features -- -D warnings
       - run: cargo +${{ matrix.toolchain }} test --quiet --all-targets --all-features -- --test-threads=$(nproc)
-      - run: cargo +${{ matrix.toolchain }} machete
+      - run: cargo +${{ matrix.toolchain }} --quiet machete
       - run: cargo +${{ matrix.toolchain }} run --quiet --bin check-docs
 
   coverage:
