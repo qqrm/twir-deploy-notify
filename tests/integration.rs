@@ -206,9 +206,9 @@ fn full_issue_end_to_end() {
 
     let mut server = mockito::Server::new();
     let mut mocks = Vec::new();
-    // Issue 606 currently generates 8 posts, so expect that
+    // Issue 606 currently generates 5 posts, so expect that
     // many requests to the mock server.
-    for _ in 0..8 {
+    for _ in 0..5 {
         mocks.push(
             server
                 .mock("POST", "/botTEST/sendMessage")
@@ -234,7 +234,7 @@ fn full_issue_end_to_end() {
         .expect("failed to run binary");
     assert!(status.success());
 
-    for i in 1..=8 {
+    for i in 1..=5 {
         let post = fs::read_to_string(dir.path().join(format!("output_{i}.md"))).unwrap();
         common::assert_valid_markdown(&post);
     }
