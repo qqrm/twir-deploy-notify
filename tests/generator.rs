@@ -70,9 +70,42 @@ proptest! {
     fn dash_boundary_preserves_escape(text in arb_dash_boundary()) {
         let posts = split_posts(&text, TELEGRAM_LIMIT);
         prop_assert!(!posts.is_empty());
+    }
+}
+
+fn arb_dash_boundary() -> impl Strategy<Value = String> {
+    let prefix_regex = format!(r"[A-Za-z0-9]{{{}}}", TELEGRAM_LIMIT - 1);
+    proptest::string::string_regex(&prefix_regex)
+        .unwrap()
+        .prop_flat_map(|prefix| {
+            proptest::string::string_regex("[A-Za-z0-9]{0,20}")
+                .unwrap()
+                .prop_map(move |suffix| format!("{prefix}\\-{suffix}"))
+        })
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(16))]
+    #[test]
+    fn dash_escape_at_boundary(input in arb_dash_boundary()) {
+        let posts = split_posts(&input, TELEGRAM_LIMIT);
+        prop_assert!(posts.len() >= 2);
         for p in posts {
             prop_assert!(!p.starts_with('-'));
             prop_assert!(validate_telegram_markdown(&p).is_ok());
         }
+    }
+}
+
+#[test]
+fn boundary_escape_preserved() {
+    let mut input = "a".repeat(TELEGRAM_LIMIT - 1);
+    input.push('\\');
+    input.push_str("-b");
+    let posts = split_posts(&input, TELEGRAM_LIMIT);
+    assert!(posts.len() >= 2);
+    assert!(!posts[1].starts_with('-'));
+    for p in posts {
+        validate_telegram_markdown(&p).unwrap();
     }
 }
