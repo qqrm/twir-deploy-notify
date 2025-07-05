@@ -46,6 +46,7 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ github.event_name == 'workflow_dispatch' && secrets.DEV_TELEGRAM_BOT_TOKEN || secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ github.event_name == 'workflow_dispatch' && secrets.DEV_TELEGRAM_CHAT_ID || secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_PIN_FIRST: '1'
         run: |
           latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n1)
           last_sent=$(cat last_sent.txt 2>/dev/null || echo "")

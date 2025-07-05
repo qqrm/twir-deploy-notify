@@ -31,6 +31,15 @@ Set `RUST_LOG=info` to see detailed logs including Telegram API responses:
 RUST_LOG=info cargo run --bin twir-deploy-notify -- twir/content/<file-name>.md
 ```
 
+## Configuration
+
+The application expects several environment variables when sending posts to
+Telegram:
+
+- `TELEGRAM_BOT_TOKEN` – the bot token used for authentication.
+- `TELEGRAM_CHAT_ID` – the identifier of the chat or channel.
+- `TELEGRAM_PIN_FIRST` – set to `1` or `true` to pin the first sent message.
+
 Running the workflow with [`act`](https://github.com/nektos/act) is possible, but it requires Docker.
 Restricted environments such as the provided container may not support Docker, so executing the above
 `cargo` commands manually remains the recommended approach.
