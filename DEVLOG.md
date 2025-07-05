@@ -29,6 +29,8 @@
 
 ## 2025-07-08
 - Removed extraneous separator line from web link section and updated tests.
+- Added Rust Jobs chat and feed links to the generated Jobs section.
+- Updated tests and expected outputs accordingly.
 
 ## Maintenance
 The development log keeps only the 20 most recent entries.

@@ -277,6 +277,20 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 
     let body = strip_header(&input);
     let mut sections = parse_sections(&body);
+    for sec in &mut sections {
+        if sec.title.eq_ignore_ascii_case("Jobs") && !sec.lines.is_empty() {
+            let chat = format!(
+                "💼 [Rust Jobs chat]({})",
+                escape_markdown_url("https://t.me/rust_jobs")
+            );
+            let feed = format!(
+                "📢 [Rust Jobs feed]({})",
+                escape_markdown_url("https://t.me/rust_jobs_feed")
+            );
+            sec.lines.insert(1, chat);
+            sec.lines.insert(2, feed);
+        }
+    }
     let mut events_link = None;
     sections.retain(|s| {
         if s.title.eq_ignore_ascii_case("Upcoming Events") {
