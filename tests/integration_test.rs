@@ -84,6 +84,17 @@ fn parse_issue_606_full() {
 }
 
 #[test]
+fn parse_call_for_participation() {
+    let input = include_str!("2025-07-05-call-for-participation.md");
+    let posts = generate_posts(input.to_string());
+
+    let expected = [
+        include_str!("expected/cfp1.md"),
+        include_str!("expected/cfp2.md"),
+  ];
+}
+
+#[test]    
 fn parse_issue_607_full() {
     let input = include_str!("2025-07-05-this-week-in-rust.md");
     let posts = generate_posts(input.to_string());
