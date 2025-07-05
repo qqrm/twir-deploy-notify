@@ -17,4 +17,6 @@
 - Read all Markdown (`*.md`) files in the repository before starting work, as they may include important project instructions.
 - Follow the guidelines in `PARSING.md`, especially the requirement to rely on crates for Markdown processing instead of custom parsing code.
 
+- Keep `DEVLOG.md` trimmed to the latest 20 entries; remove the oldest when adding a new one.
+
 - Avoid committed dead code; remove unused functions or feature-gate them.
