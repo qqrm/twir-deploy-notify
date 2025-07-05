@@ -102,7 +102,8 @@ fn fails_on_unescaped_markdown() {
         .current_dir(dir.path())
         .env("TELEGRAM_BOT_TOKEN", "TEST")
         .env("TELEGRAM_CHAT_ID", "42")
-        .env("TELEGRAM_API_BASE", "http://example.com")
+        // Use example.invalid to avoid accidental network calls
+        .env("TELEGRAM_API_BASE", "http://example.invalid")
         .status()
         .expect("failed to run binary");
     assert!(!status.success());
@@ -120,7 +121,8 @@ fn fails_on_unescaped_dash() {
         .current_dir(dir.path())
         .env("TELEGRAM_BOT_TOKEN", "TEST")
         .env("TELEGRAM_CHAT_ID", "42")
-        .env("TELEGRAM_API_BASE", "http://example.com")
+        // Use example.invalid to avoid accidental network calls
+        .env("TELEGRAM_API_BASE", "http://example.invalid")
         .status()
         .expect("failed to run binary");
     assert!(!status.success());
