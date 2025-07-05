@@ -261,7 +261,8 @@ fn full_issue_end_to_end() {
 #[test]
 fn send_issue_606_post_4() {
     let posts =
-        generator::generate_posts(include_str!("2025-07-02-this-week-in-rust.md").to_string());
+        generator::generate_posts(include_str!("2025-07-02-this-week-in-rust.md").to_string())
+            .unwrap();
     assert!(posts.len() > 3);
     let mut server = mockito::Server::new();
     let m = server
