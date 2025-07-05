@@ -1,12 +1,11 @@
-#[allow(unused_imports)]
-use twir_deploy_notify::{generator, parser, validator};
 use std::fs;
 use std::process::Command;
+use twir_deploy_notify::generator;
 
 #[cfg(feature = "integration")]
 use mockito::Matcher;
 
-use validator::validate_telegram_markdown;
+mod common;
 
 #[test]
 fn crate_of_the_week_is_preserved() {
@@ -25,7 +24,7 @@ fn crate_of_the_week_is_preserved() {
     let output = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
     assert!(output.contains("📰 **CRATE OF THE WEEK**"));
     assert!(output.contains("primitive\\_fixed\\_point\\_decimal"));
-    validate_telegram_markdown(&output).unwrap();
+    common::assert_valid_markdown(&output);
 }
 
 #[test]
@@ -47,8 +46,8 @@ fn crate_of_week_followed_by_section() {
     assert!(first.contains("📰 **CRATE OF THE WEEK**"));
     assert!(first.contains("[demo](https://example.com)"));
     assert!(second.contains("📰 **NEXT**"));
-    validate_telegram_markdown(&first).unwrap();
-    validate_telegram_markdown(&second).unwrap();
+    common::assert_valid_markdown(&first);
+    common::assert_valid_markdown(&second);
 }
 
 #[cfg(feature = "integration")]
@@ -84,8 +83,8 @@ fn telegram_request_sent() {
     assert!(status.success());
     let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
     let post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
-    validate_telegram_markdown(&post1).unwrap();
-    validate_telegram_markdown(&post2).unwrap();
+    common::assert_valid_markdown(&post1);
+    common::assert_valid_markdown(&post2);
     m.assert();
 }
 
@@ -198,8 +197,8 @@ fn sends_valid_markdown() {
     assert!(status.success());
     let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
     let post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
-    validate_telegram_markdown(&post1).unwrap();
-    validate_telegram_markdown(&post2).unwrap();
+    common::assert_valid_markdown(&post1);
+    common::assert_valid_markdown(&post2);
     m.assert();
 }
 
@@ -243,7 +242,7 @@ fn full_issue_end_to_end() {
 
     for i in 1..=8 {
         let post = fs::read_to_string(dir.path().join(format!("output_{i}.md"))).unwrap();
-        validate_telegram_markdown(&post).unwrap();
+        common::assert_valid_markdown(&post);
     }
     for m in mocks {
         m.assert();
@@ -273,5 +272,5 @@ fn send_issue_606_post_4() {
 
     generator::send_to_telegram(&[posts[3].clone()], &server.url(), "TEST", "42", true).unwrap();
     m.assert();
-    validate_telegram_markdown(&posts[3]).unwrap();
+    common::assert_valid_markdown(&posts[3]);
 }
