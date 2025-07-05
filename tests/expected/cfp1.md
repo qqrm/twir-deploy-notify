@@ -1,7 +1,6 @@
 *Part 1/2*
 **This Week in Rust 607** — \#607 — 2025\-07\-05
 
-\-\-\-
 📰 **CALL FOR PARTICIPATION; PROJECTS AND SPEAKERS**
 **CFP \- Projects**
 Always wanted to contribute to open\-source projects but did not know where to start? Every week we highlight some tasks from the Rust community for you to pick and get started\!
