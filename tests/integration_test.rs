@@ -84,20 +84,9 @@ fn parse_issue_606_full() {
 }
 
 #[test]
-fn parse_call_for_participation() {
-    let input = include_str!("2025-07-05-call-for-participation.md");
-    let posts = generate_posts(input.to_string());
-
-    let expected = [
-        include_str!("expected/cfp1.md"),
-        include_str!("expected/cfp2.md"),
-  ];
-}
-
-#[test]    
 fn parse_issue_607_full() {
     let input = include_str!("2025-07-05-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
 
     let expected = [
         include_str!("expected/607_1.md"),
@@ -199,7 +188,7 @@ fn send_long_escaped_dash() {
 #[test]
 fn issue_606_no_unescaped_dashes() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
     for (i, post) in posts.iter().enumerate() {
         assert!(
@@ -213,7 +202,7 @@ fn issue_606_no_unescaped_dashes() {
 #[test]
 fn parse_call_for_participation() {
     let input = include_str!("2025-07-05-call-for-participation.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
 
     let expected = [
         include_str!("expected/cfp1.md"),

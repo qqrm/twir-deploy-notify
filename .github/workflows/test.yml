@@ -17,7 +17,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: stable
+          toolchain: "1.88.0"
       - run: cargo fmt --quiet --all -- --check
 
   check:
@@ -28,7 +28,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: stable
+          toolchain: "1.88.0"
       - run: cargo check --quiet --all-targets --all-features
 
   clippy:
@@ -39,7 +39,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: stable
+          toolchain: "1.88.0"
       - run: cargo clippy --quiet --all-targets --all-features -- -D warnings
 
   test:
@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: stable
+          toolchain: "1.88.0"
       - run: cargo test --quiet --all-targets --all-features -- --test-threads=$(nproc)
 
   machete:
@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: stable
+          toolchain: "1.88.0"
       - run: cargo install cargo-machete --quiet
       - run: cargo machete
 
@@ -73,7 +73,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: stable
+          toolchain: "1.88.0"
       - run: cargo run --quiet --bin check-docs
 
   coverage:
@@ -84,7 +84,7 @@ jobs:
     steps:
       - uses: ./.github/actions/setup-rust
         with:
-          toolchain: stable
+          toolchain: "1.88.0"
       - run: cargo install cargo-tarpaulin --quiet
       - run: cargo tarpaulin --out Lcov --output-dir coverage -- --quiet
       - uses: actions/upload-artifact@v4
