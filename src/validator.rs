@@ -6,6 +6,11 @@ use std::collections::VecDeque;
 pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
     let chars: Vec<char> = text.chars().collect();
     let mut stack: VecDeque<&str> = VecDeque::new();
+    if let Some(&first) = chars.first() {
+        if matches!(first, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!') {
+            return Err("Post starts with reserved character".to_string());
+        }
+    }
     let mut i = 0;
     while i < chars.len() {
         let ch = chars[i];

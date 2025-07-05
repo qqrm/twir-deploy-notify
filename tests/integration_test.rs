@@ -91,14 +91,31 @@ fn parse_call_for_participation() {
     let expected = [
         include_str!("expected/cfp1.md"),
         include_str!("expected/cfp2.md"),
+  ];
+}
+
+#[test]    
+fn parse_issue_607_full() {
+    let input = include_str!("2025-07-05-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string());
+
+    let expected = [
+        include_str!("expected/607_1.md"),
+        include_str!("expected/607_2.md"),
+        include_str!("expected/607_3.md"),
+        include_str!("expected/607_4.md"),
+        include_str!("expected/607_5.md"),
+        include_str!("expected/607_6.md"),
+        include_str!("expected/607_7.md"),
+        include_str!("expected/607_8.md"),
+        include_str!("expected/607_9.md"),
+        include_str!("expected/607_10.md"),
+        include_str!("expected/607_11.md"),
     ];
 
     assert_eq!(posts.len(), expected.len(), "post count mismatch");
     for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
         assert_eq!(post, exp, "Mismatch in post {}", i + 1);
-    }
-
-    for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
             .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
     }
@@ -176,5 +193,19 @@ fn send_long_escaped_dash() {
     assert!(result.is_ok(), "send_to_telegram failed: {result:?}");
     for m in mocks {
         m.assert();
+    }
+}
+
+#[test]
+fn issue_606_no_unescaped_dashes() {
+    let input = include_str!("2025-07-02-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string());
+    assert!(!posts.is_empty());
+    for (i, post) in posts.iter().enumerate() {
+        assert!(
+            !post.starts_with('-'),
+            "post {} begins with unescaped dash",
+            i + 1
+        );
     }
 }

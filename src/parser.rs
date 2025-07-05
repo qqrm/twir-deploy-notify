@@ -11,16 +11,17 @@ pub struct Section {
     pub lines: Vec<String>,
 }
 
-static BARE_LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\((https?://[^\)]+)\)\s*$").unwrap());
+static BARE_LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\((https?://.*)\)\s*$").unwrap());
 
 fn fix_bare_link(line: &str) -> String {
     if line.contains("](") {
         return line.to_string();
     }
     if let Some(caps) = BARE_LINK_RE.captures(line) {
-        let url = caps.get(1).unwrap().as_str();
-        let text = line[..caps.get(0).unwrap().start()].trim_end();
-        format!("[{text}]({})", escape_markdown_url(url))
+        let url = caps.get(1).unwrap().as_str().replace('\\', "");
+        let text_raw = &line[..caps.get(0).unwrap().start()];
+        let text = text_raw.replace('\\', "").trim_end().to_string();
+        format!("[{text}]({})", escape_markdown_url(&url))
     } else {
         line.to_string()
     }
