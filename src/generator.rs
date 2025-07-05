@@ -279,7 +279,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         link_section.lines.push("\\-\\-\\-".to_string());
         link_section.lines.push(String::new());
         link_section.lines.push(format!(
-            "Полный выпуск: [{}]({})",
+            "📖 Full issue: [{}]({})",
             escape_markdown(link),
             escape_markdown_url(link)
         ));
