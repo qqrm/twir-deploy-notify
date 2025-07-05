@@ -10,7 +10,6 @@ Thanks to [Kill The Mule](https://users.rust-lang.org/t/twir-quote-of-the-week/3
 This Week in Rust is edited by: [nellshamrell](https://github.com/nellshamrell), [llogiq](https://github.com/llogiq), [cdmistman](https://github.com/cdmistman), [ericseppanen](https://github.com/ericseppanen), [extrawurst](https://github.com/extrawurst), [U007D](https://github.com/U007D), [joelmarcey](https://github.com/joelmarcey), [mariannegoldin](https://github.com/mariannegoldin), [bennyvasquez](https://github.com/bennyvasquez), [bdillo](https://github.com/bdillo)
 Email list hosting is sponsored by [The Rust Foundation](https://foundation.rust-lang.org/)
 [Discuss on r/rust](https://www.reddit.com/r/rust/comments/1lknjc1/this_week_in_rust_605/)
-\-\-\-
 
 🌐 [View web version](https://this-week-in-rust.org/blog/2025/06/25/this-week-in-rust-605/) 🌐
 🎉 [Upcoming Events](https://this-week-in-rust.org/blog/2025/06/25/this-week-in-rust-605/#upcoming-events)
