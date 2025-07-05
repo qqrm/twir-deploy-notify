@@ -11,26 +11,45 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  integration:
+  fmt:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo
-            target
-          key: ${{ runner.os }}-integration-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-integration-
-      - uses: actions-rs/toolchain@v1
+      - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
-          profile: minimal
-      - run: rustup component add clippy rustfmt
       - run: cargo fmt --quiet --all -- --check
+
+  check:
+    needs: fmt
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
       - run: cargo check --quiet --all-targets --features integration
+
+  clippy:
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
       - run: cargo clippy --quiet --all-targets --features integration -- -D warnings
+
+  test:
+    needs: clippy
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
       - run: cargo test --quiet --all-targets --features integration -- --test-threads=$(nproc)
