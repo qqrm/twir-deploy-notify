@@ -297,7 +297,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             escape_markdown_url(link)
         ));
         sections.push(link_section);
-        if let Some(ev) = events_link {
+        if let Some(ev) = events_link.clone() {
             sections.push(Section {
                 title: String::new(),
                 lines: vec![format!(
