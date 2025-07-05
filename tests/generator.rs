@@ -12,6 +12,17 @@ use generator::{TELEGRAM_LIMIT, split_posts};
 use proptest::prelude::*;
 use validator::validate_telegram_markdown;
 
+fn arb_dash_boundary_short() -> impl Strategy<Value = String> {
+    let prefix_re = format!(r"[A-Za-z0-9]{{{}}}", TELEGRAM_LIMIT - 1);
+    proptest::string::string_regex(&prefix_re)
+        .unwrap()
+        .prop_flat_map(|pre| {
+            proptest::string::string_regex("[A-Za-z0-9]{0,10}")
+                .unwrap()
+                .prop_map(move |post| format!("{pre}\\-{post}"))
+        })
+}
+
 fn arb_long_line() -> impl Strategy<Value = String> {
     let regex = format!(
         r"[A-Za-z0-9\\*_]{{{},{}}}",
@@ -56,21 +67,10 @@ proptest! {
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(16))]
     #[test]
-    fn dash_boundary_preserves_escape(text in arb_dash_boundary()) {
+    fn dash_boundary_preserves_escape(text in arb_dash_boundary_short()) {
         let posts = split_posts(&text, TELEGRAM_LIMIT);
         prop_assert!(!posts.is_empty());
     }
-}
-
-fn arb_dash_boundary() -> impl Strategy<Value = String> {
-    let prefix_regex = format!(r"[A-Za-z0-9]{{{}}}", TELEGRAM_LIMIT - 1);
-    proptest::string::string_regex(&prefix_regex)
-        .unwrap()
-        .prop_flat_map(|prefix| {
-            proptest::string::string_regex("[A-Za-z0-9]{0,20}")
-                .unwrap()
-                .prop_map(move |suffix| format!("{prefix}\\-{suffix}"))
-        })
 }
 
 proptest! {

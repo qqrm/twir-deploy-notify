@@ -19,9 +19,10 @@ fn fix_bare_link(line: &str) -> String {
     }
     let plain = line.replace('\\', "");
     if let Some(caps) = BARE_LINK_RE.captures(&plain) {
-        let url = caps.get(1).unwrap().as_str();
+        let url_raw = caps.get(1).unwrap().as_str();
+        let url = url_raw.replace('\\', "");
         let text = plain[..caps.get(0).unwrap().start()].trim_end();
-        format!("[{}]({})", escape_markdown(text), escape_markdown_url(url))
+        format!("[{}]({})", escape_markdown(text), escape_markdown_url(&url))
     } else {
         line.to_string()
     }
