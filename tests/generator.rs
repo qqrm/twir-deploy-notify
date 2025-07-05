@@ -76,7 +76,7 @@ proptest! {
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(16))]
     #[test]
-    fn dash_escape_at_boundary(input in arb_dash_boundary()) {
+    fn dash_escape_at_boundary(input in arb_dash_boundary_short()) {
         let posts = split_posts(&input, TELEGRAM_LIMIT);
         prop_assert!(posts.len() >= 2);
         for p in posts {
