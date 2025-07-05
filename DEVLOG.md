@@ -22,3 +22,7 @@
 
 ## 2025-07-06
 - Documented local `cargo-machete` installation in README.
+
+## 2025-07-07
+- Telegram integration tests are no longer executed automatically.
+- They can be run manually by dispatching the CI workflow with `run_integration` set to `true`.
