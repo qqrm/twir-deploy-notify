@@ -31,11 +31,13 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
+      - run: cargo install cargo-machete --quiet
       - run: rustup component add --toolchain ${{ matrix.toolchain }} clippy rustfmt
       - run: cargo +${{ matrix.toolchain }} fmt --quiet --all -- --check
       - run: cargo +${{ matrix.toolchain }} check --quiet --all-targets --all-features
       - run: cargo +${{ matrix.toolchain }} clippy --quiet --all-targets --all-features -- -D warnings
       - run: cargo +${{ matrix.toolchain }} test --quiet --all-targets --all-features -- --test-threads=$(nproc)
+      - run: cargo +${{ matrix.toolchain }} machete --quiet
       - run: cargo +${{ matrix.toolchain }} run --quiet --bin check-docs
 
   coverage:
