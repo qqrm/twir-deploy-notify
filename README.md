@@ -5,6 +5,14 @@ This repository contains a small tool and workflow for sending summaries of the 
 The GitHub Actions workflow checks out the [`rust-lang/this-week-in-rust`](https://github.com/rust-lang/this-week-in-rust) repository and detects the newest Markdown file in its `content` directory. If a new issue is found, it is parsed with the Rust application in `src/main.rs`, and the generated message is posted to the configured Telegram chat. Each section becomes an individual Telegram post, and sections or overly long lines exceeding Telegram's size limit are automatically split.
 The parser now derives the HTML link from the issue number and date and appends it at the end of each Telegram message.
 
+## Toolchain
+
+The project requires **Rust 1.88.0** and `rustfmt` **1.8.0**. The `rust-toolchain.toml` file pins the channel and lists the mandatory `clippy` and `rustfmt` components so `rustup` always uses the correct versions. If these components are not installed automatically, run:
+
+```bash
+rustup component add clippy rustfmt
+```
+
 To run the workflow locally you must clone the `this-week-in-rust` repository into a `twir` subdirectory:
 
 ```bash
