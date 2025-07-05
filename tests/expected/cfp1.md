@@ -1,4 +1,4 @@
-*Part 1️⃣/2️⃣*
+*Part 1️⃣/1️⃣*
 **This Week in Rust 607** — \#607 — 2025\-07\-05
 
 \-\-\-
@@ -12,3 +12,6 @@ If you are a Rust project owner and are looking for contributors, please submit 
 Are you a new or experienced speaker looking for a place to share something cool? This section highlights events that are being planned and are accepting submissions to join their event as a speaker\.
 No Calls for papers or presentations were submitted this week\.
 If you are an event organizer hoping to expand the reach of your event, please submit a link to the website through a [PR to TWiR](https://github.com/rust-lang/this-week-in-rust) or by reaching out on [X \(formerly Twitter\)](https://x.com/ThisWeekInRust) or [Mastodon](https://mastodon.social/@thisweekinrust)\!
+\-\-\-
+
+Полный выпуск: [https://this\-week\-in\-rust\.org/blog/2025/07/05/this\-week\-in\-rust\-607/](https://this-week-in-rust.org/blog/2025/07/05/this-week-in-rust-607/)
