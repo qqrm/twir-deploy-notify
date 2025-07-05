@@ -8,7 +8,7 @@ use crate::parser::{Section, parse_sections};
 use crate::validator::validate_telegram_markdown;
 
 pub const TELEGRAM_LIMIT: usize = 4000;
-pub const TELEGRAM_DELAY_MS: u64 = 500;
+pub const TELEGRAM_DELAY_MS: u64 = 1000;
 
 fn replace_links(text: &str) -> String {
     let mut result = String::new();
