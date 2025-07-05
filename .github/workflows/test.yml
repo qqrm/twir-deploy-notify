@@ -62,6 +62,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
+      TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.DEV_TELEGRAM_CHAT_ID }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-rust
