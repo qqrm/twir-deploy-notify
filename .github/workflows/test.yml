@@ -10,57 +10,83 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
-    strategy:
-      matrix:
-        toolchain: [stable]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo
-            target
-          key: ${{ runner.os }}-${{ matrix.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.toolchain }}-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: ${{ matrix.toolchain }}
-          profile: minimal
-      - run: cargo install cargo-machete --quiet
-      - run: rustup component add --toolchain ${{ matrix.toolchain }} clippy rustfmt
-      - run: cargo +${{ matrix.toolchain }} fmt --quiet --all -- --check
-      - run: cargo +${{ matrix.toolchain }} check --quiet --all-targets --all-features
-      - run: cargo +${{ matrix.toolchain }} clippy --quiet --all-targets --all-features -- -D warnings
-      - run: cargo +${{ matrix.toolchain }} test --quiet --all-targets --all-features -- --test-threads=$(nproc)
-      - run: cargo +${{ matrix.toolchain }} --quiet machete
-      - run: cargo +${{ matrix.toolchain }} run --quiet --bin check-docs
-
-  coverage:
+  fmt:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo
-            target
-          key: ${{ runner.os }}-coverage-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-coverage-
-      - uses: actions-rs/toolchain@v1
+      - uses: ./.github/actions/setup-rust
         with:
           toolchain: stable
-          profile: minimal
-      - run: rustup component add --toolchain stable clippy rustfmt
-      - run: cargo +stable install cargo-tarpaulin --quiet
-      - run: cargo +stable tarpaulin --out Lcov --output-dir coverage -- --quiet
+      - run: cargo fmt --quiet --all -- --check
+
+  check:
+    needs: fmt
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+      - run: cargo check --quiet --all-targets --all-features
+
+  clippy:
+    needs: check
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+      - run: cargo clippy --quiet --all-targets --all-features -- -D warnings
+
+  test:
+    needs: clippy
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+      - run: cargo test --quiet --all-targets --all-features -- --test-threads=$(nproc)
+
+  machete:
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+      - run: cargo install cargo-machete --quiet
+      - run: cargo machete
+
+  check-docs:
+    needs: machete
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+      - run: cargo run --quiet --bin check-docs
+
+  coverage:
+    needs: check-docs
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: stable
+      - run: cargo install cargo-tarpaulin --quiet
+      - run: cargo tarpaulin --out Lcov --output-dir coverage -- --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
