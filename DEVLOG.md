@@ -19,3 +19,6 @@
 ## 2025-07-05
 - Identified an issue with `split_posts` cutting lines after escape characters.
 - Added regression tests in `tests/generator.rs` verifying correct line splitting.
+
+## 2025-07-06
+- Documented local `cargo-machete` installation in README.
