@@ -42,6 +42,7 @@ The Telegram API response is checked with `jq`, and the workflow fails if the se
 ## Development
 
 Continuous integration runs `cargo machete` to verify that `Cargo.toml` lists only used dependencies. Run this command locally before opening a pull request.
+Install it with `cargo install cargo-machete` if it is not available.
 
 Documentation Markdown is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
 Generated Telegram posts are verified with the shared `validator` module.
