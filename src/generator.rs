@@ -303,7 +303,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         }
     }
     if let Some(ref d) = date {
-        header.push_str(&format!(" — {}\n\n\\-\\-\\-\n", escape_markdown(d)));
+        header.push_str(&format!(" — {}\n\n", escape_markdown(d)));
     }
 
     let mut current_post = String::new();
