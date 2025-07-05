@@ -17,11 +17,11 @@ fn fix_bare_link(line: &str) -> String {
     if line.contains("](") {
         return line.to_string();
     }
-    if let Some(caps) = BARE_LINK_RE.captures(line) {
-        let url = caps.get(1).unwrap().as_str().replace('\\', "");
-        let text_raw = &line[..caps.get(0).unwrap().start()];
-        let text = text_raw.replace('\\', "").trim_end().to_string();
-        format!("[{text}]({})", escape_markdown_url(&url))
+    let plain = line.replace('\\', "");
+    if let Some(caps) = BARE_LINK_RE.captures(&plain) {
+        let url = caps.get(1).unwrap().as_str();
+        let text = plain[..caps.get(0).unwrap().start()].trim_end();
+        format!("[{}]({})", escape_markdown(text), escape_markdown_url(url))
     } else {
         line.to_string()
     }
