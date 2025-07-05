@@ -1,39 +1,14 @@
-*Part 10/13*
-• 2025\-06\-25 \| Austin, TX, US \| [Rust ATX](https://www.meetup.com/rust-atx)
-  • [Rust Lunch \- Fareground](https://www.meetup.com/rust-atx/events/xvkdgtyhcjbhc)
-• 2025\-06\-26 \| Chicago, IL, US \| [Chicago Rust Meetup](https://www.meetup.com/chicago-rust-meetup/events/)
-  • [Rust Happy Hour](https://www.meetup.com/chicago-rust-meetup/events/308562608)
-• 2025\-06\-26 \| Los Angeles, CA, US \| [Rust Los Angeles](https://www.meetup.com/rust-los-angeles/events/)
-  • [Rust in Web3 Developer Group](https://www.meetup.com/rust-los-angeles/events/308401269)
-• 2025\-06\-26 \| Los Angeles \(Chino Hills\), CA, US \| [Vara Network](https://lu.ma/events-by-vara-gear)
-  • [Rust in Web3](https://lu.ma/ek8jx2r3)
-• 2025\-06\-26 \| México City, MX \| [Rust MX](https://www.meetup.com/rust-mx/events/)
-  • [Elixir y Rust](https://www.meetup.com/rust-mx/events/308579237)
-• 2025\-06\-26 \| Spokane, WA, US \| [Spokane Rust](https://www.meetup.com/spokane-rust)
-  • [Monthly Meetup: Making a CRUD API with Rust\!](https://www.meetup.com/spokane-rust/events/307969600)
-• 2025\-06\-28 \| Boston, MA, US \| [Boston Rust Meetup](https://www.meetup.com/bostonrust)
-  • [Back Bay Rust Lunch, June 28](https://www.meetup.com/bostonrust/events/307936269)
-• 2025\-07\-03 \| Montréal, QC, CA \| [Rust Montréal](https://www.meetup.com/rust-montreal/events/)
-  • [July Monthly Social](https://www.meetup.com/rust-montreal/events/308532058)
-• 2025\-07\-03 \| Saint Louis, MO, US \| [STL Rust](https://www.meetup.com/stl-rust/events/)
-  • [Building Resilient and Observable Rust Services with steady\_state](https://www.meetup.com/stl-rust/events/306345853)
-• 2025\-07\-06 \| Boston, MA, US \| [Boston Rust Meetup](https://www.meetup.com/bostonrust/events/)
-  • [Alewife Rust Lunch, July 6](https://www.meetup.com/bostonrust/events/307936287)
-• 2025\-07\-09 \| Phoenix, AZ, US \| [Desert Rust](https://www.meetup.com/desert-rustaceans/events/)
-  • [Rust <\> AI](https://www.meetup.com/desert-rustaceans/events/308507249/)
-• 2025\-07\-15 \| San Francisco, CA, US \| [San Francisco Rust Study Group](https://www.meetup.com/san-francisco-rust-study-group/events/)
-  • [Rust Hacking in Person](https://www.meetup.com/san-francisco-rust-study-group/events/307931266)
-• 2025\-07\-17 \| Nashville, TN, US \| [Music City Rust Developers](https://www.meetup.com/music-city-rust-developers/events/)
-  • [Rust on Bare Metal Series 1 : Introduction to Embedded Development](https://www.meetup.com/music-city-rust-developers/events/304333113)
-• 2025\-07\-17 \| Redmond, WA, US \| [Seattle Rust User Group](https://www.meetup.com/join-srug/events/)
-  • [July, 2025 Computer Programming Language Panel \(Special Event\)](https://www.meetup.com/seattle-rust-user-group/events/307698855)
-• 2025\-07\-23 \| Austin, TX, US \| [Rust ATX](https://www.meetup.com/rust-atx/events/)
-  • [Rust Lunch \- Fareground](https://www.meetup.com/rust-atx/events/xvkdgtyhckbfc)
-**Oceania**
-• 2025\-06\-30 \| Collingwood, VI, AU \| [Rust Melbourne](https://www.meetup.com/rust-melbourne/events/)
-  • [June 2025 Mini Rust Melbourne Meetup](https://www.meetup.com/rust-melbourne/events/308546374)
-• 2025\-07\-01 \| Christchurch, NZ \| [Christchurch Rust Meetup Group](https://www.meetup.com/christchurch-rustlang-meetup-group/events/)
-  • [July 2025 Christchurch Rust Meetup](https://www.meetup.com/christchurch-rustlang-meetup-group/events/308605782)
-**South America**
-• 2025\-07\-12 \| São Paulo, BR \| [Rust São Paulo Meetup](https://www.meetup.com/rust-sao-paulo-meetup/events/)
-  • [Encontro do Rust\-SP na WillBank](https://www.meetup.com/rust-sao-paulo-meetup/events/307308851)
+*Part 10/10*
+📰 **JOBS**
+Please see the latest [Who's Hiring thread on r/rust](https://www.reddit.com/r/rust/comments/1knkfb6/official_rrust_whos_hiring_thread_for_jobseekers/)
+Quote of the Week\> Our experience is that no matter how many safeguards you put on code, there’s no cure\-all that prevents bad programming\. Of course, to take the contrary argument, seat belts don’t stop all traffic fatalities, but you could just choose not to have accidents\. So we do have seat belts\. If Rust can prevent some mistakes or malicious intent, maybe it’s worth it even if it isn’t perfect\.
+
+– [Al Williams on hackaday](https://hackaday.com/2025/06/21/if-your-kernel-development-is-a-little-rusty/)
+Thanks to [Kill The Mule](https://users.rust-lang.org/t/twir-quote-of-the-week/328/1700) for the suggestion\!
+[Please submit quotes and vote for next week\!](https://users.rust-lang.org/t/twir-quote-of-the-week/328)
+This Week in Rust is edited by: [nellshamrell](https://github.com/nellshamrell), [llogiq](https://github.com/llogiq), [cdmistman](https://github.com/cdmistman), [ericseppanen](https://github.com/ericseppanen), [extrawurst](https://github.com/extrawurst), [U007D](https://github.com/U007D), [joelmarcey](https://github.com/joelmarcey), [mariannegoldin](https://github.com/mariannegoldin), [bennyvasquez](https://github.com/bennyvasquez), [bdillo](https://github.com/bdillo)
+Email list hosting is sponsored by [The Rust Foundation](https://foundation.rust-lang.org/)
+[Discuss on r/rust](https://www.reddit.com/r/rust/comments/1lknjc1/this_week_in_rust_605/)
+\-\-\-
+
+Полный выпуск: [https://this\-week\-in\-rust\.org/blog/2025/06/25/this\-week\-in\-rust\-605/](https://this-week-in-rust.org/blog/2025/06/25/this-week-in-rust-605/)

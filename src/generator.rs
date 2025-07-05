@@ -287,6 +287,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
     }
 
     let mut posts = Vec::new();
+    let mut current_post = String::new();
 
     let mut header = String::new();
     if let Some(ref t) = title {
@@ -312,10 +313,23 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             section_text.push('\n');
         }
 
-        if section_text.len() > TELEGRAM_LIMIT {
-            posts.extend(split_posts(&section_text, TELEGRAM_LIMIT));
+        if current_post.len() + section_text.len() > TELEGRAM_LIMIT && !current_post.is_empty() {
+            if current_post.len() > TELEGRAM_LIMIT {
+                posts.extend(split_posts(&current_post, TELEGRAM_LIMIT));
+            } else {
+                posts.push(current_post.clone());
+            }
+            current_post.clear();
+        }
+
+        current_post.push_str(&section_text);
+    }
+
+    if !current_post.is_empty() {
+        if current_post.len() > TELEGRAM_LIMIT {
+            posts.extend(split_posts(&current_post, TELEGRAM_LIMIT));
         } else {
-            posts.push(section_text);
+            posts.push(current_post);
         }
     }
 
@@ -454,7 +468,7 @@ mod tests {
         let first = dir.join("output_1.md");
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
-        assert!(content.contains("*Part 1/2*"));
+        assert!(content.contains("*Part 1/1*"));
         assert!(content.contains("📰 **NEWS**"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
