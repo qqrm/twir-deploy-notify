@@ -190,6 +190,9 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 }
             }
             Event::Start(Tag::BlockQuote) => {
+                if !buffer.is_empty() && !buffer.ends_with('\n') {
+                    buffer.push('\n');
+                }
                 buffer.push_str("\\> ");
             }
             Event::End(Tag::BlockQuote) => {
