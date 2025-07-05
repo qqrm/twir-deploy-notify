@@ -16,8 +16,8 @@ Some of these tasks may also have mentors available, visit the task page for mor
 • [Continuwuity \- Ability to entirely disable typing and read receipts](https://forgejo.ellis.link/continuwuation/continuwuity/issues/821)
 • [Continuwuity \- bug: appservice users are not created on registration](https://forgejo.ellis.link/continuwuation/continuwuity/issues/813)
 • [Continuwuity \- Invite filtering / disable invites per account](https://forgejo.ellis.link/continuwuation/continuwuity/issues/836)
-If you are a Rust project owner and are looking for contributors, please submit tasks [here](https://github.com/rust-lang/this-week-in-rust?tab=readme-ov-file#call-for-participation-guidelines) or through a [PR to TWiR](https://github.com/rust-lang/this-week-in-rust) or by reaching out on [X \(formerly Twitter\)](https://x.com/ThisWeekInRust) or [Mastodon](https://mastodon.social/@thisweekinrust)\!
 **CFP \- Events**
 Are you a new or experienced speaker looking for a place to share something cool? This section highlights events that are being planned and are accepting submissions to join their event as a speaker\.
 No Calls for papers or presentations were submitted this week\.
 If you are an event organizer hoping to expand the reach of your event, please submit a link to the website through a [PR to TWiR](https://github.com/rust-lang/this-week-in-rust) or by reaching out on [X \(formerly Twitter\)](https://x.com/ThisWeekInRust) or [Mastodon](https://mastodon.social/@thisweekinrust)\!
+На этой неделе новых задач нет\. [Инструкции](https://github.com/rust-lang/this-week-in-rust?tab=readme-ov-file#call-for-participation-guidelines)
