@@ -15,6 +15,8 @@ permissions:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,7 +51,7 @@ jobs:
           last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
           if [ "$GITHUB_EVENT_NAME" != "schedule" ] || [ "$latest_post" != "$last_sent" ]; then
             rm -f output_*.md
-            cargo run --bin twir-deploy-notify -- "$latest_post"
+            cargo run --quiet --bin twir-deploy-notify -- "$latest_post"
             for file in $(ls -v output_*.md 2>/dev/null); do
               text=$(cat "$file")
               resp=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
