@@ -1,6 +1,4 @@
-use once_cell::sync::Lazy;
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
-use regex::Regex;
 
 use crate::generator::{escape_markdown, escape_markdown_url, format_subheading};
 
@@ -11,21 +9,23 @@ pub struct Section {
     pub lines: Vec<String>,
 }
 
-static BARE_LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\((https?://.*)\)\s*$").unwrap());
-
 fn fix_bare_link(line: &str) -> String {
     if line.contains("](") {
         return line.to_string();
     }
     let plain = line.replace('\\', "");
-    if let Some(caps) = BARE_LINK_RE.captures(&plain) {
-        let url_raw = caps.get(1).unwrap().as_str();
-        let url = url_raw.replace('\\', "");
-        let text = plain[..caps.get(0).unwrap().start()].trim_end();
-        format!("[{}]({})", escape_markdown(text), escape_markdown_url(&url))
-    } else {
-        line.to_string()
+    let trimmed = plain.trim_end();
+    if trimmed.ends_with(')') {
+        if let Some(start) = trimmed
+            .rfind("(https://")
+            .or_else(|| trimmed.rfind("(http://"))
+        {
+            let url = &trimmed[start + 1..trimmed.len() - 1];
+            let text = trimmed[..start].trim_end();
+            return format!("[{}]({})", escape_markdown(text), escape_markdown_url(url));
+        }
     }
+    line.to_string()
 }
 
 /// Parse TWIR Markdown into sections using `pulldown-cmark`.
