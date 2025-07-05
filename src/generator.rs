@@ -94,13 +94,11 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
             let mut chunk = String::new();
             for c in line.chars() {
                 if chunk.len() + c.len_utf8() > limit {
-                    let backslashes = chunk.chars().rev().take_while(|ch| *ch == '\\').count();
-                    if backslashes % 2 == 1 {
-                        if let Some(bs) = chunk.pop() {
-                            posts.push(chunk.clone());
-                            chunk.clear();
-                            chunk.push(bs);
-                        }
+                    if chunk.ends_with('\\') {
+                        chunk.pop();
+                        posts.push(chunk.clone());
+                        chunk.clear();
+                        chunk.push('\\');
                     } else {
                         posts.push(chunk.clone());
                         chunk.clear();
@@ -122,8 +120,15 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
         };
 
         if new_len > limit && !current.is_empty() {
-            posts.push(current.clone());
-            current.clear();
+            if current.ends_with('\\') {
+                current.pop();
+                posts.push(current.clone());
+                current.clear();
+                current.push('\\');
+            } else {
+                posts.push(current.clone());
+                current.clear();
+            }
         }
 
         if !current.is_empty() {

@@ -9,6 +9,7 @@ mod parser;
 mod validator;
 
 use generator::generate_posts;
+use generator::send_to_telegram;
 use validator::validate_telegram_markdown;
 
 #[test]
@@ -112,5 +113,39 @@ fn validate_complex_posts() {
     for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
             .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    }
+}
+
+#[test]
+fn send_long_escaped_dash() {
+    use mockito::Matcher;
+
+    let prefix = "a".repeat(generator::TELEGRAM_LIMIT - 1);
+    let input = format!("Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n{prefix}\\-b");
+    let posts = generate_posts(input);
+    assert!(!posts.is_empty());
+
+    let mut server = mockito::Server::new();
+    let mut mocks = Vec::new();
+    for _ in 0..posts.len() {
+        mocks.push(
+            server
+                .mock("POST", "/botTEST/sendMessage")
+                .match_header("content-type", "application/x-www-form-urlencoded")
+                .match_body(Matcher::AllOf(vec![
+                    Matcher::UrlEncoded("chat_id".into(), "42".into()),
+                    Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+                    Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+                ]))
+                .with_status(200)
+                .with_body("{\"ok\":true}")
+                .create(),
+        );
+    }
+
+    let result = send_to_telegram(&posts, &server.url(), "TEST", "42", true);
+    assert!(result.is_ok(), "send_to_telegram failed: {result:?}");
+    for m in mocks {
+        m.assert();
     }
 }
