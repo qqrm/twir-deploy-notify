@@ -1,5 +1,6 @@
 use std::fs;
 use std::process::Command;
+#[cfg(feature = "integration")]
 use twir_deploy_notify::generator;
 
 #[cfg(feature = "integration")]
