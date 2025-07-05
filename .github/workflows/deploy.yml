@@ -71,6 +71,7 @@ jobs:
           fi
 
       - name: Upload generated posts
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: telegram-posts
@@ -78,6 +79,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload last_sent artifact
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: last-sent
