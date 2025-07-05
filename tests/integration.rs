@@ -67,7 +67,7 @@ fn telegram_request_sent() {
     fs::write(&input_path, input).unwrap();
 
     let mut server = mockito::Server::new();
-    let m = server
+    let success = server
         .mock("POST", "/botTEST/sendMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
@@ -78,6 +78,13 @@ fn telegram_request_sent() {
         .with_status(200)
         .with_body("{\"ok\":true}")
         .expect(2)
+        .create();
+
+    let fail = server
+        .mock("POST", "/botTEST/sendMessage")
+        .with_status(503)
+        .with_body("{\"ok\":false}")
+        .expect(1)
         .create();
 
     let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
@@ -93,7 +100,8 @@ fn telegram_request_sent() {
     let post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
     validate_telegram_markdown(&post1).unwrap();
     validate_telegram_markdown(&post2).unwrap();
-    m.assert();
+    success.assert();
+    fail.assert();
 }
 
 #[test]

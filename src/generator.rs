@@ -11,6 +11,8 @@ use crate::validator::validate_telegram_markdown;
 
 pub const TELEGRAM_LIMIT: usize = 4000;
 pub const TELEGRAM_DELAY_MS: u64 = 500;
+pub const TELEGRAM_RETRIES: u8 = 3;
+pub const TELEGRAM_RETRY_DELAY_MS: u64 = 1000;
 
 static LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap());
 
@@ -300,24 +302,53 @@ pub fn send_to_telegram(
         }
         form.push(("disable_web_page_preview", "true"));
 
-        let resp = client.post(&url).form(&form).send()?;
-        let status = resp.status();
-        let body = resp.text()?;
-        debug!("Telegram response {status}: {body}");
-        let data: TelegramResponse = serde_json::from_str(&body)
-            .map_err(|e| format!("Failed to parse Telegram response: {e}: {body}"))?;
-        if !data.ok {
-            error!(
-                "Telegram error {}: {}",
-                data.error_code.unwrap_or_default(),
-                data.description.as_deref().unwrap_or("unknown")
-            );
-            return Err(format!(
-                "Telegram API error {}: {}",
-                data.error_code.unwrap_or_default(),
-                data.description.unwrap_or_default()
-            )
-            .into());
+        let mut last_err: Option<Box<dyn std::error::Error + Send + Sync>> = None;
+        for attempt in 1..=TELEGRAM_RETRIES {
+            debug!("Attempt {attempt}/{TELEGRAM_RETRIES}");
+            match client.post(&url).form(&form).send() {
+                Ok(resp) => {
+                    let status = resp.status();
+                    let body = resp.text()?;
+                    debug!("Telegram response {status}: {body}");
+                    if !status.is_success() {
+                        error!("Telegram HTTP error {status} on attempt {attempt}");
+                        last_err = Some(format!("Telegram HTTP error {status}").into());
+                    } else {
+                        let data: TelegramResponse = serde_json::from_str(&body).map_err(|e| {
+                            format!("Failed to parse Telegram response: {e}: {body}")
+                        })?;
+                        if data.ok {
+                            last_err = None;
+                            break;
+                        }
+                        error!(
+                            "Telegram error {}: {} (attempt {attempt})",
+                            data.error_code.unwrap_or_default(),
+                            data.description.as_deref().unwrap_or("unknown")
+                        );
+                        last_err = Some(
+                            format!(
+                                "Telegram API error {}: {}",
+                                data.error_code.unwrap_or_default(),
+                                data.description.unwrap_or_default()
+                            )
+                            .into(),
+                        );
+                    }
+                }
+                Err(e) => {
+                    error!("Telegram request failed on attempt {attempt}: {e}");
+                    last_err = Some(Box::new(e));
+                }
+            }
+            if attempt < TELEGRAM_RETRIES {
+                thread::sleep(Duration::from_millis(
+                    TELEGRAM_RETRY_DELAY_MS * attempt as u64,
+                ));
+            }
+        }
+        if let Some(err) = last_err {
+            return Err(err);
         }
         thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
     }
