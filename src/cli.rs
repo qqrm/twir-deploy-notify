@@ -13,6 +13,11 @@ struct Cli {
     plain: bool,
 }
 
+/// Entry point for the command-line interface.
+///
+/// Reads the provided Markdown file, generates Telegram posts, optionally
+/// converts them to plain text and sends them to Telegram if credentials are
+/// set.
 pub fn main() -> std::io::Result<()> {
     env_logger::init();
     let cli = Cli::parse();
