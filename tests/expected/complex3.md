@@ -1,7 +1,4 @@
-*Часть 3/5*
-📰 **CODE BLOCK**
-```
-fn greet\(\) \{
-    println\!\("Hello, world\!"\);
-\}
-```
+*Часть 3/3*
+\-\-\-
+
+Полный выпуск: [https://this\-week\-in\-rust\.org/blog/2025/07/10/this\-week\-in\-rust\-999/](https://this-week-in-rust.org/blog/2025/07/10/this-week-in-rust-999/)

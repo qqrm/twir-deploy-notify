@@ -1,6 +1,41 @@
-*Часть 7/13*
-• [RFC: \-\-crate\-attr](https://github.com/rust-lang/rfcs/pull/3791)
-No Items entered Final Comment Period this week for [Cargo](https://github.com/rust-lang/cargo/issues?q=is%3Aopen+label%3Afinal-comment-period+sort%3Aupdated-desc), [Language Reference](https://github.com/rust-lang/reference/issues?q=is%3Aopen+label%3Afinal-comment-period+sort%3Aupdated-desc), [Language Team](https://github.com/rust-lang/lang-team/issues?q=is%3Aopen+label%3Afinal-comment-period+sort%3Aupdated-desc+) or [Unsafe Code Guidelines](https://github.com/rust-lang/unsafe-code-guidelines/issues?q=is%3Aopen+label%3Afinal-comment-period+sort%3Aupdated-desc)\.
-Let us know if you would like your PRs, Tracking Issues or RFCs to be tracked as a part of this list\.
-**\[New and Updated RFCs\]\(https://github\.com/rust\-lang/rfcs/pulls\)**
-• No New or Updated RFCs were created this week\.
+*Часть 7/10*
+• 2025\-07\-02 \| Seoul, KR \| [Seoul Rust \(Programming Language\) Meetup](https://www.meetup.com/rust-seoul-meetup/events/)
+  • [Seoul Rust Meetup](https://www.meetup.com/rust-seoul-meetup/events/308408246)
+**Europe**
+• 2025\-06\-25 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group)
+  • [Lessons learnt from making a tiny game in nostd Rust](https://www.meetup.com/london-rust-project-group/events/306809962)
+• 2025\-06\-25 \| Paris, FR \| [Systematic Paris Region](https://systematic-paris-region.org/)
+  • [Rust Paris Conference 2025](https://my.weezevent.com/rust-paris-2025)
+• 2025\-06\-26 \| Barcelona, ES \| [BcnRust](https://www.meetup.com/bcnrust/events/)
+  • [18th BcnRust Meetup](https://www.meetup.com/bcnrust/events/308399403)
+• 2025\-06\-26 \| Copenhagen, DK \| [Copenhagen Rust Community](https://www.meetup.com/copenhagen-rust-community)
+  • [Rust meetup \#58](https://www.meetup.com/copenhagen-rust-community/events/308161212)
+• 2025\-06\-26 \| Paris, FR \| [Rust Paris](https://www.meetup.com/rust-paris/events/)
+  • [Rust meetup \#77](https://www.meetup.com/rust-paris/events/308416060)
+• 2025\-06\-30 \| Zagreb, HR \| [impl Zagreb for Rust](https://www.meetup.com/zagreb-rust-meetup/events/)
+  • [Meetup 2025/06: Drink\-up zatvaranje sezone](https://www.meetup.com/zagreb-rust-meetup/events/308477879)
+• 2025\-07\-01 \| Gdansk, PL \| [Rust Gdansk](https://www.meetup.com/rust-gdansk/events/)
+  • [Rust Gdansk Meetup \#9](https://www.meetup.com/rust-gdansk/events/308349712)
+• 2025\-07\-01 \| Paris, FR \| [Stockly](https://www.eventbrite.fr/o/stockly-42274765293)
+  • [Rust Meetup in Paris \- hosted by Stockly](https://www.eventbrite.fr/e/rust-meetup-in-paris-hosted-by-stockly-tickets-1407389873999)
+• 2025\-07\-02 \| Basel, CH \| [Rust Basel](https://www.meetup.com/rust-basel)
+  • [Rust Meetup \#12 @ kHaus](https://www.meetup.com/rust-basel/events/307567391)
+• 2025\-07\-02 \| Frankfurt, DE \| [Rust Rhein\-Main](https://www.meetup.com/rust-rhein-main/events/)
+  • [The \(un\)holy Trinity of Flutter, Rust and C](https://www.meetup.com/rust-rhein-main/events/308609465)
+• 2025\-07\-02 \| London, UK \| [Oxford Rust Meetup Group](https://www.meetup.com/oxford-rust-meetup-group/)
+  • [Oxford Rust and ACCU special \- Vibe coding workshop](https://www.meetup.com/oxford-rust-meetup-group/events/308435063/)
+• 2025\-07\-02 \| Posnan, PL \| [Rust Poland](https://www.meetup.com/rust-poland-meetup/)
+  • [Rust Poland Meetup x Poznan](https://www.meetup.com/rust-poland-meetup/events/308480357)
+• 2025\-07\-05 \| Stockholm, SE \| [Stockholm Rust](https://www.meetup.com/stockholm-rust/events/)
+  • [Ferris' Fika Forum \#13](https://www.meetup.com/stockholm-rust/events/308530949)
+• 2025\-07\-08 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group/events/)
+  • [Garbage Collection for Rust: the Finalizer Frontier](https://www.meetup.com/london-rust-project-group/events/308443710)
+• 2025\-07\-09 \| Girona, ES \| [Rust Girona](https://lu.ma/rust-girona)
+  • [Rust Girona Hack & Learn 07 2025](https://lu.ma/hismn492)
+• 2025\-07\-09 \| Reading, UK \| [Reading Rust Workshop](https://www.meetup.com/reading-rust-workshop/events/)
+  • [Reading Rust Meetup](https://www.meetup.com/reading-rust-workshop/events/wrdkmtyhckbmb)
+• 2025\-07\-15 \| Leipzig, DE \| [Rust \- Modern Systems Programming in Leipzig](https://www.meetup.com/rust-modern-systems-programming-in-leipzig/events/)
+  • [Topic TBD](https://www.meetup.com/rust-modern-systems-programming-in-leipzig/events/308592246)
+• 2025\-07\-15 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group/events/)
+  • [TUI Power: Simulating & Visualising Sensor Data with Rust](https://www.meetup.com/london-rust-project-group/events/308434768)
+**North America**

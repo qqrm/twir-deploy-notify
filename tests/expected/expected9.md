@@ -1,41 +1,12 @@
-*Часть 9/13*
-• 2025\-07\-02 \| Seoul, KR \| [Seoul Rust \(Programming Language\) Meetup](https://www.meetup.com/rust-seoul-meetup/events/)
-  • [Seoul Rust Meetup](https://www.meetup.com/rust-seoul-meetup/events/308408246)
-**Europe**
-• 2025\-06\-25 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group)
-  • [Lessons learnt from making a tiny game in nostd Rust](https://www.meetup.com/london-rust-project-group/events/306809962)
-• 2025\-06\-25 \| Paris, FR \| [Systematic Paris Region](https://systematic-paris-region.org/)
-  • [Rust Paris Conference 2025](https://my.weezevent.com/rust-paris-2025)
-• 2025\-06\-26 \| Barcelona, ES \| [BcnRust](https://www.meetup.com/bcnrust/events/)
-  • [18th BcnRust Meetup](https://www.meetup.com/bcnrust/events/308399403)
-• 2025\-06\-26 \| Copenhagen, DK \| [Copenhagen Rust Community](https://www.meetup.com/copenhagen-rust-community)
-  • [Rust meetup \#58](https://www.meetup.com/copenhagen-rust-community/events/308161212)
-• 2025\-06\-26 \| Paris, FR \| [Rust Paris](https://www.meetup.com/rust-paris/events/)
-  • [Rust meetup \#77](https://www.meetup.com/rust-paris/events/308416060)
-• 2025\-06\-30 \| Zagreb, HR \| [impl Zagreb for Rust](https://www.meetup.com/zagreb-rust-meetup/events/)
-  • [Meetup 2025/06: Drink\-up zatvaranje sezone](https://www.meetup.com/zagreb-rust-meetup/events/308477879)
-• 2025\-07\-01 \| Gdansk, PL \| [Rust Gdansk](https://www.meetup.com/rust-gdansk/events/)
-  • [Rust Gdansk Meetup \#9](https://www.meetup.com/rust-gdansk/events/308349712)
-• 2025\-07\-01 \| Paris, FR \| [Stockly](https://www.eventbrite.fr/o/stockly-42274765293)
-  • [Rust Meetup in Paris \- hosted by Stockly](https://www.eventbrite.fr/e/rust-meetup-in-paris-hosted-by-stockly-tickets-1407389873999)
-• 2025\-07\-02 \| Basel, CH \| [Rust Basel](https://www.meetup.com/rust-basel)
-  • [Rust Meetup \#12 @ kHaus](https://www.meetup.com/rust-basel/events/307567391)
-• 2025\-07\-02 \| Frankfurt, DE \| [Rust Rhein\-Main](https://www.meetup.com/rust-rhein-main/events/)
-  • [The \(un\)holy Trinity of Flutter, Rust and C](https://www.meetup.com/rust-rhein-main/events/308609465)
-• 2025\-07\-02 \| London, UK \| [Oxford Rust Meetup Group](https://www.meetup.com/oxford-rust-meetup-group/)
-  • [Oxford Rust and ACCU special \- Vibe coding workshop](https://www.meetup.com/oxford-rust-meetup-group/events/308435063/)
-• 2025\-07\-02 \| Posnan, PL \| [Rust Poland](https://www.meetup.com/rust-poland-meetup/)
-  • [Rust Poland Meetup x Poznan](https://www.meetup.com/rust-poland-meetup/events/308480357)
-• 2025\-07\-05 \| Stockholm, SE \| [Stockholm Rust](https://www.meetup.com/stockholm-rust/events/)
-  • [Ferris' Fika Forum \#13](https://www.meetup.com/stockholm-rust/events/308530949)
-• 2025\-07\-08 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group/events/)
-  • [Garbage Collection for Rust: the Finalizer Frontier](https://www.meetup.com/london-rust-project-group/events/308443710)
-• 2025\-07\-09 \| Girona, ES \| [Rust Girona](https://lu.ma/rust-girona)
-  • [Rust Girona Hack & Learn 07 2025](https://lu.ma/hismn492)
-• 2025\-07\-09 \| Reading, UK \| [Reading Rust Workshop](https://www.meetup.com/reading-rust-workshop/events/)
-  • [Reading Rust Meetup](https://www.meetup.com/reading-rust-workshop/events/wrdkmtyhckbmb)
-• 2025\-07\-15 \| Leipzig, DE \| [Rust \- Modern Systems Programming in Leipzig](https://www.meetup.com/rust-modern-systems-programming-in-leipzig/events/)
-  • [Topic TBD](https://www.meetup.com/rust-modern-systems-programming-in-leipzig/events/308592246)
-• 2025\-07\-15 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group/events/)
-  • [TUI Power: Simulating & Visualising Sensor Data with Rust](https://www.meetup.com/london-rust-project-group/events/308434768)
-**North America**
+*Часть 9/10*
+If you are running a Rust event please add it to the [calendar](https://www.google.com/calendar/embed?src=apd9vmbc22egenmtu5l6c5jbfc%40group.calendar.google.com) to get it mentioned here\. Please remember to add a link to the event too\. Email the [Rust Community Team](mailto:community-team@rust-lang.org) for access\.
+📰 **JOBS**
+Please see the latest [Who's Hiring thread on r/rust](https://www.reddit.com/r/rust/comments/1knkfb6/official_rrust_whos_hiring_thread_for_jobseekers/)
+Quote of the Week\> Our experience is that no matter how many safeguards you put on code, there’s no cure\-all that prevents bad programming\. Of course, to take the contrary argument, seat belts don’t stop all traffic fatalities, but you could just choose not to have accidents\. So we do have seat belts\. If Rust can prevent some mistakes or malicious intent, maybe it’s worth it even if it isn’t perfect\.
+
+– [Al Williams on hackaday](https://hackaday.com/2025/06/21/if-your-kernel-development-is-a-little-rusty/)
+Thanks to [Kill The Mule](https://users.rust-lang.org/t/twir-quote-of-the-week/328/1700) for the suggestion\!
+[Please submit quotes and vote for next week\!](https://users.rust-lang.org/t/twir-quote-of-the-week/328)
+This Week in Rust is edited by: [nellshamrell](https://github.com/nellshamrell), [llogiq](https://github.com/llogiq), [cdmistman](https://github.com/cdmistman), [ericseppanen](https://github.com/ericseppanen), [extrawurst](https://github.com/extrawurst), [U007D](https://github.com/U007D), [joelmarcey](https://github.com/joelmarcey), [mariannegoldin](https://github.com/mariannegoldin), [bennyvasquez](https://github.com/bennyvasquez), [bdillo](https://github.com/bdillo)
+Email list hosting is sponsored by [The Rust Foundation](https://foundation.rust-lang.org/)
+[Discuss on r/rust](https://www.reddit.com/r/rust/comments/1lknjc1/this_week_in_rust_605/)

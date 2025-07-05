@@ -239,6 +239,43 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     posts
 }
 
+/// Greedily combine short posts into larger ones while respecting Telegram's
+/// length limit. The first and last posts are always kept separate.
+///
+/// # Parameters
+/// - `posts`: Posts to pack.
+/// - `limit`: Maximum allowed length of each packed post.
+///
+/// # Returns
+/// A new list of posts where intermediate posts have been combined when
+/// possible.
+pub fn pack_posts(posts: Vec<String>, limit: usize) -> Vec<String> {
+    if posts.len() <= 2 {
+        return posts;
+    }
+    let mut result = Vec::new();
+    result.push(posts[0].clone());
+    let mut buffer = String::new();
+    for post in posts.iter().skip(1).take(posts.len() - 2) {
+        if buffer.is_empty() {
+            buffer.push_str(post);
+        } else if buffer.len() + post.len() <= limit {
+            if !buffer.ends_with('\n') {
+                buffer.push('\n');
+            }
+            buffer.push_str(post);
+        } else {
+            result.push(buffer);
+            buffer = post.clone();
+        }
+    }
+    if !buffer.is_empty() {
+        result.push(buffer);
+    }
+    result.push(posts.last().unwrap().clone());
+    result
+}
+
 /// Convert a TWIR Markdown file into a series of Telegram posts.
 ///
 /// The input may include metadata headers which will be used to build the
@@ -327,6 +364,8 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             final_posts.push(post);
         }
     }
+
+    let final_posts = pack_posts(final_posts, TELEGRAM_LIMIT);
 
     let total = final_posts.len();
     let mut result = Vec::new();
