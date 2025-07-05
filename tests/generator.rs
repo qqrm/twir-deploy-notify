@@ -1,12 +1,5 @@
-#[allow(dead_code)]
-#[path = "../src/generator.rs"]
-mod generator;
-#[allow(dead_code)]
-#[path = "../src/parser.rs"]
-mod parser;
-#[allow(dead_code)]
-#[path = "../src/validator.rs"]
-mod validator;
+#[allow(unused_imports)]
+use twir_deploy_notify::{generator, parser, validator};
 
 use generator::{TELEGRAM_LIMIT, split_posts};
 use proptest::prelude::*;
