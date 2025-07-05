@@ -15,7 +15,7 @@ use validator::validate_telegram_markdown;
 fn issue_606_dash_after_newline() {
     // Extract a post from the 2025-07-02 issue that begins with a dash
     let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     // Ensure at least one generated post contains an unescaped dash at the start
     let broken = posts.into_iter().find(|p| p.starts_with("-"));
     if let Some(post) = broken {

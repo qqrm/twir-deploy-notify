@@ -83,6 +83,11 @@ impl std::error::Error for ValidationError {}
 pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
+    let mut join_next = false;
+
+    fn needs_escape(c: char) -> bool {
+        matches!(c, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!')
+    }
 
     for line in text.lines() {
         if line.len() > limit {
@@ -102,6 +107,9 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
                     } else {
                         posts.push(chunk.clone());
                         chunk.clear();
+                        if needs_escape(c) {
+                            chunk.push('\\');
+                        }
                     }
                 }
                 chunk.push(c);
@@ -109,12 +117,14 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
             if !chunk.is_empty() {
                 posts.push(chunk);
             }
-
+            join_next = false;
             continue;
         }
 
         let new_len = if current.is_empty() {
             line.len()
+        } else if join_next {
+            current.len() + line.len()
         } else {
             current.len() + 1 + line.len()
         };
@@ -125,16 +135,29 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
                 posts.push(current.clone());
                 current.clear();
                 current.push('\\');
+                join_next = true;
             } else {
                 posts.push(current.clone());
                 current.clear();
+                join_next = false;
             }
         }
 
-        if !current.is_empty() {
+        if !current.is_empty() && !join_next {
             current.push('\n');
         }
+        if current.is_empty() {
+            if let Some(first) = line.chars().next() {
+                if needs_escape(first) && !line.starts_with('\\') {
+                    current.push('\\');
+                }
+            }
+        }
         current.push_str(line);
+        if join_next {
+            current.push('\n');
+            join_next = false;
+        }
     }
 
     if !current.is_empty() {
@@ -144,7 +167,7 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     posts
 }
 
-pub fn generate_posts(mut input: String) -> Vec<String> {
+pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError> {
     let title = find_title(&input);
     let number = find_number(&input);
     let date = find_date(&input);
@@ -223,16 +246,17 @@ pub fn generate_posts(mut input: String) -> Vec<String> {
     }
 
     let total = final_posts.len();
-    final_posts
-        .into_iter()
-        .enumerate()
-        .map(|(i, mut post)| {
-            if !post.ends_with('\n') {
-                post.push('\n');
-            }
-            format!("*Часть {}/{}*\n{}", i + 1, total, post)
-        })
-        .collect()
+    let mut result = Vec::new();
+    for (i, mut post) in final_posts.into_iter().enumerate() {
+        if !post.ends_with('\n') {
+            post.push('\n');
+        }
+        let formatted = format!("*Часть {}/{}*\n{}", i + 1, total, post);
+        validate_telegram_markdown(&formatted)
+            .map_err(|e| ValidationError(format!("Generated post {} invalid: {e}", i + 1)))?;
+        result.push(formatted);
+    }
+    Ok(result)
 }
 
 pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
@@ -315,7 +339,7 @@ mod tests {
     fn generate_and_write_files() {
         let input =
             "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## News\n- [Link](https://example.com)\n";
-        let posts = generate_posts(input.to_string());
+        let posts = generate_posts(input.to_string()).unwrap();
         let mut dir = std::env::temp_dir();
         dir.push("twir_test");
         let _ = fs::remove_dir_all(&dir);
@@ -375,7 +399,7 @@ mod tests {
     #[test]
     fn table_rendering() {
         let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
-        let posts = generate_posts(input.to_string());
+        let posts = generate_posts(input.to_string()).unwrap();
         assert!(posts[0].contains("| Name | Score |"));
         assert!(posts[0].contains("| Foo  | 10    |"));
         assert!(posts[0].contains("| Bar  | 20    |"));
@@ -391,7 +415,8 @@ mod tests {
             secs[0].lines,
             vec!["\\> quoted text", "```\ncode line\n```"]
         );
-        let posts = generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{text}"));
+        let posts =
+            generate_posts(format!("Title: T\nNumber: 1\nDate: 2025-01-01\n\n{text}")).unwrap();
         let combined = posts.join("\n");
         assert!(combined.contains("> quoted text"));
         assert!(combined.contains("```\ncode line\n```"));
@@ -420,7 +445,8 @@ mod tests {
         let posts = generate_posts(
             "Title: T\nNumber: 1\nDate: 2025-01-01\n\n## Section\n### Foo-Bar\n- item\n"
                 .to_string(),
-        );
+        )
+        .unwrap();
         for p in posts {
             crate::validator::validate_telegram_markdown(&p).unwrap();
         }
@@ -431,6 +457,20 @@ mod tests {
         let mut text = "a".repeat(10);
         text.push('\n');
         text.push_str("\\- start");
+        let parts = split_posts(&text, 10);
+        assert!(parts.len() > 1);
+        assert!(parts[1].starts_with("\\-"));
+        for p in parts {
+            crate::validator::validate_telegram_markdown(&p).unwrap();
+        }
+    }
+
+    #[test]
+    fn backslash_then_dash_across_posts() {
+        let mut text = "a".repeat(9);
+        text.push('\\');
+        text.push('\n');
+        text.push_str("- test");
         let parts = split_posts(&text, 10);
         assert!(parts.len() > 1);
         assert!(parts[1].starts_with("\\-"));
@@ -497,7 +537,10 @@ mod tests {
 
             #[test]
             fn random_inputs_are_split_correctly(input in arb_markdown()) {
-                let posts = generate_posts(input);
+                let posts = match generate_posts(input) {
+                    Ok(p) => p,
+                    Err(e) => return Err(TestCaseError::fail(e.to_string())),
+                };
                 prop_assert!(!posts.is_empty());
                 for p in posts {
                     prop_assert!(p.len() <= TELEGRAM_LIMIT + 50);

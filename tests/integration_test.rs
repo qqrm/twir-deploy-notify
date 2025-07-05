@@ -15,7 +15,7 @@ use validator::validate_telegram_markdown;
 #[test]
 fn parse_latest_issue_full() {
     let input = include_str!("2025-06-25-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
 
     let expected = [
         include_str!("expected/expected1.md"),
@@ -42,7 +42,7 @@ fn parse_latest_issue_full() {
 #[test]
 fn parse_complex_markdown() {
     let input = include_str!("complex.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
 
     let expected = [
         include_str!("expected/complex1.md"),
@@ -61,7 +61,7 @@ fn parse_complex_markdown() {
 #[test]
 fn parse_issue_606_full() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
 
     let expected = [
         include_str!("expected/606_1.md"),
@@ -84,9 +84,36 @@ fn parse_issue_606_full() {
 }
 
 #[test]
+fn parse_issue_607_full() {
+    let input = include_str!("2025-07-05-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string());
+
+    let expected = [
+        include_str!("expected/607_1.md"),
+        include_str!("expected/607_2.md"),
+        include_str!("expected/607_3.md"),
+        include_str!("expected/607_4.md"),
+        include_str!("expected/607_5.md"),
+        include_str!("expected/607_6.md"),
+        include_str!("expected/607_7.md"),
+        include_str!("expected/607_8.md"),
+        include_str!("expected/607_9.md"),
+        include_str!("expected/607_10.md"),
+        include_str!("expected/607_11.md"),
+    ];
+
+    assert_eq!(posts.len(), expected.len(), "post count mismatch");
+    for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
+        assert_eq!(post, exp, "Mismatch in post {}", i + 1);
+        validate_telegram_markdown(post)
+            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    }
+}
+
+#[test]
 fn validate_generated_posts() {
     let input = include_str!("2025-06-25-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
     for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
@@ -97,7 +124,7 @@ fn validate_generated_posts() {
 #[test]
 fn validate_issue_606_posts() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
     for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
@@ -108,7 +135,7 @@ fn validate_issue_606_posts() {
 #[test]
 fn validate_issue_606_post_4() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(posts.len() >= 4);
     validate_telegram_markdown(&posts[3]).unwrap();
 }
@@ -116,7 +143,7 @@ fn validate_issue_606_post_4() {
 #[test]
 fn validate_complex_posts() {
     let input = include_str!("complex.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
     for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
@@ -130,7 +157,7 @@ fn send_long_escaped_dash() {
 
     let prefix = "a".repeat(generator::TELEGRAM_LIMIT - 1);
     let input = format!("Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n{prefix}\\-b");
-    let posts = generate_posts(input);
+    let posts = generate_posts(input).unwrap();
     assert!(!posts.is_empty());
 
     let mut server = mockito::Server::new();
@@ -155,5 +182,37 @@ fn send_long_escaped_dash() {
     assert!(result.is_ok(), "send_to_telegram failed: {result:?}");
     for m in mocks {
         m.assert();
+    }
+}
+
+#[test]
+fn issue_606_no_unescaped_dashes() {
+    let input = include_str!("2025-07-02-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string());
+    assert!(!posts.is_empty());
+    for (i, post) in posts.iter().enumerate() {
+        assert!(
+            !post.starts_with('-'),
+            "post {} begins with unescaped dash",
+            i + 1
+        );
+    }
+}
+
+#[test]
+fn parse_call_for_participation() {
+    let input = include_str!("2025-07-05-call-for-participation.md");
+    let posts = generate_posts(input.to_string());
+
+    let expected = [
+        include_str!("expected/cfp1.md"),
+        include_str!("expected/cfp2.md"),
+    ];
+
+    assert_eq!(posts.len(), expected.len(), "post count mismatch");
+    for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
+        assert_eq!(post, exp, "Mismatch in post {}", i + 1);
+        validate_telegram_markdown(post)
+            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
     }
 }
