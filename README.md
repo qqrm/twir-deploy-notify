@@ -23,6 +23,10 @@ Set `RUST_LOG=info` to see detailed logs including Telegram API responses:
 RUST_LOG=info cargo run --bin twir-deploy-notify -- twir/content/<file-name>.md
 ```
 
+Running the workflow with [`act`](https://github.com/nektos/act) is possible, but it requires Docker.
+Restricted environments such as the provided container may not support Docker, so executing the above
+`cargo` commands manually remains the recommended approach.
+
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
 
 The Telegram API response is checked with `jq`, and the workflow fails if the server does not return `{ "ok": true }`.
