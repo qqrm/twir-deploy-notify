@@ -83,6 +83,11 @@ impl std::error::Error for ValidationError {}
 pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
+    let mut join_next = false;
+
+    fn needs_escape(c: char) -> bool {
+        matches!(c, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!')
+    }
 
     for line in text.lines() {
         if line.len() > limit {
@@ -102,6 +107,9 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
                     } else {
                         posts.push(chunk.clone());
                         chunk.clear();
+                        if needs_escape(c) {
+                            chunk.push('\\');
+                        }
                     }
                 }
                 chunk.push(c);
@@ -109,12 +117,14 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
             if !chunk.is_empty() {
                 posts.push(chunk);
             }
-
+            join_next = false;
             continue;
         }
 
         let new_len = if current.is_empty() {
             line.len()
+        } else if join_next {
+            current.len() + line.len()
         } else {
             current.len() + 1 + line.len()
         };
@@ -125,16 +135,29 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
                 posts.push(current.clone());
                 current.clear();
                 current.push('\\');
+                join_next = true;
             } else {
                 posts.push(current.clone());
                 current.clear();
+                join_next = false;
             }
         }
 
-        if !current.is_empty() {
+        if !current.is_empty() && !join_next {
             current.push('\n');
         }
+        if current.is_empty() {
+            if let Some(first) = line.chars().next() {
+                if needs_escape(first) && !line.starts_with('\\') {
+                    current.push('\\');
+                }
+            }
+        }
         current.push_str(line);
+        if join_next {
+            current.push('\n');
+            join_next = false;
+        }
     }
 
     if !current.is_empty() {
@@ -431,6 +454,20 @@ mod tests {
         let mut text = "a".repeat(10);
         text.push('\n');
         text.push_str("\\- start");
+        let parts = split_posts(&text, 10);
+        assert!(parts.len() > 1);
+        assert!(parts[1].starts_with("\\-"));
+        for p in parts {
+            crate::validator::validate_telegram_markdown(&p).unwrap();
+        }
+    }
+
+    #[test]
+    fn backslash_then_dash_across_posts() {
+        let mut text = "a".repeat(9);
+        text.push('\\');
+        text.push('\n');
+        text.push_str("- test");
         let parts = split_posts(&text, 10);
         assert!(parts.len() > 1);
         assert!(parts[1].starts_with("\\-"));
