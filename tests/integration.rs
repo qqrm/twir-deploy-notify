@@ -271,7 +271,53 @@ fn send_issue_606_post_4() {
         .expect(1)
         .create();
 
-    generator::send_to_telegram(&[posts[3].clone()], &server.url(), "TEST", "42", true).unwrap();
+    generator::send_to_telegram(
+        &[posts[3].clone()],
+        &server.url(),
+        "TEST",
+        "42",
+        true,
+        false,
+    )
+    .unwrap();
     m.assert();
     common::assert_valid_markdown(&posts[3]);
+}
+
+#[cfg(feature = "integration")]
+#[test]
+fn pin_first_message() {
+    use mockito::Matcher;
+
+    let posts = vec!["hello".to_string()];
+    let mut server = mockito::Server::new();
+    let m1 = server
+        .mock("POST", "/botTEST/sendMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+            Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+        ]))
+        .with_status(200)
+        .with_body("{\"ok\":true,\"result\":{\"message_id\":1}}")
+        .expect(1)
+        .create();
+
+    let m2 = server
+        .mock("POST", "/botTEST/pinChatMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("message_id".into(), "1".into()),
+        ]))
+        .with_status(200)
+        .with_body("{\"ok\":true}")
+        .expect(1)
+        .create();
+
+    generator::send_to_telegram(&posts, &server.url(), "TEST", "42", true, true).unwrap();
+    m1.assert();
+    m2.assert();
+    common::assert_valid_markdown(&posts[0]);
 }

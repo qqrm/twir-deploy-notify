@@ -45,7 +45,7 @@ fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     let chat_id_num = chat_id.parse::<i64>().ok();
     for p in &posts {
         common::assert_valid_markdown(p);
-        send_to_telegram(&[p.clone()], &base, &token, &chat_id, true)?;
+        send_to_telegram(&[p.clone()], &base, &token, &chat_id, true, false)?;
         let updates_url = format!(
             "{}/bot{}/getUpdates?offset={}",
             base.trim_end_matches('/'),
