@@ -175,3 +175,12 @@ fn parse_call_for_participation() {
         common::assert_valid_markdown(post);
     }
 }
+
+#[test]
+fn jobs_links_present() {
+    let input = include_str!("2025-07-05-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string()).unwrap();
+    let combined = posts.join("\n");
+    assert!(combined.contains("[Rust Jobs chat](https://t.me/rust_jobs)"));
+    assert!(combined.contains("[Rust Jobs feed](https://t.me/rust_jobs_feed)"));
+}
