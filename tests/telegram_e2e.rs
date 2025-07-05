@@ -9,6 +9,10 @@ mod common;
 
 #[test]
 fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    if env::var("RUN_TELEGRAM_E2E").is_err() {
+        eprintln!("Missing RUN_TELEGRAM_E2E, skipping");
+        return Ok(());
+    }
     let token = match env::var("TELEGRAM_BOT_TOKEN") {
         Ok(v) => v,
         Err(_) => {

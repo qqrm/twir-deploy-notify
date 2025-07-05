@@ -45,3 +45,14 @@ Continuous integration runs `cargo machete` to verify that `Cargo.toml` lists on
 
 Documentation Markdown is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
 Generated Telegram posts are verified with the shared `validator` module.
+
+## End-to-End Test
+
+The `telegram_e2e` test sends real messages to Telegram. It is skipped unless the
+`RUN_TELEGRAM_E2E` environment variable is present. Provide valid credentials and
+enable the integration feature:
+
+```bash
+RUN_TELEGRAM_E2E=1 TELEGRAM_BOT_TOKEN=<token> TELEGRAM_CHAT_ID=<chat_id> \
+  cargo test --all-targets --features integration
+```
