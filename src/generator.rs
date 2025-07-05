@@ -12,9 +12,28 @@ use crate::validator::validate_telegram_markdown;
 pub const TELEGRAM_LIMIT: usize = 4000;
 
 static LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap());
-static TITLE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^Title: (.+)$").unwrap());
-static NUMBER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^Number: (.+)$").unwrap());
-static DATE_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(?m)^Date: (.+)$").unwrap());
+
+fn find_value(text: &str, prefix: &str) -> Option<String> {
+    for line in text.lines() {
+        if let Some(rest) = line.strip_prefix(prefix) {
+            return Some(rest.trim().to_string());
+        }
+    }
+    None
+}
+
+fn find_title(text: &str) -> Option<String> {
+    find_value(text, "Title: ")
+}
+
+fn find_number(text: &str) -> Option<String> {
+    find_value(text, "Number: ")
+}
+
+fn find_date(text: &str) -> Option<String> {
+    find_value(text, "Date: ")
+}
+
 static HEADER_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap());
 
@@ -121,18 +140,9 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
 }
 
 pub fn generate_posts(mut input: String) -> Vec<String> {
-    let title = TITLE_RE
-        .captures(&input)
-        .and_then(|c| c.get(1))
-        .map(|m| m.as_str().trim().to_string());
-    let number = NUMBER_RE
-        .captures(&input)
-        .and_then(|c| c.get(1))
-        .map(|m| m.as_str().trim().to_string());
-    let date = DATE_RE
-        .captures(&input)
-        .and_then(|c| c.get(1))
-        .map(|m| m.as_str().trim().to_string());
+    let title = find_title(&input);
+    let number = find_number(&input);
+    let date = find_date(&input);
 
     let url = if let (Some(d), Some(n)) = (date.as_ref(), number.as_ref()) {
         let parts: Vec<&str> = d.split('-').collect();
