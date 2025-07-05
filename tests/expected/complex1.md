@@ -1,7 +1,6 @@
 *Part 1/1*
 **Complex Example** — \#999 — 2025\-07\-10
 
-\-\-\-
 📰 **NESTED LIST** 📰
 • Item 1
   • Sub Item 1
