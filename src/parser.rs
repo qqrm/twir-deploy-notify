@@ -28,7 +28,13 @@ fn fix_bare_link(line: &str) -> String {
     }
 }
 
-/// Parse TWIR Markdown into sections using `pulldown-cmark`.
+/// Parse TWIR Markdown into logical sections using `pulldown-cmark`.
+///
+/// # Parameters
+/// - `text`: Full Markdown source from a TWIR issue.
+///
+/// # Returns
+/// A list of [`Section`]s preserving the order found in the input.
 pub fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;

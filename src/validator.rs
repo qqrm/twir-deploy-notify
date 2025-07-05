@@ -1,8 +1,15 @@
 use std::collections::VecDeque;
 
-/// Validate that the provided text conforms to Telegram Markdown v2 rules
-/// used in this project. Returns `Ok(())` if valid, otherwise an error
-/// message describing the first encountered problem.
+/// Validate that the provided text conforms to the Telegram Markdown V2 rules
+/// used in this project.
+///
+/// # Parameters
+/// - `text`: Telegram-formatted Markdown to validate.
+///
+/// # Returns
+/// - `Ok(())` if the text is valid.
+/// - `Err(String)` with a description of the first encountered problem
+///   otherwise.
 pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
     let chars: Vec<char> = text.chars().collect();
     let mut stack: VecDeque<&str> = VecDeque::new();

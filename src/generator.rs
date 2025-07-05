@@ -38,23 +38,59 @@ fn find_date(text: &str) -> Option<String> {
 static HEADER_RE: Lazy<Regex> =
     Lazy::new(|| Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap());
 
+/// Escape Telegram Markdown special characters in `text`.
+///
+/// # Parameters
+/// - `text`: Plain text that may contain Markdown control characters.
+///
+/// # Returns
+/// A new `String` with all reserved characters escaped so it can be used in
+/// Telegram Markdown.
 pub fn escape_markdown(text: &str) -> String {
     escape(text)
 }
 
+/// Escape parentheses in `url` for usage in Telegram Markdown links.
+///
+/// # Parameters
+/// - `url`: The URL to escape.
+///
+/// # Returns
+/// The escaped URL.
 pub fn escape_markdown_url(url: &str) -> String {
     escape_link_url(url)
 }
 
+/// Format a section heading for Telegram posts.
+///
+/// # Parameters
+/// - `title`: Raw section title text.
+///
+/// # Returns
+/// A bold heading prefixed with a newspaper emoji.
 pub fn format_heading(title: &str) -> String {
     let upper = title.to_uppercase();
     format!("📰 **{}**", escape_markdown(&upper))
 }
 
+/// Format a level 3 or level 4 heading.
+///
+/// # Parameters
+/// - `title`: Heading text.
+///
+/// # Returns
+/// The escaped heading wrapped in bold markers.
 pub fn format_subheading(title: &str) -> String {
     format!("**{}**", escape_markdown(title))
 }
 
+/// Convert Telegram Markdown to a plain text representation.
+///
+/// # Parameters
+/// - `text`: A Telegram Markdown string.
+///
+/// # Returns
+/// A plain text version with formatting markers removed.
 pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
     let replaced = LINK_RE.replace_all(&without_escapes, "$1 ($2)");
@@ -81,6 +117,14 @@ impl std::fmt::Display for ValidationError {
 
 impl std::error::Error for ValidationError {}
 
+/// Split a long message into chunks that obey Telegram's length limit.
+///
+/// # Parameters
+/// - `text`: The text to split.
+/// - `limit`: Maximum allowed length of each chunk.
+///
+/// # Returns
+/// A vector of strings each no longer than `limit` characters.
 pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
@@ -168,6 +212,17 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     posts
 }
 
+/// Convert a TWIR Markdown file into a series of Telegram posts.
+///
+/// The input may include metadata headers which will be used to build the
+/// leading post and the final link section.
+///
+/// # Parameters
+/// - `input`: Raw Markdown content read from a TWIR issue.
+///
+/// # Returns
+/// A vector of validated Telegram Markdown posts or a `ValidationError` if any
+/// post fails validation.
 pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError> {
     let title = find_title(&input);
     let number = find_number(&input);
@@ -260,6 +315,14 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
     Ok(result)
 }
 
+/// Write generated posts to `output_N.md` files in `dir`.
+///
+/// # Parameters
+/// - `posts`: Messages to write.
+/// - `dir`: Destination directory.
+///
+/// # Returns
+/// `Ok(())` on success or any file I/O error encountered.
 pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     for (i, post) in posts.iter().enumerate() {
         let file_name = dir.join(format!("output_{}.md", i + 1));
@@ -277,6 +340,18 @@ struct TelegramResponse {
     description: Option<String>,
 }
 
+/// Send prepared posts to a Telegram chat via the HTTP API.
+///
+/// # Parameters
+/// - `posts`: Posts to deliver.
+/// - `base_url`: Base Telegram API endpoint.
+/// - `token`: Bot token used for authentication.
+/// - `chat_id`: Identifier of the destination chat or channel.
+/// - `use_markdown`: Whether to enable Telegram Markdown parsing.
+///
+/// # Errors
+/// Returns an error if the HTTP request fails or Telegram responds with an
+/// error code.
 pub fn send_to_telegram(
     posts: &[String],
     base_url: &str,
