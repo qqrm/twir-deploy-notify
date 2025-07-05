@@ -112,7 +112,17 @@ pub fn format_heading(title: &str) -> String {
 /// # Returns
 /// The escaped heading wrapped in bold markers.
 pub fn format_subheading(title: &str) -> String {
-    format!("**{}**", escape_markdown(title))
+    let trimmed = title.trim();
+    let lower = trimmed.to_ascii_lowercase();
+    if lower == "newsletters" {
+        format!("\n**{}:** 📰", escape_markdown(trimmed))
+    } else if lower == "project/tooling updates" {
+        format!("\n**{}:** 🛠️", escape_markdown(trimmed))
+    } else if lower == "observations/thoughts" {
+        format!("\n**{}:** 🤔", escape_markdown(trimmed))
+    } else {
+        format!("**{}**", escape_markdown(trimmed))
+    }
 }
 
 /// Convert Telegram Markdown to a plain text representation.

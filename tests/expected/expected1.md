@@ -4,13 +4,16 @@
 📰 **UPDATES FROM RUST COMMUNITY** 📰
 **Official**
 • [Announcing the Clippy feature freeze](https://blog.rust-lang.org/inside-rust/2025/06/21/announcing-the-clippy-feature-freeze/)
-**Newsletters**
+
+**Newsletters:** 📰
 • [Rust Trends Issue \#67](https://rust-trends.com/newsletter/untangling-rust-errors-the-bzip2-rewrite/)
-**Project/Tooling Updates**
+
+**Project/Tooling Updates:** 🛠️
 • [Tantivy 0\.24](https://quickwit.io/blog/tantivy-0.24)
 • [How to write Rust in the kernel: part 1](https://lwn.net/SubscriberLink/1024202/556fa7b3c51d7899/)
 • [GlueSQL v0\.17\.0 \- Added redb storage support](https://github.com/gluesql/gluesql/releases/tag/v0.17.0)
-**Observations/Thoughts**
+
+**Observations/Thoughts:** 🤔
 • [The Unreasonable Effectiveness of Fuzzing for Porting Programs](https://rjp.io/blog/2025-06-17-unreasonable-effectiveness-of-fuzzing)
 • [So you want to serialize some DER?](https://alexgaynor.net/2025/jun/20/serialize-some-der/)
 • [Why I Switched from Flutter \+ Rust to Rust \+ egui](https://jdiaz97.github.io/greenblog/posts/flutter_to_egui/)
