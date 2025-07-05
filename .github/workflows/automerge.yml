@@ -31,7 +31,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR: ${{ steps.pr.outputs.number }}
         run: |
-          gh pr merge "$PR" --rebase --delete-branch
+          gh pr merge "$PR" --rebase --delete-branch || \
+          gh pr merge "$PR" --squash --delete-branch
       - name: Rebase and merge remaining PRs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,6 +42,7 @@ jobs:
               gh pr checkout "$n"
               git pull --rebase origin main || continue
               git push --force-with-lease
-              gh pr merge "$n" --rebase --delete-branch || true
+              gh pr merge "$n" --rebase --delete-branch || \
+              gh pr merge "$n" --squash --delete-branch || true
             fi
           done
