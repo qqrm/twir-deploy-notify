@@ -1,3 +1,4 @@
+mod common;
 #[allow(dead_code)]
 #[path = "../src/generator.rs"]
 mod generator;
@@ -8,8 +9,8 @@ mod parser;
 #[path = "../src/validator.rs"]
 mod validator;
 
+use common::assert_valid_markdown;
 use generator::generate_posts;
-use validator::validate_telegram_markdown;
 
 const CFP_SNIPPET: &str = r#"## Call for Participation; projects and speakers
 
@@ -48,8 +49,7 @@ fn cfp_section_generates_valid_markdown() {
     let input = format!("Title: Test\nNumber: 1\nDate: 2025-06-25\n\n{CFP_SNIPPET}");
     let posts = generate_posts(input).unwrap();
     assert!(!posts.is_empty());
-    for (i, post) in posts.iter().enumerate() {
-        validate_telegram_markdown(post)
-            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    for post in &posts {
+        assert_valid_markdown(post);
     }
 }

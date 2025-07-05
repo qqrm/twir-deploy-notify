@@ -328,6 +328,10 @@ pub fn send_to_telegram(
 mod tests {
     use super::*;
     use crate::parser::parse_sections;
+    mod common {
+        include!(concat!(env!("CARGO_MANIFEST_DIR"), "/tests/common/mod.rs"));
+    }
+    use common::assert_valid_markdown;
     use std::fs;
 
     #[test]
@@ -450,7 +454,7 @@ mod tests {
         )
         .unwrap();
         for p in posts {
-            crate::validator::validate_telegram_markdown(&p).unwrap();
+            assert_valid_markdown(&p);
         }
     }
 
@@ -463,7 +467,7 @@ mod tests {
         assert!(parts.len() > 1);
         assert!(parts[1].starts_with("\\-"));
         for p in parts {
-            crate::validator::validate_telegram_markdown(&p).unwrap();
+            assert_valid_markdown(&p);
         }
     }
 
@@ -477,13 +481,13 @@ mod tests {
         assert!(parts.len() > 1);
         assert!(parts[1].starts_with("\\-"));
         for p in parts {
-            crate::validator::validate_telegram_markdown(&p).unwrap();
+            assert_valid_markdown(&p);
         }
     }
 
     #[test]
     fn markdown_validation() {
-        assert!(crate::validator::validate_telegram_markdown("simple text").is_ok());
+        assert_valid_markdown("simple text");
         assert!(crate::validator::validate_telegram_markdown("bad *text").is_err());
     }
 

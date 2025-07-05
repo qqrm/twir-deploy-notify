@@ -1,3 +1,4 @@
+mod common;
 #[allow(dead_code)]
 #[path = "../src/generator.rs"]
 mod generator;
@@ -8,6 +9,7 @@ mod parser;
 #[path = "../src/validator.rs"]
 mod validator;
 
+use common::assert_valid_markdown;
 use parser::parse_sections;
 
 #[test]
@@ -29,5 +31,5 @@ fn bare_link_with_parentheses() {
         sections[0].lines,
         vec!["• [Some text](https://example.com/path(1\\))"]
     );
-    validator::validate_telegram_markdown(&sections[0].lines[0]).unwrap();
+    assert_valid_markdown(&sections[0].lines[0]);
 }

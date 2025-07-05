@@ -1,3 +1,4 @@
+mod common;
 #[allow(dead_code)]
 #[path = "../src/generator.rs"]
 mod generator;
@@ -8,9 +9,9 @@ mod parser;
 #[path = "../src/validator.rs"]
 mod validator;
 
+use common::assert_valid_markdown;
 use generator::generate_posts;
 use generator::send_to_telegram;
-use validator::validate_telegram_markdown;
 
 #[test]
 fn parse_latest_issue_full() {
@@ -105,8 +106,7 @@ fn parse_issue_607_full() {
     assert_eq!(posts.len(), expected.len(), "post count mismatch");
     for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
         assert_eq!(post, exp, "Mismatch in post {}", i + 1);
-        validate_telegram_markdown(post)
-            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+        assert_valid_markdown(post);
     }
 }
 
@@ -115,9 +115,8 @@ fn validate_generated_posts() {
     let input = include_str!("2025-06-25-this-week-in-rust.md");
     let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
-    for (i, post) in posts.iter().enumerate() {
-        validate_telegram_markdown(post)
-            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    for post in &posts {
+        assert_valid_markdown(post);
     }
 }
 
@@ -126,9 +125,8 @@ fn validate_issue_606_posts() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
     let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
-    for (i, post) in posts.iter().enumerate() {
-        validate_telegram_markdown(post)
-            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    for post in &posts {
+        assert_valid_markdown(post);
     }
 }
 
@@ -137,7 +135,7 @@ fn validate_issue_606_post_4() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
     let posts = generate_posts(input.to_string()).unwrap();
     assert!(posts.len() >= 4);
-    validate_telegram_markdown(&posts[3]).unwrap();
+    assert_valid_markdown(&posts[3]);
 }
 
 #[test]
@@ -145,9 +143,8 @@ fn validate_complex_posts() {
     let input = include_str!("complex.md");
     let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
-    for (i, post) in posts.iter().enumerate() {
-        validate_telegram_markdown(post)
-            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    for post in &posts {
+        assert_valid_markdown(post);
     }
 }
 
@@ -212,7 +209,6 @@ fn parse_call_for_participation() {
     assert_eq!(posts.len(), expected.len(), "post count mismatch");
     for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
         assert_eq!(post, exp, "Mismatch in post {}", i + 1);
-        validate_telegram_markdown(post)
-            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+        assert_valid_markdown(post);
     }
 }
