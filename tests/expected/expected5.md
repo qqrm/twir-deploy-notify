@@ -40,4 +40,4 @@
 • [fix false positive of borrow\_deref\_ref](https://github.com/rust-lang/rust-clippy/pull/14967)
 • [fix suggestion\-causes\-error of empty\_line\_after\_outer\_attr](https://github.com/rust-lang/rust-clippy/pull/15078)
 • [new lint: manual\_is\_multiple\_of](https://github.com/rust-lang/rust-clippy/pull/14292)
-**Rust\\-Analyzer**
+**Rust\-Analyzer**
