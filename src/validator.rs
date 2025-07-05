@@ -88,7 +88,11 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
             }
             '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!' => {
                 let prev = if i == 0 { None } else { Some(chars[i - 1]) };
-                if prev != Some('\\') {
+                let next = chars.get(i + 1).copied();
+                if prev != Some('\\')
+                    && !(prev.map(|c| c.is_ascii_alphanumeric()).unwrap_or(false)
+                        && next.map(|c| c.is_ascii_alphanumeric()).unwrap_or(false))
+                {
                     return Err(format!("Unescaped {ch} at {i}"));
                 }
             }
