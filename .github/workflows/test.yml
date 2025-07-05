@@ -16,7 +16,7 @@ jobs:
       CARGO_TERM_PROGRESS_WHEN: never
     strategy:
       matrix:
-        toolchain: ["1.88.0", beta, nightly]
+        toolchain: [stable]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/cache@v4
@@ -54,11 +54,11 @@ jobs:
             ${{ runner.os }}-coverage-
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: "1.88.0"
+          toolchain: stable
           profile: minimal
-      - run: rustup component add --toolchain 1.88.0 clippy rustfmt
-      - run: cargo +1.88.0 install cargo-tarpaulin --quiet
-      - run: cargo +1.88.0 tarpaulin --out Lcov --output-dir coverage --quiet
+      - run: rustup component add --toolchain stable clippy rustfmt
+      - run: cargo +stable install cargo-tarpaulin --quiet
+      - run: cargo +stable tarpaulin --out Lcov --output-dir coverage --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report

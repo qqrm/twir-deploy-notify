@@ -41,10 +41,10 @@ fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     let mut last_update = 0i64;
     if let Some(arr) = resp["result"].as_array() {
         for upd in arr {
-            if let Some(id) = upd["update_id"].as_i64() {
-                if id > last_update {
-                    last_update = id;
-                }
+            if let Some(id) = upd["update_id"].as_i64()
+                && id > last_update
+            {
+                last_update = id;
             }
         }
     }
@@ -67,12 +67,11 @@ fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     if let Some(arr) = resp["result"].as_array() {
         for upd in arr {
             let msg = upd.get("channel_post").or_else(|| upd.get("message"));
-            if let Some(m) = msg {
-                if m["chat"]["id"].as_i64() == chat_id.parse::<i64>().ok() {
-                    if let Some(text) = m["text"].as_str() {
-                        received.push(text.to_string());
-                    }
-                }
+            if let Some(m) = msg
+                && m["chat"]["id"].as_i64() == chat_id.parse::<i64>().ok()
+                && let Some(text) = m["text"].as_str()
+            {
+                received.push(text.to_string());
             }
         }
     }

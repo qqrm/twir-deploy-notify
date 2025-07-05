@@ -1,0 +1,34 @@
+#[allow(dead_code)]
+#[path = "../src/generator.rs"]
+mod generator;
+#[allow(dead_code)]
+#[path = "../src/parser.rs"]
+mod parser;
+#[allow(dead_code)]
+#[path = "../src/validator.rs"]
+mod validator;
+
+use generator::{TELEGRAM_LIMIT, split_posts};
+use proptest::prelude::*;
+
+fn arb_long_line() -> impl Strategy<Value = String> {
+    let regex = format!(
+        r"[A-Za-z0-9\\*_]{{{},{}}}",
+        TELEGRAM_LIMIT * 2,
+        TELEGRAM_LIMIT * 3
+    );
+    proptest::string::string_regex(&regex).unwrap()
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(16))]
+    #[test]
+    fn split_posts_handles_long_lines(lines in prop::collection::vec(arb_long_line(), 1..3)) {
+        let input = lines.join("\n");
+        let posts = split_posts(&input, TELEGRAM_LIMIT);
+        prop_assert!(!posts.is_empty());
+        for p in posts {
+            prop_assert!(p.len() <= TELEGRAM_LIMIT);
+        }
+    }
+}

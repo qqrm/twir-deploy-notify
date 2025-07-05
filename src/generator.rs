@@ -66,6 +66,36 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut current = String::new();
 
     for line in text.lines() {
+        if line.len() > limit {
+            if !current.is_empty() {
+                posts.push(current.clone());
+                current.clear();
+            }
+
+            let mut chunk = String::new();
+            for c in line.chars() {
+                if chunk.len() + c.len_utf8() > limit {
+                    let backslashes = chunk.chars().rev().take_while(|ch| *ch == '\\').count();
+                    if backslashes % 2 == 1 {
+                        if let Some(bs) = chunk.pop() {
+                            posts.push(chunk.clone());
+                            chunk.clear();
+                            chunk.push(bs);
+                        }
+                    } else {
+                        posts.push(chunk.clone());
+                        chunk.clear();
+                    }
+                }
+                chunk.push(c);
+            }
+            if !chunk.is_empty() {
+                posts.push(chunk);
+            }
+
+            continue;
+        }
+
         let new_len = if current.is_empty() {
             line.len()
         } else {
