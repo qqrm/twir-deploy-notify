@@ -1,5 +1,5 @@
 *Part 5/13*
-📰 **UPDATES FROM THE RUST PROJECT**
+📰 **UPDATES FROM THE RUST PROJECT** 📰
 448 pull requests were [merged in the last week](https://github.com/search?q=is%3Apr+org%3Arust-lang+is%3Amerged+merged%3A2025-06-17..2025-06-24)
 **Compiler**
 • [perf: Cache the canonical instantiation of param\-envs](https://github.com/rust-lang/rust/pull/142316)

@@ -97,7 +97,11 @@ pub fn escape_markdown_url(url: &str) -> String {
 /// A bold heading prefixed with a newspaper emoji.
 pub fn format_heading(title: &str) -> String {
     let upper = title.to_uppercase();
-    format!("📰 **{}**", escape_markdown(&upper))
+    let emoji = match upper.as_str() {
+        "UPCOMING EVENTS" => "🎉",
+        _ => "📰",
+    };
+    format!("{e} **{}** {e}", escape_markdown(&upper), e = emoji)
 }
 
 /// Format a level 3 or level 4 heading.
@@ -455,7 +459,7 @@ mod tests {
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
         assert!(content.contains("*Part 1/2*"));
-        assert!(content.contains("📰 **NEWS**"));
+        assert!(content.contains("📰 **NEWS** 📰"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
     }
@@ -540,7 +544,7 @@ mod tests {
     #[test]
     fn heading_formatter() {
         let formatted = format_heading("My Title");
-        assert_eq!(formatted, "📰 **MY TITLE**");
+        assert_eq!(formatted, "📰 **MY TITLE** 📰");
     }
 
     #[test]
