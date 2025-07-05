@@ -24,4 +24,4 @@ fn greet\(\) \{
 | 2     | abcdef             | 44 |
 \-\-\-
 
-📖 Full issue: [https://this\-week\-in\-rust\.org/blog/2025/07/10/this\-week\-in\-rust\-999/](https://this-week-in-rust.org/blog/2025/07/10/this-week-in-rust-999/)
+📖 View web version: [https://this\-week\-in\-rust\.org/blog/2025/07/10/this\-week\-in\-rust\-999/](https://this-week-in-rust.org/blog/2025/07/10/this-week-in-rust-999/)
