@@ -4,6 +4,12 @@ use std::process::Command;
 #[cfg(feature = "integration")]
 use mockito::Matcher;
 #[allow(dead_code)]
+#[path = "../src/generator.rs"]
+mod generator;
+#[allow(dead_code)]
+#[path = "../src/parser.rs"]
+mod parser;
+#[allow(dead_code)]
 #[path = "../src/validator.rs"]
 mod validator;
 
@@ -249,4 +255,29 @@ fn full_issue_end_to_end() {
     for m in mocks {
         m.assert();
     }
+}
+
+#[cfg(feature = "integration")]
+#[test]
+fn send_issue_606_post_4() {
+    let posts =
+        generator::generate_posts(include_str!("2025-07-02-this-week-in-rust.md").to_string());
+    assert!(posts.len() > 3);
+    let mut server = mockito::Server::new();
+    let m = server
+        .mock("POST", "/botTEST/sendMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+            Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+        ]))
+        .with_status(200)
+        .with_body("{\"ok\":true}")
+        .expect(1)
+        .create();
+
+    generator::send_to_telegram(&[posts[3].clone()], &server.url(), "TEST", "42", true).unwrap();
+    m.assert();
+    validate_telegram_markdown(&posts[3]).unwrap();
 }
