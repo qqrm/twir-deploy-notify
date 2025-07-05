@@ -39,7 +39,7 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: stable
+          toolchain: 1.88.0
           profile: minimal
 
       - name: Send latest post to Telegram
