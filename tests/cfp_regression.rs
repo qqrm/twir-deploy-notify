@@ -46,7 +46,7 @@ If you are an event organizer hoping to expand the reach of your event, please s
 #[test]
 fn cfp_section_generates_valid_markdown() {
     let input = format!("Title: Test\nNumber: 1\nDate: 2025-06-25\n\n{CFP_SNIPPET}");
-    let posts = generate_posts(input);
+    let posts = generate_posts(input).unwrap();
     assert!(!posts.is_empty());
     for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
