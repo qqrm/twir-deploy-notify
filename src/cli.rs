@@ -40,6 +40,7 @@ pub fn main() -> std::io::Result<()> {
         let pin_first = env::var("TELEGRAM_PIN_FIRST")
             .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
             .unwrap_or(false);
+        log::info!("calling send_to_telegram");
         send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain, pin_first)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
     }
