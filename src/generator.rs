@@ -3,13 +3,14 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use reqwest::blocking::Client;
 use serde::Deserialize;
-use std::{fs, path::Path};
+use std::{fs, path::Path, thread, time::Duration};
 use teloxide::utils::markdown::{escape, escape_link_url};
 
 use crate::parser::{Section, parse_sections};
 use crate::validator::validate_telegram_markdown;
 
 pub const TELEGRAM_LIMIT: usize = 4000;
+pub const TELEGRAM_DELAY_MS: u64 = 500;
 
 static LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap());
 
@@ -318,6 +319,7 @@ pub fn send_to_telegram(
             )
             .into());
         }
+        thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
     }
     Ok(())
 }
