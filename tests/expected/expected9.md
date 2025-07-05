@@ -1,4 +1,4 @@
-*Part 9️⃣/1️⃣3️⃣*
+*Part 9/13*
 • 2025\-07\-02 \| Seoul, KR \| [Seoul Rust \(Programming Language\) Meetup](https://www.meetup.com/rust-seoul-meetup/events/)
   • [Seoul Rust Meetup](https://www.meetup.com/rust-seoul-meetup/events/308408246)
 **Europe**

@@ -1,4 +1,4 @@
-*Part 8️⃣/1️⃣3️⃣*
+*Part 8/13*
 📰 **UPCOMING EVENTS**
 Rusty Events between 2025\-06\-25 \- 2025\-07\-23 🦀
 **Virtual**

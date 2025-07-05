@@ -1,4 +1,4 @@
-*Part 4️⃣/5️⃣*
+*Part 4/5*
 📰 **TABLE EXAMPLE**
 | Short | Much Longer Column | C  |
 | 1     | a                  | 3  |
