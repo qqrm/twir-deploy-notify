@@ -18,3 +18,16 @@ fn code_block_before_next_heading() {
     assert_eq!(sections[0].title, "First");
     assert_eq!(sections[0].lines, vec!["```\nline1\nline2\n```"]);
 }
+
+#[test]
+fn bare_link_with_parentheses() {
+    let input = "## Section\n- Some text (https://example.com/path(1))";
+    let sections = parse_sections(input);
+    assert_eq!(sections.len(), 1);
+    assert_eq!(sections[0].title, "Section");
+    assert_eq!(
+        sections[0].lines,
+        vec!["• [Some text](https://example.com/path(1\\))"]
+    );
+    validator::validate_telegram_markdown(&sections[0].lines[0]).unwrap();
+}
