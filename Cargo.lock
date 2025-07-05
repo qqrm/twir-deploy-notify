@@ -1887,7 +1887,6 @@ dependencies = [
  "env_logger",
  "log",
  "mockito",
- "once_cell",
  "proptest",
  "pulldown-cmark",
  "regex",

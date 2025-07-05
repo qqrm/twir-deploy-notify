@@ -1,6 +1,4 @@
 use log::{debug, error, info};
-use once_cell::sync::Lazy;
-use regex::Regex;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
@@ -12,7 +10,27 @@ use crate::validator::validate_telegram_markdown;
 pub const TELEGRAM_LIMIT: usize = 4000;
 pub const TELEGRAM_DELAY_MS: u64 = 500;
 
-static LINK_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"\[([^\]]+)\]\(([^)]+)\)").unwrap());
+fn replace_links(text: &str) -> String {
+    let mut result = String::new();
+    let mut rest = text;
+    while let Some(start) = rest.find('[') {
+        if let Some(mid) = rest[start..].find("](") {
+            let mid = start + mid;
+            if let Some(end) = rest[mid + 2..].find(')') {
+                result.push_str(&rest[..start]);
+                result.push_str(&rest[start + 1..mid]);
+                result.push_str(" (");
+                result.push_str(&rest[mid + 2..mid + 2 + end]);
+                result.push(')');
+                rest = &rest[mid + 2 + end + 1..];
+                continue;
+            }
+        }
+        break;
+    }
+    result.push_str(rest);
+    result
+}
 
 fn find_value(text: &str, prefix: &str) -> Option<String> {
     for line in text.lines() {
@@ -35,8 +53,17 @@ fn find_date(text: &str) -> Option<String> {
     find_value(text, "Date: ")
 }
 
-static HEADER_RE: Lazy<Regex> =
-    Lazy::new(|| Regex::new(r"(?m)^(Title|Number|Date):.*$\n?").unwrap());
+fn strip_header(text: &str) -> String {
+    let mut out = String::new();
+    for line in text.lines() {
+        if !(line.starts_with("Title:") || line.starts_with("Number:") || line.starts_with("Date:"))
+        {
+            out.push_str(line);
+            out.push('\n');
+        }
+    }
+    out
+}
 
 /// Escape Telegram Markdown special characters in `text`.
 ///
@@ -93,7 +120,7 @@ pub fn format_subheading(title: &str) -> String {
 /// A plain text version with formatting markers removed.
 pub fn markdown_to_plain(text: &str) -> String {
     let without_escapes = text.replace('\\', "");
-    let replaced = LINK_RE.replace_all(&without_escapes, "$1 ($2)");
+    let replaced = replace_links(&without_escapes);
     let mut result = String::with_capacity(replaced.len());
     for (i, line) in replaced.lines().enumerate() {
         if i > 0 {
@@ -244,7 +271,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 
     input = input.replace("_Полный выпуск: ссылка_", "");
 
-    let body = HEADER_RE.replace_all(&input, "");
+    let body = strip_header(&input);
     let mut sections = parse_sections(&body);
 
     if let Some(link) = url.as_ref() {
