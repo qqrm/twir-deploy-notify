@@ -1,4 +1,4 @@
-*Part 2/10*
+*Part 2/6*
 📰 **CALLS FOR TESTING** 📰
 An important step for RFC implementation is for people to experiment with the implementation and give feedback, especially before stabilization\.
 If you are a feature implementer and would like your RFC to appear in this list, add a call\-for\-testing label to your RFC along with a comment providing testing instructions and/or guidance on which aspect\(s\) of the feature need testing\.

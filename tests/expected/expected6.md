@@ -1,42 +1,15 @@
-*Part 6/10*
-🎉 **UPCOMING EVENTS** 🎉
-Rusty Events between 2025\-06\-25 \- 2025\-07\-23 🦀
-**Virtual**
-• 2025\-06\-25 \| Virtual \(Lima, PE\)\| [Perú Rust User Group](https://www.meetup.com/peru-rust-user-group/)
-  • [Interfaces y Costos en la nube con Rust](https://www.meetup.com/peru-rust-user-group/events/308543965/)
-• 2025\-06\-26 \| Virtual \(Girona, ES\) \| [Rust Girona](https://lu.ma/rust-girona)
-  • [Sessió setmanal de codificació / Weekly coding session](https://lu.ma/cgamfls6)
-• 2025\-06\-26 \| Virtual \(Nürnberg, DE\) \| [Rust Nuremberg](https://www.meetup.com/rust-noris)
-  • [Rust Nürnberg online](https://www.meetup.com/rust-noris/events/304567869)
-• 2025\-06\-29 \| Virtual \(Dallas, TX, US\) \| [Dallas Rust User Meetup](https://www.meetup.com/dallasrust)
-  • [Rust Readers Discord Discussion: Async Rust](https://www.meetup.com/dallasrust/events/kvqfrtyhcjbmc)
-• 2025\-07\-02 \| Virtual \(Indianapolis, IN, US\) \| [Indy Rust](https://www.meetup.com/indyrs)
-  • [Indy\.rs \- with Social Distancing](https://www.meetup.com/indyrs/events/302031667)
-• 2025\-07\-03 \| Virtual \(Berlin, DE\) \| [Rust Berlin](https://www.meetup.com/rust-berlin/events/)
-  • [Rust Hack and Learn](https://www.meetup.com/rust-berlin/events/300820304)
-• 2025\-07\-03 \| Virtual \(Rotterdam, NL\) \| [Bevy Game Development](https://www.meetup.com/bevy-game-development/events/)
-  • [Bevy Meetup \#11](https://www.meetup.com/bevy-game-development/events/308463394)
-• 2025\-07\-05 \| Virtual \(Kampala, UG\) \| [Rust Circle Meetup](https://www.eventbrite.com/o/rust-circle-kampala-65249289033)
-  • [Rust Circle Meetup](https://www.eventbrite.com/e/rust-circle-meetup-tickets-628763176587)
-• 2025\-07\-06 \| Virtual \(Dallas, TX, US\) \| [Dallas Rust User Meetup](https://www.meetup.com/dallasrust/events/)
-  • [Rust Readers Discord Discussion: Async Rust](https://www.meetup.com/dallasrust/events/308298511)
-• 2025\-07\-08 \| Virtual \(Dallas, TX, US\) \| [Dallas Rust User Meetup](https://www.meetup.com/dallasrust/events/)
-  • [Second Tuesday](https://www.meetup.com/dallasrust/events/305361452)
-• 2025\-07\-13 \| Virtual \(Dallas, TX, US\) \| [Dallas Rust User Meetup](https://www.meetup.com/dallasrust/events/)
-  • [Rust Readers Discord Discussion: Async Rust](https://www.meetup.com/dallasrust/events/308298512)
-• 2025\-07\-15 \| Virtual \(London, UK\) \| [Women in Rust](https://www.meetup.com/women-in-rust/events/)
-  • [👋 Community Catch Up](https://www.meetup.com/women-in-rust/events/307560349)
-• 2025\-07\-15 \| Virtual \(Washington, DC, US\) \| [Rust DC](https://www.meetup.com/rustdc/events/)
-  • [Mid\-month Rustful](https://www.meetup.com/rustdc/events/306757755)
-• 2025\-07\-16 \| Virtual \(Vancouver, BC, CA\) \| [Vancouver Rust](https://www.meetup.com/vancouver-rust/events/)
-  • [Rust Study/Hack/Hang\-out](https://www.meetup.com/vancouver-rust/events/307731031)
-• 2025\-07\-17 \| Virtual \(Berlin, DE\) \| [Rust Berlin](https://www.meetup.com/rust-berlin/events/)
-  • [Rust Hack and Learn](https://www.meetup.com/rust-berlin/events/300820305)
-• 2025\-07\-20 \| Virtual \(Dallas, TX, US\) \| [Dallas Rust User Meetup](https://www.meetup.com/dallasrust/events/)
-  • [Rust Readers Discord Discussion: Rust Atomics and Locks](https://www.meetup.com/dallasrust/events/308383001)
-• 2025\-07\-22 \| Virtual \(Dallas, TX, US\) \| [Dallas Rust User Meetup](https://www.meetup.com/dallasrust/events/)
-  • [Fourth Tuesday](https://www.meetup.com/dallasrust/events/tgctrtyhckbdc)
-• 2025\-07\-22 \| Virtual \(London, GB\) \| [Women in Rust](https://www.meetup.com/women-in-rust/events/)
-  • [Lunch & Learn: Crates, Tips & Tricks Lightning Talks \- Bring your ideas\!](https://www.meetup.com/women-in-rust/events/307560304)
-**Asia**
-• 2025\-06\-28 \| Bangalore/Bengaluru, IN \| [Rust Bangalore](https://hasgeek.com/rustbangalore)
+*Part 6/6*
+📰 **JOBS** 📰
+Please see the latest [Who's Hiring thread on r/rust](https://www.reddit.com/r/rust/comments/1knkfb6/official_rrust_whos_hiring_thread_for_jobseekers/)
+Quote of the Week\> Our experience is that no matter how many safeguards you put on code, there’s no cure\-all that prevents bad programming\. Of course, to take the contrary argument, seat belts don’t stop all traffic fatalities, but you could just choose not to have accidents\. So we do have seat belts\. If Rust can prevent some mistakes or malicious intent, maybe it’s worth it even if it isn’t perfect\.
+
+– [Al Williams on hackaday](https://hackaday.com/2025/06/21/if-your-kernel-development-is-a-little-rusty/)
+Thanks to [Kill The Mule](https://users.rust-lang.org/t/twir-quote-of-the-week/328/1700) for the suggestion\!
+[Please submit quotes and vote for next week\!](https://users.rust-lang.org/t/twir-quote-of-the-week/328)
+This Week in Rust is edited by: [nellshamrell](https://github.com/nellshamrell), [llogiq](https://github.com/llogiq), [cdmistman](https://github.com/cdmistman), [ericseppanen](https://github.com/ericseppanen), [extrawurst](https://github.com/extrawurst), [U007D](https://github.com/U007D), [joelmarcey](https://github.com/joelmarcey), [mariannegoldin](https://github.com/mariannegoldin), [bennyvasquez](https://github.com/bennyvasquez), [bdillo](https://github.com/bdillo)
+Email list hosting is sponsored by [The Rust Foundation](https://foundation.rust-lang.org/)
+[Discuss on r/rust](https://www.reddit.com/r/rust/comments/1lknjc1/this_week_in_rust_605/)
+\-\-\-
+
+📖 View web version: [https://this\-week\-in\-rust\.org/blog/2025/06/25/this\-week\-in\-rust\-605/](https://this-week-in-rust.org/blog/2025/06/25/this-week-in-rust-605/)
+🎉 [Upcoming Events](https://this-week-in-rust.org/blog/2025/06/25/this-week-in-rust-605/#upcoming-events)

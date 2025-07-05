@@ -16,10 +16,6 @@ fn parse_latest_issue_full() {
         include_str!("expected/expected4.md"),
         include_str!("expected/expected5.md"),
         include_str!("expected/expected6.md"),
-        include_str!("expected/expected7.md"),
-        include_str!("expected/expected8.md"),
-        include_str!("expected/expected9.md"),
-        include_str!("expected/expected10.md"),
     ];
 
     assert_eq!(posts.len(), expected.len(), "post count mismatch");
@@ -52,9 +48,6 @@ fn parse_issue_606_full() {
         include_str!("expected/606_3.md"),
         include_str!("expected/606_4.md"),
         include_str!("expected/606_5.md"),
-        include_str!("expected/606_6.md"),
-        include_str!("expected/606_7.md"),
-        include_str!("expected/606_8.md"),
     ];
 
     assert_eq!(posts.len(), expected.len(), "post count mismatch");
@@ -74,9 +67,6 @@ fn parse_issue_607_full() {
         include_str!("expected/607_3.md"),
         include_str!("expected/607_4.md"),
         include_str!("expected/607_5.md"),
-        include_str!("expected/607_6.md"),
-        include_str!("expected/607_7.md"),
-        include_str!("expected/607_8.md"),
     ];
 
     assert_eq!(posts.len(), expected.len(), "post count mismatch");

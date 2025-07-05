@@ -277,6 +277,15 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 
     let body = strip_header(&input);
     let mut sections = parse_sections(&body);
+    let mut events_link = None;
+    sections.retain(|s| {
+        if s.title.eq_ignore_ascii_case("Upcoming Events") {
+            events_link = url.as_ref().map(|u| format!("{u}#upcoming-events"));
+            false
+        } else {
+            true
+        }
+    });
 
     if let Some(link) = url.as_ref() {
         let mut link_section = Section::default();
@@ -288,6 +297,15 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             escape_markdown_url(link)
         ));
         sections.push(link_section);
+        if let Some(ev) = events_link {
+            sections.push(Section {
+                title: String::new(),
+                lines: vec![format!(
+                    "🎉 [Upcoming Events]({})",
+                    escape_markdown_url(&ev)
+                )],
+            });
+        }
     }
 
     let mut posts = Vec::new();
