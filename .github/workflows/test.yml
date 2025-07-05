@@ -60,7 +60,7 @@ jobs:
           profile: minimal
       - run: rustup component add --toolchain stable clippy rustfmt
       - run: cargo +stable install cargo-tarpaulin --quiet
-      - run: cargo +stable tarpaulin --out Lcov --output-dir coverage --quiet
+      - run: cargo +stable tarpaulin --out Lcov --output-dir coverage -- --quiet
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report
