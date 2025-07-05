@@ -547,7 +547,7 @@ mod tests {
     fn subheading_with_dash() {
         let text = "## Section\n### Foo-Bar\n- item\n";
         let secs = parse_sections(text);
-        assert_eq!(secs[0].lines[0], "**Foo\\\\-Bar**");
+        assert_eq!(secs[0].lines[0], "**Foo\\-Bar**");
         let posts = generate_posts(
             "Title: T\nNumber: 1\nDate: 2025-01-01\n\n## Section\n### Foo-Bar\n- item\n"
                 .to_string(),
