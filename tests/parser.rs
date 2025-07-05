@@ -21,10 +21,10 @@ fn code_block_before_next_heading() {
 
 #[test]
 fn bare_link_with_parentheses() {
-    let input = "## Links\n- Some text (https://example.com/path(1))\n";
+    let input = "## Section\n- Some text (https://example.com/path(1))";
     let sections = parse_sections(input);
     assert_eq!(sections.len(), 1);
-    assert_eq!(sections[0].title, "Links");
+    assert_eq!(sections[0].title, "Section");
     assert_eq!(
         sections[0].lines,
         vec!["• [Some text](https://example.com/path(1\\))"]
