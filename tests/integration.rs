@@ -212,7 +212,9 @@ fn full_issue_end_to_end() {
 
     let mut server = mockito::Server::new();
     let mut mocks = Vec::new();
-    for _ in 0..8 {
+    // Issue 606 currently generates 11 posts, so expect that
+    // many requests to the mock server.
+    for _ in 0..11 {
         mocks.push(
             server
                 .mock("POST", "/botTEST/sendMessage")
