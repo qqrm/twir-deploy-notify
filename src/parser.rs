@@ -43,46 +43,51 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
     let mut link_dest: Option<String> = None;
     let mut list_depth: usize = 0;
     let mut in_code_block = false;
+    let mut in_heading = false;
     let mut table: Vec<Vec<String>> = Vec::new();
     let mut row: Vec<String> = Vec::new();
     for event in parser {
         match event {
-            Event::Start(Tag::Heading(HeadingLevel::H2, ..)) => {
-                if let Some(ref mut sec) = current {
-                    let line = buffer.trim();
-                    if !line.is_empty() {
-                        sec.lines.push(line.to_string());
+            Event::Start(Tag::Heading(level, ..)) => {
+                in_heading = true;
+                if level == HeadingLevel::H2 {
+                    if let Some(ref mut sec) = current {
+                        let line = buffer.trim();
+                        if !line.is_empty() {
+                            sec.lines.push(line.to_string());
+                        }
                     }
-                }
-                if let Some(sec) = current.take() {
-                    sections.push(sec);
-                }
-                buffer.clear();
-            }
-            Event::End(Tag::Heading(HeadingLevel::H2, ..)) => {
-                current = Some(Section {
-                    title: buffer.trim().to_string(),
-                    lines: Vec::new(),
-                });
-                buffer.clear();
-            }
-            Event::Start(Tag::Heading(HeadingLevel::H3 | HeadingLevel::H4, ..)) => {
-                if let Some(ref mut sec) = current {
-                    let line = buffer.trim_end();
-                    if !line.is_empty() {
-                        sec.lines.push(line.to_string());
+                    if let Some(sec) = current.take() {
+                        sections.push(sec);
                     }
-                }
-                buffer.clear();
-            }
-            Event::End(Tag::Heading(HeadingLevel::H3 | HeadingLevel::H4, ..)) => {
-                if let Some(ref mut sec) = current {
-                    let heading = buffer.trim();
-                    if !heading.is_empty() {
-                        sec.lines.push(format_subheading(heading));
+                    buffer.clear();
+                } else if matches!(level, HeadingLevel::H3 | HeadingLevel::H4) {
+                    if let Some(ref mut sec) = current {
+                        let line = buffer.trim_end();
+                        if !line.is_empty() {
+                            sec.lines.push(line.to_string());
+                        }
                     }
+                    buffer.clear();
                 }
-                buffer.clear();
+            }
+            Event::End(Tag::Heading(level, ..)) => {
+                in_heading = false;
+                if level == HeadingLevel::H2 {
+                    current = Some(Section {
+                        title: buffer.trim().to_string(),
+                        lines: Vec::new(),
+                    });
+                    buffer.clear();
+                } else if matches!(level, HeadingLevel::H3 | HeadingLevel::H4) {
+                    if let Some(ref mut sec) = current {
+                        let heading = buffer.trim();
+                        if !heading.is_empty() {
+                            sec.lines.push(format_subheading(heading));
+                        }
+                    }
+                    buffer.clear();
+                }
             }
             Event::Start(Tag::List(_)) => {
                 if let Some(ref mut sec) = current {
@@ -202,7 +207,11 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 buffer.push_str("```");
             }
             Event::Text(t) | Event::Code(t) => {
-                buffer.push_str(&escape_markdown(&t));
+                if in_heading {
+                    buffer.push_str(&t);
+                } else {
+                    buffer.push_str(&escape_markdown(&t));
+                }
             }
             Event::SoftBreak | Event::HardBreak => {
                 if in_code_block {
