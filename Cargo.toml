@@ -24,6 +24,9 @@ proptest = "1"
 [features]
 integration = []
 
+[lib]
+path = "src/lib.rs"
+
 [[bin]]
 name = "check-docs"
 path = "src/bin/check_docs.rs"

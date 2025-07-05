@@ -1,17 +1,10 @@
+#[allow(unused_imports)]
+use twir_deploy_notify::{generator, parser, validator};
 use std::fs;
 use std::process::Command;
 
 #[cfg(feature = "integration")]
 use mockito::Matcher;
-#[allow(dead_code)]
-#[path = "../src/generator.rs"]
-mod generator;
-#[allow(dead_code)]
-#[path = "../src/parser.rs"]
-mod parser;
-#[allow(dead_code)]
-#[path = "../src/validator.rs"]
-mod validator;
 
 use validator::validate_telegram_markdown;
 
