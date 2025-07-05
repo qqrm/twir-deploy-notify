@@ -139,4 +139,16 @@ mod tests {
     fn accepts_escaped_dash() {
         assert!(validate_telegram_markdown("some \\- text").is_ok());
     }
+
+    #[test]
+    fn dash_inside_word_is_ok() {
+        let msg =
+            "Always wanted to contribute to open-source projects but did not know where to start?";
+        assert!(validate_telegram_markdown(msg).is_ok());
+    }
+
+    #[test]
+    fn rejects_dash_at_start() {
+        assert!(validate_telegram_markdown("- bad").is_err());
+    }
 }
