@@ -1,4 +1,4 @@
-*Часть 10/13*
+*Part 1️⃣0️⃣/1️⃣3️⃣*
 • 2025\-06\-25 \| Austin, TX, US \| [Rust ATX](https://www.meetup.com/rust-atx)
   • [Rust Lunch \- Fareground](https://www.meetup.com/rust-atx/events/xvkdgtyhcjbhc)
 • 2025\-06\-26 \| Chicago, IL, US \| [Chicago Rust Meetup](https://www.meetup.com/chicago-rust-meetup/events/)
