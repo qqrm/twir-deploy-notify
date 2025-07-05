@@ -166,7 +166,7 @@ fn send_long_escaped_dash() {
         );
     }
 
-    let result = send_to_telegram(&posts, &server.url(), "TEST", "42", true);
+    let result = send_to_telegram(&posts, &server.url(), "TEST", "42", true, false);
     assert!(result.is_ok(), "send_to_telegram failed: {result:?}");
     for m in mocks {
         m.assert();

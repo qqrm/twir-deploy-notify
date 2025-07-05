@@ -359,12 +359,19 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
 }
 
 #[derive(Deserialize)]
-struct TelegramResponse {
+struct TelegramResponse<T> {
     ok: bool,
     #[serde(default)]
     error_code: Option<i32>,
     #[serde(default)]
     description: Option<String>,
+    result: Option<T>,
+}
+
+#[derive(Deserialize)]
+/// Subset of fields returned by `sendMessage`.
+struct SendMessageResult {
+    message_id: i64,
 }
 
 /// Send prepared posts to a Telegram chat via the HTTP API.
@@ -375,6 +382,7 @@ struct TelegramResponse {
 /// - `token`: Bot token used for authentication.
 /// - `chat_id`: Identifier of the destination chat or channel.
 /// - `use_markdown`: Whether to enable Telegram Markdown parsing.
+/// - `pin_first`: Pin the first sent message using `pinChatMessage`.
 ///
 /// # Errors
 /// Returns an error if the HTTP request fails or Telegram responds with an
@@ -385,6 +393,7 @@ pub fn send_to_telegram(
     token: &str,
     chat_id: &str,
     use_markdown: bool,
+    pin_first: bool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::new();
     info!("Sending {} posts", posts.len());
@@ -406,7 +415,7 @@ pub fn send_to_telegram(
         let status = resp.status();
         let body = resp.text()?;
         debug!("Telegram response {status}: {body}");
-        let data: TelegramResponse = serde_json::from_str(&body)
+        let data: TelegramResponse<SendMessageResult> = serde_json::from_str(&body)
             .map_err(|e| format!("Failed to parse Telegram response: {e}: {body}"))?;
         if !data.ok {
             error!(
@@ -422,6 +431,40 @@ pub fn send_to_telegram(
                 data.description.unwrap_or_default()
             )
             .into());
+        }
+        if pin_first && i == 0 {
+            let Some(result) = data.result else {
+                return Err("Telegram response missing message_id".into());
+            };
+            let pin_url = format!(
+                "{}/bot{}/pinChatMessage",
+                base_url.trim_end_matches('/'),
+                token
+            );
+            debug!("Pinning message {} via {}", result.message_id, pin_url);
+            let msg_id = result.message_id.to_string();
+            let pin_form = vec![("chat_id", chat_id), ("message_id", &msg_id)];
+            let resp = client.post(&pin_url).form(&pin_form).send()?;
+            let status = resp.status();
+            let body = resp.text()?;
+            debug!("Telegram pin response {status}: {body}");
+            let pin_data: TelegramResponse<()> = serde_json::from_str(&body)
+                .map_err(|e| format!("Failed to parse Telegram pin response: {e}: {body}"))?;
+            if !pin_data.ok {
+                error!(
+                    "Telegram error pinning message {} {}: {}",
+                    result.message_id,
+                    pin_data.error_code.unwrap_or_default(),
+                    pin_data.description.as_deref().unwrap_or("unknown")
+                );
+                return Err(format!(
+                    "Telegram API error when pinning {} {}: {}",
+                    result.message_id,
+                    pin_data.error_code.unwrap_or_default(),
+                    pin_data.description.unwrap_or_default()
+                )
+                .into());
+            }
         }
         thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
     }
@@ -594,7 +637,7 @@ mod tests {
     #[test]
     fn send_to_telegram_errors_on_invalid_markdown() {
         let posts = vec!["bad *text".to_string()];
-        let err = send_to_telegram(&posts, "http://example.com", "TOKEN", "42", true);
+        let err = send_to_telegram(&posts, "http://example.com", "TOKEN", "42", true, false);
         assert!(err.is_err());
     }
 

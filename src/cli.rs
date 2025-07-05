@@ -37,7 +37,10 @@ pub fn main() -> std::io::Result<()> {
     {
         let base = env::var("TELEGRAM_API_BASE")
             .unwrap_or_else(|_| "https://api.telegram.org".to_string());
-        send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain)
+        let pin_first = env::var("TELEGRAM_PIN_FIRST")
+            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+            .unwrap_or(false);
+        send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain, pin_first)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
     }
     Ok(())
