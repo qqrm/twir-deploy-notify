@@ -3,7 +3,11 @@
 This tool processes weekly "This Week in Rust" Markdown files and prepares messages for Telegram.
 
 ## Structure
-- **src/main.rs**: Contains all application code including parsing, message generation, and tests.
+- **src/main.rs**: Entry point that calls into the CLI module.
+- **src/cli.rs**: Parses command-line arguments and orchestrates the workflow.
+- **src/generator.rs**: Builds Telegram posts and sends them to the API.
+- **src/parser.rs**: Splits Markdown into sections using `pulldown-cmark`.
+- **src/validator.rs**: Checks that generated posts follow Telegram Markdown rules.
 - **Cargo.toml**: Defines dependencies such as `pulldown-cmark`, `regex`, and `teloxide`.
 - **last_sent.txt**: Records the last processed issue for the workflow.
 
