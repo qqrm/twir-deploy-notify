@@ -293,7 +293,10 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         header.push_str(&format!("**{}**", escape_markdown(t)));
     }
     if let Some(ref n) = number {
-        header.push_str(&format!(" — \\#{}", escape_markdown(n)));
+        let already_in_title = title.as_ref().map(|t| t.contains(n)).unwrap_or(false);
+        if !already_in_title {
+            header.push_str(&format!(" — \\#{}", escape_markdown(n)));
+        }
     }
     if let Some(ref d) = date {
         header.push_str(&format!(" — {}\n\n\\-\\-\\-\n", escape_markdown(d)));
