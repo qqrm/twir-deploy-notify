@@ -4,6 +4,12 @@ on:
   push:
     branches: [ main ]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      run_integration:
+        description: "Run Telegram integration tests"
+        required: false
+        default: "false"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -58,6 +64,7 @@ jobs:
       - run: cargo test --quiet --all-targets --all-features -- --test-threads=$(nproc)
 
   integration-tests:
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_integration == 'true'
     needs: test
     runs-on: ubuntu-latest
     env:
@@ -72,7 +79,7 @@ jobs:
       - run: cargo test --quiet --all-targets --features integration -- --test-threads=1
 
   machete:
-    needs: integration-tests
+    needs: test
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
