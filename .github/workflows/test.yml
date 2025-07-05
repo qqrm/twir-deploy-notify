@@ -55,7 +55,7 @@ jobs:
       - uses: ./.github/actions/setup-rust
         with:
           toolchain: 1.88.0
-    - run: cargo test --quiet --all-targets --all-features -- --test-threads=$(nproc)
+      - run: cargo test --quiet --all-targets --all-features -- --test-threads=$(nproc)
 
   integration-tests:
     needs: test
