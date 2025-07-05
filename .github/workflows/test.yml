@@ -84,8 +84,21 @@ jobs:
       - run: cargo install cargo-machete --quiet
       - run: cargo machete
 
-  check-docs:
+  audit:
     needs: machete
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: 1.88.0
+      - run: cargo install cargo-audit --locked --quiet
+      - run: cargo audit --quiet
+
+  check-docs:
+    needs: audit
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
@@ -97,7 +110,7 @@ jobs:
       - run: cargo run --quiet --bin check-docs
 
   coverage:
-    needs: check-docs
+    needs: [check-docs, audit]
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
