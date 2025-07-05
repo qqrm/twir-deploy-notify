@@ -15,7 +15,7 @@ use validator::validate_telegram_markdown;
 #[test]
 fn parse_latest_issue_full() {
     let input = include_str!("2025-06-25-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
 
     let expected = [
         include_str!("expected/expected1.md"),
@@ -42,7 +42,7 @@ fn parse_latest_issue_full() {
 #[test]
 fn parse_complex_markdown() {
     let input = include_str!("complex.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
 
     let expected = [
         include_str!("expected/complex1.md"),
@@ -61,7 +61,7 @@ fn parse_complex_markdown() {
 #[test]
 fn parse_issue_606_full() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
 
     let expected = [
         include_str!("expected/606_1.md"),
@@ -86,7 +86,7 @@ fn parse_issue_606_full() {
 #[test]
 fn validate_generated_posts() {
     let input = include_str!("2025-06-25-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
     for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
@@ -97,7 +97,7 @@ fn validate_generated_posts() {
 #[test]
 fn validate_issue_606_posts() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
     for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
@@ -108,7 +108,7 @@ fn validate_issue_606_posts() {
 #[test]
 fn validate_issue_606_post_4() {
     let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(posts.len() >= 4);
     validate_telegram_markdown(&posts[3]).unwrap();
 }
@@ -116,7 +116,7 @@ fn validate_issue_606_post_4() {
 #[test]
 fn validate_complex_posts() {
     let input = include_str!("complex.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     assert!(!posts.is_empty());
     for (i, post) in posts.iter().enumerate() {
         validate_telegram_markdown(post)
@@ -130,7 +130,7 @@ fn send_long_escaped_dash() {
 
     let prefix = "a".repeat(generator::TELEGRAM_LIMIT - 1);
     let input = format!("Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n{prefix}\\-b");
-    let posts = generate_posts(input);
+    let posts = generate_posts(input).unwrap();
     assert!(!posts.is_empty());
 
     let mut server = mockito::Server::new();
