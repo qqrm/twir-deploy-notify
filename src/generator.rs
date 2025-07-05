@@ -408,6 +408,33 @@ mod tests {
     }
 
     #[test]
+    fn subheading_with_dash() {
+        let text = "## Section\n### Foo-Bar\n- item\n";
+        let secs = parse_sections(text);
+        assert_eq!(secs[0].lines[0], "**Foo\\\\-Bar**");
+        let posts = generate_posts(
+            "Title: T\nNumber: 1\nDate: 2025-01-01\n\n## Section\n### Foo-Bar\n- item\n"
+                .to_string(),
+        );
+        for p in posts {
+            crate::validator::validate_telegram_markdown(&p).unwrap();
+        }
+    }
+
+    #[test]
+    fn dash_at_post_boundary() {
+        let mut text = "a".repeat(10);
+        text.push('\n');
+        text.push_str("\\- start");
+        let parts = split_posts(&text, 10);
+        assert!(parts.len() > 1);
+        assert!(parts[1].starts_with("\\-"));
+        for p in parts {
+            crate::validator::validate_telegram_markdown(&p).unwrap();
+        }
+    }
+
+    #[test]
     fn markdown_validation() {
         assert!(crate::validator::validate_telegram_markdown("simple text").is_ok());
         assert!(crate::validator::validate_telegram_markdown("bad *text").is_err());

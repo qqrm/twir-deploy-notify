@@ -20,7 +20,7 @@ fn fix_bare_link(line: &str) -> String {
     if let Some(caps) = BARE_LINK_RE.captures(line) {
         let url = caps.get(1).unwrap().as_str();
         let text = line[..caps.get(0).unwrap().start()].trim_end();
-        format!("[{text}]({url})")
+        format!("[{text}]({})", escape_markdown_url(url))
     } else {
         line.to_string()
     }

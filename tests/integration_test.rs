@@ -105,6 +105,14 @@ fn validate_issue_606_posts() {
 }
 
 #[test]
+fn validate_issue_606_post_4() {
+    let input = include_str!("2025-07-02-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string());
+    assert!(posts.len() >= 4);
+    validate_telegram_markdown(&posts[3]).unwrap();
+}
+
+#[test]
 fn validate_complex_posts() {
     let input = include_str!("complex.md");
     let posts = generate_posts(input.to_string());
