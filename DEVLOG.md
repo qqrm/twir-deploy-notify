@@ -13,4 +13,5 @@
 
 ## 2025-07-03
 - Updated deploy workflow to skip previous version checks when the run is not triggered by the scheduler.
- - Fixed message splitting logic to respect Telegram limits and updated integration tests.
+- Fixed message splitting logic to respect Telegram limits and updated integration tests.
+- Enhanced post splitting to cut within overly long lines while preserving escapes.
