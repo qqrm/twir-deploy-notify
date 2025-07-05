@@ -2,7 +2,7 @@
 
 This repository contains a small tool and workflow for sending summaries of the latest **This Week in Rust** post to Telegram.
 
-The GitHub Actions workflow checks out the [`rust-lang/this-week-in-rust`](https://github.com/rust-lang/this-week-in-rust) repository and detects the newest Markdown file in its `content` directory. If a new issue is found, it is parsed with the Rust application in `src/main.rs`, and the generated message is posted to the configured Telegram chat. Each section becomes an individual Telegram post, and sections exceeding Telegram's size limit are automatically split.
+The GitHub Actions workflow checks out the [`rust-lang/this-week-in-rust`](https://github.com/rust-lang/this-week-in-rust) repository and detects the newest Markdown file in its `content` directory. If a new issue is found, it is parsed with the Rust application in `src/main.rs`, and the generated message is posted to the configured Telegram chat. Each section becomes an individual Telegram post, and sections or overly long lines exceeding Telegram's size limit are automatically split.
 The parser now derives the HTML link from the issue number and date and appends it at the end of each Telegram message.
 
 To run the workflow locally you must clone the `this-week-in-rust` repository into a `twir` subdirectory:
@@ -29,7 +29,7 @@ The Telegram API response is checked with `jq`, and the workflow fails if the se
 
 ## Development
 
-Continuous integration runs `cargo machete --check` to verify that `Cargo.toml` lists only used dependencies. Run this command locally before opening a pull request.
+Continuous integration runs `cargo machete` to verify that `Cargo.toml` lists only used dependencies. Run this command locally before opening a pull request.
 
 Documentation Markdown is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
 Generated Telegram posts are verified with the shared `validator` module.

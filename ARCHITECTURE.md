@@ -14,8 +14,8 @@ This tool processes weekly "This Week in Rust" Markdown files and prepares messa
 4. Links are preserved using parentheses format, and a final link to the full issue is generated from the date and number.
 
 ## Message Generation
- - Each section becomes a separate Telegram post capped at 4000 characters.
-- Long messages are split, and each post is prefixed with `*Часть X/Y*`.
+- Each section becomes a separate Telegram post capped at 4000 characters.
+- Long messages are split, and overly long lines are divided while preserving escape sequences. Each post is prefixed with `*Часть X/Y*`.
 - The optional `--plain` flag removes Markdown formatting for channels that require plain text.
 
 ## Dependencies
