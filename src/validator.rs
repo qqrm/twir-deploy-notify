@@ -3,7 +3,6 @@ use std::collections::VecDeque;
 /// Validate that the provided text conforms to Telegram Markdown v2 rules
 /// used in this project. Returns `Ok(())` if valid, otherwise an error
 /// message describing the first encountered problem.
-#[allow(dead_code)]
 pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
     let chars: Vec<char> = text.chars().collect();
     let mut stack: VecDeque<&str> = VecDeque::new();
@@ -91,7 +90,6 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
     Ok(())
 }
 
-#[allow(dead_code)]
 fn toggle_token<'a>(token: &'a str, stack: &mut VecDeque<&'a str>) -> Result<(), String> {
     if let Some(last) = stack.back() {
         if *last == token {
