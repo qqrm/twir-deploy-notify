@@ -27,5 +27,6 @@
 - Telegram integration tests are no longer executed automatically.
 - They can be run manually by dispatching the CI workflow with `run_integration` set to `true`.
 
-## 2025-07-08
-- Added workflow to cancel CI jobs when a pull request is merged.
+## Maintenance
+The development log keeps only the 20 most recent entries.
+When adding a new entry, delete the oldest if there are already 20.
