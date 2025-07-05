@@ -306,6 +306,8 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         header.push_str(&format!(" — {}\n\n\\-\\-\\-\n", escape_markdown(d)));
     }
 
+    let mut current_post = String::new();
+
     for (idx, sec) in sections.iter().enumerate() {
         let mut section_text = String::new();
         if idx == 0 {
@@ -319,11 +321,16 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             section_text.push('\n');
         }
 
-        if section_text.len() > TELEGRAM_LIMIT {
-            posts.extend(split_posts(&section_text, TELEGRAM_LIMIT));
+        if !current_post.is_empty() && current_post.len() + section_text.len() > TELEGRAM_LIMIT {
+            posts.push(current_post);
+            current_post = section_text;
         } else {
-            posts.push(section_text);
+            current_post.push_str(&section_text);
         }
+    }
+
+    if !current_post.is_empty() {
+        posts.push(current_post);
     }
 
     let mut final_posts = Vec::new();
@@ -504,7 +511,7 @@ mod tests {
         let first = dir.join("output_1.md");
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
-        assert!(content.contains("*Part 1/2*"));
+        assert!(content.contains("*Part 1/1*"));
         assert!(content.contains("📰 **NEWS** 📰"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);

@@ -43,12 +43,10 @@ fn crate_of_week_followed_by_section() {
     assert!(status.success());
 
     let first = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    let second = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
     assert!(first.contains("📰 **CRATE OF THE WEEK** 📰"));
     assert!(first.contains("[demo](https://example.com)"));
-    assert!(second.contains("📰 **NEXT** 📰"));
+    assert!(first.contains("📰 **NEXT** 📰"));
     common::assert_valid_markdown(&first);
-    common::assert_valid_markdown(&second);
 }
 
 #[cfg(feature = "integration")]
@@ -70,7 +68,7 @@ fn telegram_request_sent() {
         ]))
         .with_status(200)
         .with_body("{\"ok\":true}")
-        .expect(2)
+        .expect(1)
         .create();
 
     let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
@@ -83,9 +81,7 @@ fn telegram_request_sent() {
         .expect("failed to run binary");
     assert!(status.success());
     let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    let post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
     common::assert_valid_markdown(&post1);
-    common::assert_valid_markdown(&post2);
     m.assert();
 }
 
@@ -147,7 +143,7 @@ fn telegram_request_sent_plain() {
         })
         .with_status(200)
         .with_body("{\"ok\":true}")
-        .expect(2)
+        .expect(1)
         .create();
 
     let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
@@ -161,7 +157,6 @@ fn telegram_request_sent_plain() {
         .expect("failed to run binary");
     assert!(status.success());
     let _post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    let _post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
     m.assert();
 }
 
@@ -184,7 +179,7 @@ fn sends_valid_markdown() {
         ]))
         .with_status(200)
         .with_body("{\"ok\":true}")
-        .expect(2)
+        .expect(1)
         .create();
 
     let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
@@ -197,9 +192,7 @@ fn sends_valid_markdown() {
         .expect("failed to run binary");
     assert!(status.success());
     let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    let post2 = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
     common::assert_valid_markdown(&post1);
-    common::assert_valid_markdown(&post2);
     m.assert();
 }
 
@@ -213,9 +206,9 @@ fn full_issue_end_to_end() {
 
     let mut server = mockito::Server::new();
     let mut mocks = Vec::new();
-    // Issue 606 currently generates 11 posts, so expect that
+    // Issue 606 currently generates 8 posts, so expect that
     // many requests to the mock server.
-    for _ in 0..11 {
+    for _ in 0..8 {
         mocks.push(
             server
                 .mock("POST", "/botTEST/sendMessage")
