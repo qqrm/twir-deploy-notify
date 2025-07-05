@@ -85,6 +85,10 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut current = String::new();
     let mut join_next = false;
 
+    fn needs_escape(c: char) -> bool {
+        matches!(c, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!')
+    }
+
     for line in text.lines() {
         if line.len() > limit {
             if !current.is_empty() {
@@ -103,6 +107,9 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
                     } else {
                         posts.push(chunk.clone());
                         chunk.clear();
+                        if needs_escape(c) {
+                            chunk.push('\\');
+                        }
                     }
                 }
                 chunk.push(c);
@@ -138,6 +145,13 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
 
         if !current.is_empty() && !join_next {
             current.push('\n');
+        }
+        if current.is_empty() {
+            if let Some(first) = line.chars().next() {
+                if needs_escape(first) && !line.starts_with('\\') {
+                    current.push('\\');
+                }
+            }
         }
         current.push_str(line);
         if join_next {
