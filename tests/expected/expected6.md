@@ -11,5 +11,5 @@ Email list hosting is sponsored by [The Rust Foundation](https://foundation.rust
 [Discuss on r/rust](https://www.reddit.com/r/rust/comments/1lknjc1/this_week_in_rust_605/)
 \-\-\-
 
-📖 View web version: [https://this\-week\-in\-rust\.org/blog/2025/06/25/this\-week\-in\-rust\-605/](https://this-week-in-rust.org/blog/2025/06/25/this-week-in-rust-605/)
+🌐 [View web version](https://this-week-in-rust.org/blog/2025/06/25/this-week-in-rust-605/) 🌐
 🎉 [Upcoming Events](https://this-week-in-rust.org/blog/2025/06/25/this-week-in-rust-605/#upcoming-events)

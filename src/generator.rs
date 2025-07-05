@@ -292,8 +292,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         link_section.lines.push("\\-\\-\\-".to_string());
         link_section.lines.push(String::new());
         link_section.lines.push(format!(
-            "📖 View web version: [{}]({})",
-            escape_markdown(link),
+            "🌐 [View web version]({}) 🌐",
             escape_markdown_url(link)
         ));
         sections.push(link_section);
