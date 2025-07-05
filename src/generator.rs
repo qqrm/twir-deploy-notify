@@ -308,12 +308,14 @@ pub fn send_to_telegram(
             .map_err(|e| format!("Failed to parse Telegram response: {e}: {body}"))?;
         if !data.ok {
             error!(
-                "Telegram error {}: {}",
+                "Telegram error for post {} {}: {}",
+                i + 1,
                 data.error_code.unwrap_or_default(),
                 data.description.as_deref().unwrap_or("unknown")
             );
             return Err(format!(
-                "Telegram API error {}: {}",
+                "Telegram API error in post {} {}: {}",
+                i + 1,
                 data.error_code.unwrap_or_default(),
                 data.description.unwrap_or_default()
             )
