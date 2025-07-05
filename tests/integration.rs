@@ -23,7 +23,7 @@ fn crate_of_the_week_is_preserved() {
     assert!(status.success());
 
     let output = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    assert!(output.contains("📰 **CRATE OF THE WEEK**"));
+    assert!(output.contains("📰 **CRATE OF THE WEEK** 📰"));
     assert!(output.contains("primitive\\_fixed\\_point\\_decimal"));
     common::assert_valid_markdown(&output);
 }
@@ -44,9 +44,9 @@ fn crate_of_week_followed_by_section() {
 
     let first = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
     let second = fs::read_to_string(dir.path().join("output_2.md")).unwrap();
-    assert!(first.contains("📰 **CRATE OF THE WEEK**"));
+    assert!(first.contains("📰 **CRATE OF THE WEEK** 📰"));
     assert!(first.contains("[demo](https://example.com)"));
-    assert!(second.contains("📰 **NEXT**"));
+    assert!(second.contains("📰 **NEXT** 📰"));
     common::assert_valid_markdown(&first);
     common::assert_valid_markdown(&second);
 }

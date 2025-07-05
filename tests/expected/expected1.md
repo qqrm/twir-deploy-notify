@@ -2,7 +2,7 @@
 **This Week in Rust 605** — 2025\-06\-25
 
 \-\-\-
-📰 **UPDATES FROM RUST COMMUNITY**
+📰 **UPDATES FROM RUST COMMUNITY** 📰
 **Official**
 • [Announcing the Clippy feature freeze](https://blog.rust-lang.org/inside-rust/2025/06/21/announcing-the-clippy-feature-freeze/)
 **Newsletters**

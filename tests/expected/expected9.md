@@ -1,4 +1,5 @@
 *Part 9/13*
+  • [June 2025 Rustacean meetup](https://hasgeek.com/rustbangalore/june-2025-rustacean-meetup/)
 • 2025\-07\-02 \| Seoul, KR \| [Seoul Rust \(Programming Language\) Meetup](https://www.meetup.com/rust-seoul-meetup/events/)
   • [Seoul Rust Meetup](https://www.meetup.com/rust-seoul-meetup/events/308408246)
 **Europe**
@@ -37,5 +38,3 @@
 • 2025\-07\-15 \| Leipzig, DE \| [Rust \- Modern Systems Programming in Leipzig](https://www.meetup.com/rust-modern-systems-programming-in-leipzig/events/)
   • [Topic TBD](https://www.meetup.com/rust-modern-systems-programming-in-leipzig/events/308592246)
 • 2025\-07\-15 \| London, UK \| [London Rust Project Group](https://www.meetup.com/london-rust-project-group/events/)
-  • [TUI Power: Simulating & Visualising Sensor Data with Rust](https://www.meetup.com/london-rust-project-group/events/308434768)
-**North America**

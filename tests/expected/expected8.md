@@ -1,5 +1,5 @@
 *Part 8/13*
-📰 **UPCOMING EVENTS**
+🎉 **UPCOMING EVENTS** 🎉
 Rusty Events between 2025\-06\-25 \- 2025\-07\-23 🦀
 **Virtual**
 • 2025\-06\-25 \| Virtual \(Lima, PE\)\| [Perú Rust User Group](https://www.meetup.com/peru-rust-user-group/)
@@ -40,4 +40,3 @@ Rusty Events between 2025\-06\-25 \- 2025\-07\-23 🦀
   • [Lunch & Learn: Crates, Tips & Tricks Lightning Talks \- Bring your ideas\!](https://www.meetup.com/women-in-rust/events/307560304)
 **Asia**
 • 2025\-06\-28 \| Bangalore/Bengaluru, IN \| [Rust Bangalore](https://hasgeek.com/rustbangalore)
-  • [June 2025 Rustacean meetup](https://hasgeek.com/rustbangalore/june-2025-rustacean-meetup/)

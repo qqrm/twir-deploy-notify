@@ -1,5 +1,5 @@
 *Part 12/13*
-📰 **JOBS**
+📰 **JOBS** 📰
 Please see the latest [Who's Hiring thread on r/rust](https://www.reddit.com/r/rust/comments/1knkfb6/official_rrust_whos_hiring_thread_for_jobseekers/)
 Quote of the Week\> Our experience is that no matter how many safeguards you put on code, there’s no cure\-all that prevents bad programming\. Of course, to take the contrary argument, seat belts don’t stop all traffic fatalities, but you could just choose not to have accidents\. So we do have seat belts\. If Rust can prevent some mistakes or malicious intent, maybe it’s worth it even if it isn’t perfect\.
 

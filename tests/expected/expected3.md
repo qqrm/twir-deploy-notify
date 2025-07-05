@@ -1,5 +1,5 @@
 *Part 3/13*
-📰 **CALLS FOR TESTING**
+📰 **CALLS FOR TESTING** 📰
 An important step for RFC implementation is for people to experiment with the implementation and give feedback, especially before stabilization\.
 If you are a feature implementer and would like your RFC to appear in this list, add a call\-for\-testing label to your RFC along with a comment providing testing instructions and/or guidance on which aspect\(s\) of the feature need testing\.
 • No calls for testing were issued this week by [Rust](https://github.com/rust-lang/rust/labels/call-for-testing), [Rust language RFCs](https://github.com/rust-lang/rfcs/issues?q=label%3Acall-for-testing), [Cargo](https://github.com/rust-lang/cargo/labels/call-for-testing) or [Rustup](https://github.com/rust-lang/rustup/labels/call-for-testing)\.
