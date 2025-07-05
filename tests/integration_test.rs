@@ -198,3 +198,21 @@ fn issue_606_no_unescaped_dashes() {
         );
     }
 }
+
+#[test]
+fn parse_call_for_participation() {
+    let input = include_str!("2025-07-05-call-for-participation.md");
+    let posts = generate_posts(input.to_string());
+
+    let expected = [
+        include_str!("expected/cfp1.md"),
+        include_str!("expected/cfp2.md"),
+    ];
+
+    assert_eq!(posts.len(), expected.len(), "post count mismatch");
+    for (i, (post, exp)) in posts.iter().zip(expected.iter()).enumerate() {
+        assert_eq!(post, exp, "Mismatch in post {}", i + 1);
+        validate_telegram_markdown(post)
+            .unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
+    }
+}
