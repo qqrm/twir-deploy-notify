@@ -50,7 +50,7 @@ fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     }
 
     let input = include_str!("2025-06-25-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string());
+    let posts = generate_posts(input.to_string()).unwrap();
     for (i, p) in posts.iter().enumerate() {
         validate_telegram_markdown(p).unwrap_or_else(|e| panic!("post {} invalid: {}", i + 1, e));
     }

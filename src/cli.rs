@@ -18,7 +18,7 @@ pub fn main() -> std::io::Result<()> {
     let cli = Cli::parse();
 
     let input = fs::read_to_string(&cli.input)?;
-    let mut posts = generate_posts(input);
+    let mut posts = generate_posts(input).map_err(|e| std::io::Error::other(e.to_string()))?;
 
     if cli.plain {
         posts = posts.into_iter().map(|p| markdown_to_plain(&p)).collect();
