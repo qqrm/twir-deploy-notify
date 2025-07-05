@@ -52,3 +52,16 @@ proptest! {
         }
     }
 }
+
+#[test]
+fn boundary_escape_preserved() {
+    let mut input = "a".repeat(TELEGRAM_LIMIT - 1);
+    input.push('\\');
+    input.push_str("-b");
+    let posts = split_posts(&input, TELEGRAM_LIMIT);
+    assert!(posts.len() >= 2);
+    assert!(!posts[1].starts_with('-'));
+    for p in posts {
+        validate_telegram_markdown(&p).unwrap();
+    }
+}

@@ -157,3 +157,17 @@ fn send_long_escaped_dash() {
         m.assert();
     }
 }
+
+#[test]
+fn issue_606_no_unescaped_dashes() {
+    let input = include_str!("2025-07-02-this-week-in-rust.md");
+    let posts = generate_posts(input.to_string());
+    assert!(!posts.is_empty());
+    for (i, post) in posts.iter().enumerate() {
+        assert!(
+            !post.starts_with('-'),
+            "post {} begins with unescaped dash",
+            i + 1
+        );
+    }
+}
