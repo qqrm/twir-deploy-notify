@@ -79,7 +79,7 @@ jobs:
         run: cargo test --quiet --all-targets --features integration -- --test-threads=1
 
       - name: Send to main chat
-        if: steps.prepare.outputs.send == 'true' && inputs.send_main == true && github.event_name == 'schedule'
+        if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
