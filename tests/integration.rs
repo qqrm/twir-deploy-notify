@@ -8,6 +8,64 @@ use mockito::Matcher;
 
 mod common;
 
+#[cfg(feature = "integration")]
+fn run_single_post(input: &str, plain: bool, validate_markdown: bool) {
+    use mockito::Matcher;
+
+    let dir = tempfile::tempdir().unwrap();
+    let input_path = dir.path().join("input.md");
+    fs::write(&input_path, input).unwrap();
+
+    let mut server = mockito::Server::new();
+    let mock = if plain {
+        server
+            .mock("POST", "/botTEST/sendMessage")
+            .match_header("content-type", "application/x-www-form-urlencoded")
+            .match_request(|req| {
+                let body = req.utf8_lossy_body().unwrap();
+                body.contains("chat_id=42")
+                    && body.contains("disable_web_page_preview=true")
+                    && !body.contains("parse_mode")
+            })
+            .with_status(200)
+            .with_body("{\"ok\":true}")
+            .expect(1)
+            .create()
+    } else {
+        server
+            .mock("POST", "/botTEST/sendMessage")
+            .match_header("content-type", "application/x-www-form-urlencoded")
+            .match_body(Matcher::AllOf(vec![
+                Matcher::UrlEncoded("chat_id".into(), "42".into()),
+                Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+                Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+            ]))
+            .with_status(200)
+            .with_body("{\"ok\":true}")
+            .expect(1)
+            .create()
+    };
+
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"));
+    cmd.arg(&input_path)
+        .current_dir(dir.path())
+        .env("TELEGRAM_BOT_TOKEN", "TEST")
+        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_API_BASE", server.url());
+    if plain {
+        cmd.arg("--plain");
+    }
+
+    let status = cmd.status().expect("failed to run binary");
+    assert!(status.success());
+
+    let post = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
+    if validate_markdown {
+        common::assert_valid_markdown(&post);
+    }
+    mock.assert();
+}
+
 #[test]
 fn crate_of_the_week_is_preserved() {
     let dir = tempfile::tempdir().unwrap();
@@ -52,37 +110,11 @@ fn crate_of_week_followed_by_section() {
 #[cfg(feature = "integration")]
 #[test]
 fn telegram_request_sent() {
-    let dir = tempfile::tempdir().unwrap();
-    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- item\n";
-    let input_path = dir.path().join("input.md");
-    fs::write(&input_path, input).unwrap();
-
-    let mut server = mockito::Server::new();
-    let m = server
-        .mock("POST", "/botTEST/sendMessage")
-        .match_header("content-type", "application/x-www-form-urlencoded")
-        .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
-            Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
-            Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
-        ]))
-        .with_status(200)
-        .with_body("{\"ok\":true,\"result\":true}")
-        .expect(1)
-        .create();
-
-    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
-        .arg(&input_path)
-        .current_dir(dir.path())
-        .env("TELEGRAM_BOT_TOKEN", "TEST")
-        .env("TELEGRAM_CHAT_ID", "42")
-        .env("TELEGRAM_API_BASE", server.url())
-        .status()
-        .expect("failed to run binary");
-    assert!(status.success());
-    let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    common::assert_valid_markdown(&post1);
-    m.assert();
+    run_single_post(
+        "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- item\n",
+        false,
+        true,
+    );
 }
 
 #[test]
@@ -126,74 +158,21 @@ fn fails_on_unescaped_dash() {
 #[cfg(feature = "integration")]
 #[test]
 fn telegram_request_sent_plain() {
-    let dir = tempfile::tempdir().unwrap();
-    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- item\n";
-    let input_path = dir.path().join("input.md");
-    fs::write(&input_path, input).unwrap();
-
-    let mut server = mockito::Server::new();
-    let m = server
-        .mock("POST", "/botTEST/sendMessage")
-        .match_header("content-type", "application/x-www-form-urlencoded")
-        .match_request(|req| {
-            let body = req.utf8_lossy_body().unwrap();
-            body.contains("chat_id=42")
-                && body.contains("disable_web_page_preview=true")
-                && !body.contains("parse_mode")
-        })
-        .with_status(200)
-        .with_body("{\"ok\":true,\"result\":true}")
-        .expect(1)
-        .create();
-
-    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
-        .arg(&input_path)
-        .arg("--plain")
-        .current_dir(dir.path())
-        .env("TELEGRAM_BOT_TOKEN", "TEST")
-        .env("TELEGRAM_CHAT_ID", "42")
-        .env("TELEGRAM_API_BASE", server.url())
-        .status()
-        .expect("failed to run binary");
-    assert!(status.success());
-    let _post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    m.assert();
+    run_single_post(
+        "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- item\n",
+        true,
+        false,
+    );
 }
 
 #[cfg(feature = "integration")]
 #[test]
 fn sends_valid_markdown() {
-    let dir = tempfile::tempdir().unwrap();
-    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- **Bold**\n";
-    let input_path = dir.path().join("input.md");
-    fs::write(&input_path, input).unwrap();
-
-    let mut server = mockito::Server::new();
-    let m = server
-        .mock("POST", "/botTEST/sendMessage")
-        .match_header("content-type", "application/x-www-form-urlencoded")
-        .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
-            Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
-            Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
-        ]))
-        .with_status(200)
-        .with_body("{\"ok\":true,\"result\":true}")
-        .expect(1)
-        .create();
-
-    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
-        .arg(&input_path)
-        .current_dir(dir.path())
-        .env("TELEGRAM_BOT_TOKEN", "TEST")
-        .env("TELEGRAM_CHAT_ID", "42")
-        .env("TELEGRAM_API_BASE", server.url())
-        .status()
-        .expect("failed to run binary");
-    assert!(status.success());
-    let post1 = fs::read_to_string(dir.path().join("output_1.md")).unwrap();
-    common::assert_valid_markdown(&post1);
-    m.assert();
+    run_single_post(
+        "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- **Bold**\n",
+        false,
+        true,
+    );
 }
 
 #[cfg(feature = "integration")]

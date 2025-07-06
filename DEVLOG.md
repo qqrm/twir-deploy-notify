@@ -1,5 +1,7 @@
 # Development Log
 
+## 2025-07-09
+- Unified Telegram integration tests using a helper function to reduce duplication.
 ## 2025-06-26
 - Initial project setup and scheduled GitHub Actions workflow.
 - Implemented basic Telegram notifier and bug fixes.
