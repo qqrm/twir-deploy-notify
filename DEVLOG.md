@@ -1,5 +1,8 @@
 # Development Log
 
+## 2025-07-12
+- Updated Crate of the Week heading to use a box emoji.
+
 ## 2025-07-09
 - Unified Telegram integration tests using a helper function to reduce duplication.
 ## 2025-06-26
