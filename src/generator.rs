@@ -24,7 +24,6 @@ pub static SUBHEADING_EMOJIS: phf::Map<&'static str, &'static str> = phf_map! {
     "clippy" => "🔧",
     "rust-analyzer" => "🤖",
     "tracking issues & prs" => "📌",
-    "quote of the week" => "💬",
 };
 
 /// Short URL guiding contributors how to submit CFP tasks.
@@ -73,6 +72,28 @@ fn simplify_cfp_section(section: &mut Section) {
         cleaned.insert(insert_at, msg);
     }
 
+    section.lines = cleaned;
+}
+
+fn simplify_quote_section(section: &mut Section) {
+    let mut cleaned = Vec::new();
+    let mut in_quote = false;
+    for line in &section.lines {
+        if line.contains("Quote of the Week") {
+            cleaned.push("\n**Quote of the Week:**".to_string());
+            in_quote = true;
+            continue;
+        }
+        let lower = line.to_ascii_lowercase();
+        if in_quote
+            && (lower.contains("please submit quotes")
+                || lower.starts_with("thanks to")
+                || lower.starts_with("despite "))
+        {
+            continue;
+        }
+        cleaned.push(line.clone());
+    }
     section.lines = cleaned;
 }
 
@@ -159,6 +180,9 @@ pub fn format_heading(title: &str) -> String {
 pub fn format_subheading(title: &str) -> String {
     let trimmed = title.trim();
     let lower = trimmed.to_ascii_lowercase();
+    if lower == "quote of the week" {
+        return format!("\n**{}:**", escape_markdown(trimmed));
+    }
     if let Some(emoji) = SUBHEADING_EMOJIS.get(lower.as_str()) {
         format!("\n**{}:** {}", escape_markdown(trimmed), emoji)
     } else {
@@ -378,6 +402,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         {
             simplify_cfp_section(sec);
         }
+        simplify_quote_section(sec);
     }
     sections.retain(|s| !s.title.eq_ignore_ascii_case("Upcoming Events"));
 
