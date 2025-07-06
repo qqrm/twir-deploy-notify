@@ -273,6 +273,15 @@ impl std::error::Error for ValidationError {}
 
 /// Split a long message into chunks that obey Telegram's length limit.
 ///
+/// The function walks through the input line by line and builds a vector of
+/// posts whose length never exceeds `limit`. Lines longer than the limit are
+/// split character by character. When a chunk ends with a backslash the
+/// character is moved to the beginning of the next chunk so that escape
+/// sequences remain valid. If the start of a new post would begin with a
+/// Markdown control character, it is prefixed with a backslash to keep the
+/// formatting intact. Newlines are inserted between lines unless a trailing
+/// backslash caused the next line to be joined.
+///
 /// # Parameters
 /// - `text`: The text to split.
 /// - `limit`: Maximum allowed length of each chunk.
