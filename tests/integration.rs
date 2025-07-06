@@ -239,7 +239,7 @@ fn send_issue_606_post_4() {
             Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
         ]))
         .with_status(200)
-        .with_body("{\"ok\":true}")
+        .with_body("{\"ok\":true,\"result\":true}")
         .expect(1)
         .create();
 
@@ -296,7 +296,7 @@ fn pin_first_message() {
             Matcher::UrlEncoded("message_id".into(), "2".into()),
         ]))
         .with_status(200)
-        .with_body("{\"ok\":true}")
+        .with_body("{\"ok\":true,\"result\":true}")
         .expect(1)
         .create();
 

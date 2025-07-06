@@ -31,6 +31,18 @@ fn arb_escaped_text() -> impl Strategy<Value = String> {
     proptest::string::string_regex(&regex).unwrap()
 }
 
+fn arb_special_line() -> impl Strategy<Value = String> {
+    let word = proptest::string::string_regex("[A-Za-z0-9]{1,5}").unwrap();
+    let seq = prop_oneof![Just("\\".to_string()), Just("\\-".to_string()),];
+    let word2 = proptest::string::string_regex("[A-Za-z0-9]{0,5}").unwrap();
+    (word, prop::collection::vec(seq, 1..3), word2)
+        .prop_map(|(pre, seqs, post)| format!("{pre}{}{post}", seqs.concat()))
+}
+
+fn arb_multiline_special() -> impl Strategy<Value = String> {
+    prop::collection::vec(arb_special_line(), 2..5).prop_map(|lines| lines.join("\n"))
+}
+
 proptest! {
     #![proptest_config(ProptestConfig::with_cases(16))]
     #[test]
@@ -73,6 +85,19 @@ proptest! {
         prop_assert!(posts.len() >= 2);
         for p in posts {
             prop_assert!(!p.starts_with('-'));
+            common::assert_valid_markdown(&p);
+        }
+    }
+}
+
+proptest! {
+    #![proptest_config(ProptestConfig::with_cases(16))]
+    #[test]
+    fn special_sequences_are_valid(input in arb_multiline_special()) {
+        let posts = split_posts(&input, TELEGRAM_LIMIT);
+        prop_assert!(!posts.is_empty());
+        for p in posts {
+            prop_assert!(!p.is_empty());
             common::assert_valid_markdown(&p);
         }
     }
