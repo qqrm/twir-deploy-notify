@@ -483,7 +483,12 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         if !post.ends_with('\n') {
             post.push('\n');
         }
-        let formatted = format!("*Part {}/{}*\n{}", i + 1, total, post);
+        let formatted = format!(
+            "*Part {}/{}*\n\n{}",
+            i + 1,
+            total,
+            post.trim_start_matches('\n')
+        );
         validate_telegram_markdown(&formatted)
             .map_err(|e| ValidationError(format!("Generated post {} invalid: {e}", i + 1)))?;
         result.push(formatted);
