@@ -557,3 +557,17 @@ fn jobs_links_present() {
     assert!(combined.contains("[Rust Jobs chat](https://t.me/rust_jobs)"));
     assert!(combined.contains("[Rust Jobs feed](https://t.me/rust_jobs_feed)"));
 }
+
+#[test]
+fn send_to_telegram_rejects_invalid_before_request() {
+    let posts = vec!["bad *text".to_string()];
+    let mut server = mockito::Server::new();
+    let m = server
+        .mock("POST", "/botTEST/sendMessage")
+        .expect(0)
+        .create();
+
+    let result = generator::send_to_telegram(&posts, &server.url(), "TEST", "42", true, false);
+    assert!(result.is_err());
+    m.assert();
+}

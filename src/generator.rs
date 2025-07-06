@@ -518,6 +518,13 @@ pub fn send_to_telegram(
     use_markdown: bool,
     pin_first: bool,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    if use_markdown {
+        for (i, post) in posts.iter().enumerate() {
+            validate_telegram_markdown(post)
+                .map_err(|e| ValidationError(format!("Post {} invalid: {e}", i + 1)))?;
+        }
+    }
+
     let client = Client::new();
     info!("Sending {} posts", posts.len());
     let mut first_id: Option<i64> = None;
@@ -530,7 +537,6 @@ pub fn send_to_telegram(
         debug!("Posting message {} to {}", i + 1, url);
         let mut form = vec![("chat_id", chat_id), ("text", post)];
         if use_markdown {
-            validate_telegram_markdown(post).map_err(ValidationError)?;
             form.push(("parse_mode", "MarkdownV2"));
         }
         form.push(("disable_web_page_preview", "true"));
