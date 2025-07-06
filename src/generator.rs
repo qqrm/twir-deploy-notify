@@ -396,7 +396,7 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
 /// A vector of validated Telegram Markdown posts or a `ValidationError` if any
 /// post fails validation.
 pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError> {
-    let title = find_title(&input);
+    let _title = find_title(&input);
     let number = find_number(&input);
     let date = find_date(&input);
 
@@ -455,17 +455,14 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
     let mut posts = Vec::new();
 
     let mut header = String::new();
-    if let Some(ref t) = title {
-        header.push_str(&format!("🦀 **{}** 🦀", escape_markdown(t)));
-    }
     if let Some(ref n) = number {
-        let already_in_title = title.as_ref().map(|t| t.contains(n)).unwrap_or(false);
-        if !already_in_title {
-            header.push_str(&format!(" — \\#{}", escape_markdown(n)));
-        }
+        header.push_str(&format!("\\#{}", escape_markdown(n)));
     }
     if let Some(ref d) = date {
-        header.push_str(&format!(" — {}\n\n", escape_markdown(d)));
+        header.push_str(&format!(" — {}", escape_markdown(d)));
+    }
+    if !header.is_empty() {
+        header.push_str("\n\n");
     }
 
     let mut current_post = String::new();
@@ -729,7 +726,7 @@ mod tests {
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
         assert!(!content.starts_with("*Part"));
-        assert!(content.starts_with("🦀 **Test** 🦀"));
+        assert!(content.starts_with("\\#1 — 2024\\-01\\-01"));
         assert!(content.contains("📰 **NEWS** 📰"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);

@@ -1,4 +1,4 @@
-🦀 **This Week in Rust 607** 🦀 — 2025\-07\-05
+\#607 — 2025\-07\-05
 
 📰 **CALL FOR PARTICIPATION; PROJECTS AND SPEAKERS** 📰
 **CFP \- Projects**
