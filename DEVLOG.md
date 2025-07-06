@@ -33,6 +33,12 @@
 - Removed extraneous separator line from web link section and updated tests.
 - Added Rust Jobs chat and feed links to the generated Jobs section.
 - Updated tests and expected outputs accordingly.
+## 2025-07-09
+- Introduced AI-only license and updated contributor guidelines.
+## 2025-07-10
+- Replaced AI-only license with QQRM LAPOCHKA and updated docs.
+## 2025-07-11
+- Expanded QQRM LAPOCHKA license text and clarified contributor rules.
 
 ## 2025-07-09
 - GitHub usernames prefixed with `@` are now converted to profile links.
