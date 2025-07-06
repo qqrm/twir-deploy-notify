@@ -87,7 +87,6 @@ fn simplify_quote_section(section: &mut Section) {
     for line in &section.lines {
         if line.contains("Quote of the Week") {
             cleaned.push(format_subheading("Quote of the Week"));
-            cleaned.push(String::new());
             in_quote = true;
             continue;
         }
@@ -102,6 +101,7 @@ fn simplify_quote_section(section: &mut Section) {
             if line.trim_start().starts_with('–') {
                 in_quote = false;
                 cleaned.push(line.trim_start().to_string());
+                cleaned.push(String::new());
                 continue;
             }
             let content = line.trim_start_matches("\\>").trim_start();
