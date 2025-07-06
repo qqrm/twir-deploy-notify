@@ -67,7 +67,7 @@ fn telegram_request_sent() {
             Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
         ]))
         .with_status(200)
-        .with_body("{\"ok\":true}")
+        .with_body("{\"ok\":true,\"result\":true}")
         .expect(1)
         .create();
 
@@ -142,7 +142,7 @@ fn telegram_request_sent_plain() {
                 && !body.contains("parse_mode")
         })
         .with_status(200)
-        .with_body("{\"ok\":true}")
+        .with_body("{\"ok\":true,\"result\":true}")
         .expect(1)
         .create();
 
@@ -178,7 +178,7 @@ fn sends_valid_markdown() {
             Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
         ]))
         .with_status(200)
-        .with_body("{\"ok\":true}")
+        .with_body("{\"ok\":true,\"result\":true}")
         .expect(1)
         .create();
 
@@ -305,7 +305,7 @@ fn pin_first_message() {
             Matcher::UrlEncoded("message_id".into(), "1".into()),
         ]))
         .with_status(200)
-        .with_body("{\"ok\":true}")
+        .with_body("{\"ok\":true,\"result\":true}")
         .expect(1)
         .create();
 

@@ -540,7 +540,8 @@ pub fn send_to_telegram(
             let status = resp.status();
             let body = resp.text()?;
             debug!("Telegram pin response {status}: {body}");
-            let pin_data: TelegramResponse<()> = serde_json::from_str(&body)
+            use serde::de::IgnoredAny;
+            let pin_data: TelegramResponse<IgnoredAny> = serde_json::from_str(&body)
                 .map_err(|e| format!("Failed to parse Telegram pin response: {e}: {body}"))?;
             if !pin_data.ok {
                 error!(

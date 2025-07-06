@@ -44,8 +44,9 @@
 - Removed `tests/dash_word.rs` since validator test covers this case.
 - Pinned posts now remove the automatic notification using `deleteMessage`.
 - Updated integration tests for the new behavior.
+- Fixed parsing of pinChatMessage response handling boolean result.
+- Updated integration test accordingly.
 
 ## Maintenance
 The development log keeps only the 20 most recent entries.
 When adding a new entry, delete the oldest if there are already 20.
-
