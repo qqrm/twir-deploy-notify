@@ -37,6 +37,10 @@
 - Added short instruction link and removed the events link at the bottom.
 - Updated expected test outputs accordingly.
 
+## 2025-07-10
+- Pinned posts now remove the automatic notification using `deleteMessage`.
+- Updated integration tests for the new behavior.
+
 ## Maintenance
 The development log keeps only the 20 most recent entries.
 When adding a new entry, delete the oldest if there are already 20.
