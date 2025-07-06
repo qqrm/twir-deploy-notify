@@ -28,6 +28,35 @@ fn fix_bare_link(line: &str) -> String {
     line.to_string()
 }
 
+fn replace_github_mentions(text: &str) -> String {
+    let mut result = String::new();
+    let chars: Vec<char> = text.chars().collect();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '@' {
+            let prev = if i == 0 { None } else { Some(chars[i - 1]) };
+            let mut j = i + 1;
+            if j < chars.len() && chars[j].is_ascii_alphanumeric() {
+                while j < chars.len() && (chars[j].is_ascii_alphanumeric() || chars[j] == '-') {
+                    j += 1;
+                }
+                let next = chars.get(j).copied();
+                if !prev.is_some_and(|c| c.is_ascii_alphanumeric() || c == '/')
+                    && !next.is_some_and(|c| c.is_ascii_alphanumeric() || c == '-')
+                {
+                    let user: String = chars[i + 1..j].iter().collect();
+                    result.push_str(&format!("[{user}](https://github.com/{user})"));
+                    i = j;
+                    continue;
+                }
+            }
+        }
+        result.push(chars[i]);
+        i += 1;
+    }
+    result
+}
+
 /// Parse TWIR Markdown into logical sections using `pulldown-cmark`.
 ///
 /// # Parameters
@@ -93,7 +122,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 if let Some(ref mut sec) = current {
                     let line = buffer.trim_end();
                     if !line.is_empty() {
-                        let fixed = fix_bare_link(line);
+                        let fixed = replace_github_mentions(&fix_bare_link(line));
                         let indent = "  ".repeat(list_depth.saturating_sub(1));
                         sec.lines.push(format!("{indent}• {fixed}"));
                         buffer.clear();
@@ -111,7 +140,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 if let Some(ref mut sec) = current {
                     let line = buffer.trim_end();
                     if !line.is_empty() {
-                        let fixed = fix_bare_link(line);
+                        let fixed = replace_github_mentions(&fix_bare_link(line));
                         let indent = "  ".repeat(list_depth.saturating_sub(1));
                         sec.lines.push(format!("{indent}• {fixed}"));
                     }
@@ -172,7 +201,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 if let Some(ref mut sec) = current {
                     let line = buffer.trim_end();
                     if !line.is_empty() {
-                        let fixed = fix_bare_link(line);
+                        let fixed = replace_github_mentions(&fix_bare_link(line));
                         sec.lines.push(fixed);
                     }
                 }
@@ -228,7 +257,8 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
     }
     if let Some(mut sec) = current {
         if !buffer.trim().is_empty() {
-            sec.lines.push(buffer.trim().to_string());
+            let fixed = replace_github_mentions(&fix_bare_link(buffer.trim()));
+            sec.lines.push(fixed);
         }
         sections.push(sec);
     }

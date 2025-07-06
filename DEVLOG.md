@@ -33,6 +33,8 @@
 - Updated tests and expected outputs accordingly.
 
 ## 2025-07-09
+- GitHub usernames prefixed with `@` are now converted to profile links.
+- Updated parser logic and revised expected test outputs.
 - Unified Markdown validation tests into a single function.
 - Simplified Call for Participation section when no tasks are available.
 - Added short instruction link and removed the events link at the bottom.
