@@ -90,26 +90,9 @@ task description and prepares a **task stub** that starts from the freshest
 commit on `main`. A prompt asks whether to launch the stub as a new merge
 request, avoiding stale branches. See [RESTART.md](DOCS/RESTART.md) for details.
 
-## Commit message template
-
-Git can automatically include the required co-author line in every commit. Set
-the template once using:
-
-```bash
-git config commit.template .gitmessage
-```
-
-The template includes the following default trailer:
-
-```text
-Co-authored-by: CODEX from ChatGPT <codex@example.com>
-```
-
-Adjust the agent name or email by editing `.gitmessage` directly or by setting
-`GIT_AUTHOR_NAME` and `GIT_AUTHOR_EMAIL` before committing.
 
 ## License
 
 This project is distributed under the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.
-Contributors must generate changes via an AI agent and mention it as a co-author in commits.
+Contributors must generate changes via an AI agent.
 Manual code submissions may still be humorously called a "skill issue" by the community.
