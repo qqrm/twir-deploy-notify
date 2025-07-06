@@ -56,3 +56,9 @@ Install it with `cargo install cargo-machete` if it is not available.
 Documentation Markdown is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
 Generated Telegram posts are verified with the shared `validator` module.
 Integration tests that send messages to Telegram run only when the CI workflow is manually triggered with the `run_integration` input.
+
+## License
+
+This project is distributed under two licenses: the standard MIT terms in `LICENSE` and the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.
+Contributors must generate changes via an AI agent and mention it as a co-author in commits.
+Manual code submissions may be humorously called a "skill issue" by the community.
