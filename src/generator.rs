@@ -595,7 +595,7 @@ pub fn send_to_telegram(
             let status = resp.status();
             let body = resp.text()?;
             debug!("Telegram delete response {status}: {body}");
-            let delete_data: TelegramResponse<()> = serde_json::from_str(&body)
+            let delete_data: TelegramResponse<IgnoredAny> = serde_json::from_str(&body)
                 .map_err(|e| format!("Failed to parse Telegram delete response: {e}: {body}"))?;
             if !delete_data.ok {
                 warn!(
