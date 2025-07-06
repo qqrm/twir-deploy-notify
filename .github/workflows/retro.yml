@@ -8,18 +8,18 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
-    steps:
-      - uses: actions/checkout@v4
+      steps:
+        - uses: actions/checkout@v4
 
-      - name: Checkout TWIR
-        uses: actions/checkout@v4
-        with:
-          repository: rust-lang/this-week-in-rust
-          path: twir
+        - uses: ./.github/actions/setup-rust
+          with:
+            toolchain: 1.88.0
 
-      - uses: ./.github/actions/setup-rust
-        with:
-          toolchain: 1.88.0
+        - name: Checkout TWIR
+          uses: actions/checkout@v4
+          with:
+            repository: rust-lang/this-week-in-rust
+            path: twir
 
       - name: Determine last 10 posts
         id: list
