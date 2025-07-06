@@ -26,9 +26,8 @@ Additional terms (QQRM LAPOCHKA):
 2. **All routine and repetitive actions MUST be automated.** If a human runs the same command twice in a row by hand, they must confess loudly in the commit message.
 3. **Pipelines MUST exist.** Absence of CI/CD is considered a personal insult to the spirit of vibecoding.
 4. **All code MUST pass tests.** Broken builds are grounds for collective meditation over the logs.
-5. **A trailer mentioning the AI agent is MANDATORY in commit messages** (e.g., "Co-authored-by").
-6. **Manual code review is welcome, but only for the aesthetic pleasure of admiring automation.** Attempts to "optimize manually" shall be met with: "well, then go ahead and deploy it by hand yourself, huh."
-7. **When resolving merge conflicts, priority always goes to the most automated solution.** The more automation, the more of a lapochka you are.
-8. **Every contributor must keep a playful spirit and remember: deep down, all code is just an elegant joke played on entropy.**
+5. **Manual code review is welcome, but only for the aesthetic pleasure of admiring automation.** Attempts to "optimize manually" shall be met with: "well, then go ahead and deploy it by hand yourself, huh."
+6. **When resolving merge conflicts, priority always goes to the most automated solution.** The more automation, the more of a lapochka you are.
+7. **Every contributor must keep a playful spirit and remember: deep down, all code is just an elegant joke played on entropy.**
 
 *This license is not a joke, and not a set of practical instructions. If you can’t figure out why it exists — you’re doing everything right.*
