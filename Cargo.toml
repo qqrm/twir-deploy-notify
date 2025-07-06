@@ -30,3 +30,16 @@ path = "src/lib.rs"
 [[bin]]
 name = "check-docs"
 path = "src/bin/check_docs.rs"
+
+[profile.dev]
+opt-level = 0
+incremental = true
+
+[profile.test]
+opt-level = 0
+incremental = true
+
+[profile.release]
+opt-level = 1
+incremental = true
+codegen-units = 16

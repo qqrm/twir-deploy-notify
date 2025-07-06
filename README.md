@@ -31,6 +31,16 @@ Set `RUST_LOG=info` to see detailed logs including Telegram API responses:
 RUST_LOG=info cargo run --bin twir-deploy-notify -- twir/content/<file-name>.md
 ```
 
+## Cargo profiles
+
+The project defines custom profiles in `Cargo.toml` that optimize for quick
+iteration. Development and test builds use `opt-level = 0` with incremental
+compilation enabled. Release builds set `opt-level = 1`, keep incremental
+compilation, and increase `codegen-units` to `16`.
+
+The `.cargo/config.toml` file adds `-C target-cpu=native` to all builds so local
+compilations target the current machine's CPU features.
+
 ## Configuration
 
 The application expects several environment variables when sending posts to
