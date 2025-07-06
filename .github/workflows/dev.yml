@@ -1,0 +1,20 @@
+name: Dev TWIR summary
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  notify:
+    uses: ./.github/workflows/common-delivery.yml
+    with:
+      send_main: false
+      run_integration: true

@@ -58,9 +58,9 @@ Restricted environments such as the provided container may not support Docker, s
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
 
 Responses from Telegram are verified with the `verify-posts` binary.
-Scheduled runs send the posts to the development chat using this tool.
-After the messages are confirmed to appear in the channel, the same release is
-posted to the main chat.
+Scheduled runs send the posts to the development chat through the `dev.yml` workflow.
+After the messages are confirmed to appear in the channel, the manual `release.yml` workflow
+posts the same release to the main chat.
 
 Setting the `TWIR_MARKDOWN` environment variable before building will
 parse the referenced file at compile time and embed the generated posts
