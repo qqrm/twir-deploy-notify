@@ -115,3 +115,11 @@ fn boundary_escape_preserved() {
         common::assert_valid_markdown(&p);
     }
 }
+
+#[test]
+fn single_section_has_expected_prefix() {
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- item\n";
+    let posts = generator::generate_posts(input.to_string()).unwrap();
+    assert_eq!(posts.len(), 1);
+    assert!(posts[0].starts_with("*Part 1/1*\n\n"));
+}

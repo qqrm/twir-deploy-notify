@@ -554,6 +554,7 @@ fn jobs_links_present() {
     let input = include_str!("2025-07-05-this-week-in-rust.md");
     let posts = generator::generate_posts(input.to_string()).unwrap();
     let combined = posts.join("\n");
+    assert!(combined.contains("[Rust Job Reddit Thread](https://www.reddit.com/r/rust/comments/1llcso7/official_rrust_whos_hiring_thread_for_jobseekers/)"));
     assert!(combined.contains("[Rust Jobs chat](https://t.me/rust_jobs)"));
     assert!(combined.contains("[Rust Jobs feed](https://t.me/rust_jobs_feed)"));
 }

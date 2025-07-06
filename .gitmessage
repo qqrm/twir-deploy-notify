@@ -1,0 +1,6 @@
+# Commit message template
+# Provide a short summary in imperative mood.
+# Leave a blank line after the summary and wrap lines at 72 characters.
+# Describe the motivation and changes in the body if necessary.
+# Append the following trailer for AI-generated contributions.
+Co-authored-by: Codex Agent <email@example.com>

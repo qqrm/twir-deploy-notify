@@ -1,5 +1,6 @@
 use log::{debug, error, info, warn};
 use phf::phf_map;
+use regex::Regex;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
@@ -33,28 +34,33 @@ fn simplify_cfp_section(section: &mut Section) {
     let mut cleaned = Vec::new();
     let mut in_projects = false;
     let mut has_task = false;
-    let mut events_index = None;
 
     for line in section.lines.iter() {
-        if line.starts_with("**CFP - Projects**") {
+        if line.starts_with("**CFP \\- Projects**") {
             in_projects = true;
             cleaned.push(line.clone());
             continue;
         }
-        if line.starts_with("**CFP - Events**") {
+        if line.starts_with("**CFP \\- Events**") {
             in_projects = false;
-            events_index = Some(cleaned.len());
             cleaned.push(line.clone());
             continue;
         }
         if line.contains("guidelines") && line.contains("submit tasks") {
             continue;
         }
+        if line.starts_with("Always wanted to contribute")
+            || line.starts_with("Some of these tasks")
+            || line.starts_with("Are you a new or experienced speaker")
+        {
+            continue;
+        }
         if in_projects {
             if line.trim() == "No Calls for participation were submitted this week." {
                 continue;
             }
-            if line.trim_start().starts_with('•') {
+            let trimmed = line.trim_start();
+            if trimmed.starts_with('•') || trimmed.starts_with('*') {
                 has_task = true;
             }
             cleaned.push(line.clone());
@@ -68,8 +74,7 @@ fn simplify_cfp_section(section: &mut Section) {
             "На этой неделе новых задач нет\\. [Инструкции]({})",
             escape_markdown_url(CFP_GUIDELINES)
         );
-        let insert_at = events_index.unwrap_or(cleaned.len());
-        cleaned.insert(insert_at, msg);
+        cleaned.push(msg);
     }
 
     section.lines = cleaned;
@@ -95,6 +100,16 @@ fn simplify_quote_section(section: &mut Section) {
         cleaned.push(line.clone());
     }
     section.lines = cleaned;
+}
+
+fn simplify_jobs_section(section: &mut Section) {
+    let re = Regex::new(r"\[Who'?s Hiring thread on r/rust\]\(([^)]+)\)").unwrap();
+    for line in &mut section.lines {
+        if let Some(caps) = re.captures(line) {
+            let url = caps.get(1).unwrap().as_str();
+            *line = format!("🦀 [Rust Job Reddit Thread]({})", escape_markdown_url(url));
+        }
+    }
 }
 
 fn find_value(text: &str, prefix: &str) -> Option<String> {
@@ -256,6 +271,15 @@ impl std::error::Error for ValidationError {}
 
 /// Split a long message into chunks that obey Telegram's length limit.
 ///
+/// The function walks through the input line by line and builds a vector of
+/// posts whose length never exceeds `limit`. Lines longer than the limit are
+/// split character by character. When a chunk ends with a backslash the
+/// character is moved to the beginning of the next chunk so that escape
+/// sequences remain valid. If the start of a new post would begin with a
+/// Markdown control character, it is prefixed with a backslash to keep the
+/// formatting intact. Newlines are inserted between lines unless a trailing
+/// backslash caused the next line to be joined.
+///
 /// # Parameters
 /// - `text`: The text to split.
 /// - `limit`: Maximum allowed length of each chunk.
@@ -385,6 +409,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
     let mut sections = parse_sections(&body);
     for sec in &mut sections {
         if sec.title.eq_ignore_ascii_case("Jobs") && !sec.lines.is_empty() {
+            simplify_jobs_section(sec);
             let chat = format!(
                 "💼 [Rust Jobs chat]({})",
                 escape_markdown_url("https://t.me/rust_jobs")
@@ -477,7 +502,12 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         if !post.ends_with('\n') {
             post.push('\n');
         }
-        let formatted = format!("*Part {}/{}*\n{}", i + 1, total, post);
+        let formatted = format!(
+            "*Part {}/{}*\n\n{}",
+            i + 1,
+            total,
+            post.trim_start_matches('\n')
+        );
         validate_telegram_markdown(&formatted)
             .map_err(|e| ValidationError(format!("Generated post {} invalid: {e}", i + 1)))?;
         result.push(formatted);
@@ -643,7 +673,7 @@ pub fn send_to_telegram(
         let status = resp.status();
         let body = resp.text()?;
         debug!("Telegram delete response {status}: {body}");
-        let delete_data: TelegramResponse<()> = serde_json::from_str(&body)
+        let delete_data: TelegramResponse<IgnoredAny> = serde_json::from_str(&body)
             .map_err(|e| format!("Failed to parse Telegram delete response: {e}: {body}"))?;
         if !delete_data.ok {
             warn!(
@@ -825,6 +855,19 @@ mod tests {
         let posts = vec!["bad *text".to_string()];
         let err = send_to_telegram(&posts, "http://example.com", "TOKEN", "42", true, false);
         assert!(err.is_err());
+    }
+
+    #[test]
+    fn cfp_sections_without_content_are_short() {
+        let input = include_str!("../tests/2025-07-05-call-for-participation.md");
+        let posts = generate_posts(input.to_string()).unwrap();
+        assert_eq!(posts.len(), 1);
+        let post = &posts[0];
+        assert!(post.contains("No Calls for participation were submitted this week"));
+        assert!(post.contains("No Calls for papers or presentations were submitted this week"));
+        assert!(!post.contains("Always wanted to contribute"));
+        assert!(!post.contains("Some of these tasks"));
+        assert!(!post.contains("Are you a new or experienced speaker"));
     }
 
     mod property {

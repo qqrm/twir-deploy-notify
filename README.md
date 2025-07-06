@@ -59,6 +59,14 @@ The workflow stores the last processed file in `last_sent.txt` as an artifact an
 
 The Telegram API response is checked with `jq`, and the workflow fails if the server does not return `{ "ok": true }`.
 
+Scheduled runs first send the posts to the development chat using the
+`verify-posts` binary. After the messages are confirmed to appear in the
+channel, the same release is posted to the main chat.
+
+Setting the `TWIR_MARKDOWN` environment variable before building will
+parse the referenced file at compile time and embed the generated posts
+in the crate. The resulting array is available as `twir_deploy_notify::posts::POSTS`.
+
 ## Development
 
 Continuous integration runs `cargo machete` to verify that `Cargo.toml` lists only used dependencies. Run this command locally before opening a pull request.
@@ -83,13 +91,25 @@ If these variables are absent, the Telegram tests are skipped.
 
 ## Restart command
 
-To restart a task, use the `Restart` command. The agent will duplicate the
-original task description and create a new task based on the latest commit. A
-prompt appears asking whether to launch the task in a clean environment. See
-[RESTART.md](RESTART.md) for details.
+To restart a task, use the `Restart` command. The agent duplicates the original
+task description and prepares a **task stub** that starts from the freshest
+commit on `main`. A prompt asks whether to launch the stub as a new merge
+request, avoiding stale branches. See [RESTART.md](RESTART.md) for details.
+
+## Commit message template
+
+Git can automatically include the required co-author line in every commit. Set
+the template once using:
+
+```bash
+git config commit.template .gitmessage
+```
+
+Adjust the agent name or email by editing `.gitmessage` directly or by setting
+`GIT_AUTHOR_NAME` and `GIT_AUTHOR_EMAIL` before committing.
 
 ## License
 
-This project is distributed under two licenses: the standard MIT terms in `LICENSE` and the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.
+This project is distributed under the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.
 Contributors must generate changes via an AI agent and mention it as a co-author in commits.
-Manual code submissions may be humorously called a "skill issue" by the community.
+Manual code submissions may still be humorously called a "skill issue" by the community.
