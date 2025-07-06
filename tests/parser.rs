@@ -20,7 +20,7 @@ fn bare_link_with_parentheses() {
     assert_eq!(sections[0].title, "Section");
     assert_eq!(
         sections[0].lines,
-        vec!["• [Some text](https://example.com/path(1\\))"]
+        vec!["• [Some text](https://example.com/path\\(1\\))"]
     );
     common::assert_valid_markdown(&sections[0].lines[0]);
 }

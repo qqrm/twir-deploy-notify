@@ -3,7 +3,7 @@ use phf::phf_map;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
-use teloxide::utils::markdown::{escape, escape_link_url};
+use teloxide::utils::markdown::escape;
 
 use crate::parser::{Section, parse_sections};
 use crate::validator::validate_telegram_markdown;
@@ -180,7 +180,7 @@ pub fn escape_markdown(text: &str) -> String {
 /// # Returns
 /// The escaped URL.
 pub fn escape_markdown_url(url: &str) -> String {
-    escape_link_url(url)
+    url.replace('(', "\\(").replace(')', "\\)")
 }
 
 /// Format a section heading for Telegram posts.
@@ -209,6 +209,17 @@ pub fn format_heading(title: &str) -> String {
 /// The escaped heading wrapped in bold markers.
 pub fn format_subheading(title: &str) -> String {
     let trimmed = title.trim();
+    if trimmed.starts_with('[') && trimmed.ends_with(')') {
+        if let Some(idx) = trimmed.find("](") {
+            let text = &trimmed[1..idx];
+            let url = &trimmed[idx + 2..trimmed.len() - 1];
+            return format!(
+                "**[{}]({})**",
+                escape_markdown(text),
+                escape_markdown_url(url)
+            );
+        }
+    }
     let lower = trimmed.to_ascii_lowercase();
     if lower == "quote of the week" {
         return format!("\n**{}:** 💬\n", escape_markdown(trimmed));
@@ -777,7 +788,7 @@ mod tests {
     fn escape_url_parentheses() {
         let url = "https://example.com/path(1)";
         let escaped = escape_markdown_url(url);
-        assert_eq!(escaped, "https://example.com/path(1\\)");
+        assert_eq!(escaped, "https://example.com/path\\(1\\)");
     }
 
     #[test]
