@@ -123,3 +123,23 @@ fn single_section_has_expected_prefix() {
     assert_eq!(posts.len(), 1);
     assert!(!posts[0].starts_with("*Part"));
 }
+
+#[test]
+fn quote_section_spacing() {
+    let posts =
+        generator::generate_posts(include_str!("2025-07-02-this-week-in-rust.md").to_string())
+            .unwrap();
+    assert!(posts.len() >= 5);
+    let lines: Vec<_> = posts[4].lines().collect();
+    let idx = lines
+        .iter()
+        .position(|l| l.contains("Quote of the Week"))
+        .unwrap();
+    assert!(lines.get(idx + 1).is_some_and(|l| l.is_empty()));
+    assert!(lines.get(idx + 2).is_some_and(|l| !l.is_empty()));
+    let author_idx = lines
+        .iter()
+        .position(|l| l.trim_start().starts_with('–'))
+        .unwrap();
+    assert!(lines.get(author_idx + 1).is_some_and(|l| l.is_empty()));
+}
