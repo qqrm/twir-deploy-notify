@@ -1,6 +1,4 @@
-*Part 1/6*
-
-**This Week in Rust 605** — 2025\-06\-25
+🦀 **This Week in Rust 605** 🦀 — 2025\-06\-25
 
 📰 **UPDATES FROM RUST COMMUNITY** 📰
 **Official**
