@@ -35,6 +35,7 @@ pub fn main() -> std::io::Result<()> {
     }
     if let (Ok(token), Ok(chat_id)) = (env::var("TELEGRAM_BOT_TOKEN"), env::var("TELEGRAM_CHAT_ID"))
     {
+        log::debug!("chat id: {chat_id}");
         let base = env::var("TELEGRAM_API_BASE")
             .unwrap_or_else(|_| "https://api.telegram.org".to_string());
         let pin_first = env::var("TELEGRAM_PIN_FIRST")
