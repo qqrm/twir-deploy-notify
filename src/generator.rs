@@ -630,8 +630,21 @@ pub fn send_to_telegram(
                 .get("description")
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
-            error!("Telegram error for post {} {}: {}", i + 1, code, desc);
-            return Err(format!("Telegram API error in post {} {}: {}", i + 1, code, desc).into());
+            error!(
+                "Telegram error for post {} {}: {} (chat_id {chat_id}, token {token})",
+                i + 1,
+                code,
+                desc
+            );
+            return Err(
+                format!(
+                    "Telegram API error in post {} {}: {} (TELEGRAM_CHAT_ID={chat_id}, TELEGRAM_BOT_TOKEN={token})",
+                    i + 1,
+                    code,
+                    desc
+                )
+                .into(),
+            );
         }
         if pin_first {
             match raw

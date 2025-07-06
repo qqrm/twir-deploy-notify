@@ -572,3 +572,32 @@ fn send_to_telegram_rejects_invalid_before_request() {
     assert!(result.is_err());
     m.assert();
 }
+
+#[test]
+fn send_to_telegram_reports_chat_not_found() {
+    use mockito::Matcher;
+
+    let posts = vec!["hello".to_string()];
+    let mut server = mockito::Server::new();
+    let m = server
+        .mock("POST", "/botTOKEN/sendMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+            Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+        ]))
+        .with_status(400)
+        .with_body(
+            "{\"ok\":false,\"error_code\":400,\"description\":\"Bad Request: chat not found\"}",
+        )
+        .expect(1)
+        .create();
+
+    let result = generator::send_to_telegram(&posts, &server.url(), "TOKEN", "42", true, false);
+    assert!(result.is_err());
+    let err = result.unwrap_err().to_string();
+    assert!(err.contains("chat not found"));
+    assert!(err.contains("TELEGRAM_BOT_TOKEN"));
+    m.assert();
+}
