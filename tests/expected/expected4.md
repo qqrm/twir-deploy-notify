@@ -27,7 +27,8 @@ Changes to Rust follow the Rust [RFC \(request for comments\) process](https://g
 • No RFCs were approved this week\.
 **Final Comment Period**
 Every week, [the team](https://www.rust-lang.org/team.html) announces the 'final comment period' for RFCs and key PRs which are reaching a decision\. Express your opinions now\.
-**Tracking Issues & PRs**
+
+**Tracking Issues & PRs:** 📌
 • [Rust](https://github.com/rust-lang/rust/issues?q=is%3Aopen+label%3Afinal-comment-period+sort%3Aupdated-desc)
 • [Use lld by default on x86\_64\-unknown\-linux\-gnu stable](https://github.com/rust-lang/rust/pull/140525)
 • [Allow \#\[must\_use\] on associated types to warn on unused values in generic contexts](https://github.com/rust-lang/rust/pull/142590)

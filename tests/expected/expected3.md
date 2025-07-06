@@ -7,7 +7,8 @@
 • [asyncDrop trait without sync Drop generates an error](https://github.com/rust-lang/rust/pull/142606)
 • [stabilize generic\_arg\_infer](https://github.com/rust-lang/rust/pull/141610)
 • [skip no\-op drop glue](https://github.com/rust-lang/rust/pull/142508)
-**Library**
+
+**Library:** 📚
 • [add trim\_prefix and trim\_suffix methods for both slice and str types](https://github.com/rust-lang/rust/pull/142331)
 • [allow comparisons between CStr, CString, and Cow<CStr\>](https://github.com/rust-lang/rust/pull/137268)
 • [allow storing format\_args\!\(\) in variable](https://github.com/rust-lang/rust/pull/140748)
@@ -16,15 +17,18 @@
 • [let String pass \#\[track\_caller\] to its Vec calls](https://github.com/rust-lang/rust/pull/142728)
 • [safer implementation of RepeatN](https://github.com/rust-lang/rust/pull/130887)
 • [use a distinct ToString implementation for u128 and i128](https://github.com/rust-lang/rust/pull/142294)
-**Cargo**
+
+**Cargo:** 📦
 • [cargo: feat\(toml\): Parse support for multiple build scripts](https://github.com/rust-lang/cargo/pull/15630)
 • [cargo: feat: introduce perma unstable \-\-compile\-time\-deps option for cargo build](https://github.com/rust-lang/cargo/pull/15674)
 • [cargo: fix potential deadlock in CacheState::lock](https://github.com/rust-lang/cargo/pull/15698)
-**Rustdoc**
+
+**Rustdoc:** 📖
 • [avoid a few more allocations in write\_shared\.rs](https://github.com/rust-lang/rust/pull/142667)
 • [rustdoc\-json: keep empty generic args if parenthesized](https://github.com/rust-lang/rust/pull/142932)
 • [rustdoc: make srcIndex no longer a global variable](https://github.com/rust-lang/rust/pull/142100)
-**Clippy**
+
+**Clippy:** 🔧
 • [use jemalloc for Clippy](https://github.com/rust-lang/rust/pull/142286)
 • [perf: Don't spawn so many compilers \(3/2\) \(19m → 250k\)](https://github.com/rust-lang/rust-clippy/pull/15030)
 • [Sugg: do not parenthesize a double unary operator](https://github.com/rust-lang/rust-clippy/pull/14983)
@@ -41,4 +45,5 @@
 • [fix false positive of borrow\_deref\_ref](https://github.com/rust-lang/rust-clippy/pull/14967)
 • [fix suggestion\-causes\-error of empty\_line\_after\_outer\_attr](https://github.com/rust-lang/rust-clippy/pull/15078)
 • [new lint: manual\_is\_multiple\_of](https://github.com/rust-lang/rust-clippy/pull/14292)
-**Rust\-Analyzer**
+
+**Rust\-Analyzer:** 🤖

@@ -90,7 +90,10 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                         sections.push(sec);
                     }
                     buffer.clear();
-                } else if matches!(level, HeadingLevel::H3 | HeadingLevel::H4) {
+                } else if matches!(
+                    level,
+                    HeadingLevel::H1 | HeadingLevel::H3 | HeadingLevel::H4
+                ) {
                     if let Some(ref mut sec) = current {
                         let line = buffer.trim_end();
                         if !line.is_empty() {
@@ -108,7 +111,10 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                         lines: Vec::new(),
                     });
                     buffer.clear();
-                } else if matches!(level, HeadingLevel::H3 | HeadingLevel::H4) {
+                } else if matches!(
+                    level,
+                    HeadingLevel::H1 | HeadingLevel::H3 | HeadingLevel::H4
+                ) {
                     if let Some(ref mut sec) = current {
                         let heading = buffer.trim();
                         if !heading.is_empty() {
