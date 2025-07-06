@@ -757,6 +757,13 @@ mod tests {
     }
 
     #[test]
+    fn plain_code_block() {
+        let text = "```rust\nlet x = 1;\n```";
+        let plain = markdown_to_plain(text);
+        assert_eq!(plain, "let x = 1;\n");
+    }
+
+    #[test]
     fn link_parsing() {
         let text = "## Links\n- [Rust](https://rust-lang.org)\n";
         let secs = parse_sections(text);
