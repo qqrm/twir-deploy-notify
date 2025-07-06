@@ -104,6 +104,12 @@ the template once using:
 git config commit.template .gitmessage
 ```
 
+The template includes the following default trailer:
+
+```text
+Co-authored-by: CODEX from ChatGPT <codex@example.com>
+```
+
 Adjust the agent name or email by editing `.gitmessage` directly or by setting
 `GIT_AUTHOR_NAME` and `GIT_AUTHOR_EMAIL` before committing.
 
