@@ -24,7 +24,8 @@
 • [Defending Democracies With Rust](https://filtra.io/rust/interviews/helsing-jun-25)
 • [Rust: A language that grows with you, your career and your projects](https://kerkour.com/rust-grows-with-you)
 • \[video playlist\] [Scientific Computing in Rust 2025](https://www.youtube.com/watch?v=XyXMKuclTcQ&list=PLrueqeouhcZNRW7H26DfscFjGSf0Pzd8c)
-**Rust Walkthroughs**
+
+**Rust Walkthroughs:** 📚
 • [Porting GPU shaders to Rust 30x faster with AI](https://rust-gpu.github.io/blog/2025/06/24/vulkan-shader-port/)
 • [Bitwise DNA Compression in Rust: Small Footprint with Fast Reverse Complements](https://arianfarid.me/articles/dna-compression.html)
 • [Writing a basic Linux device driver when you know nothing about Linux drivers or USB](https://crescentro.se/posts/writing-drivers/)
