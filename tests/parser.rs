@@ -24,3 +24,14 @@ fn bare_link_with_parentheses() {
     );
     common::assert_valid_markdown(&sections[0].lines[0]);
 }
+
+#[test]
+fn fenced_code_block_round_trip() {
+    let input = "## Section\n```\nfn main() {\n    println!(\"Hello_world\");\n}\n```";
+    let sections = parse_sections(input);
+    assert_eq!(sections.len(), 1);
+    assert_eq!(
+        sections[0].lines,
+        vec!["```\nfn main() {\n    println!(\"Hello_world\");\n}\n```"]
+    );
+}
