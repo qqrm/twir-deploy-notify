@@ -347,7 +347,7 @@ fn pin_after_all_messages() {
         ]))
         .with_body_from_request(|_| {
             CALLS.lock().unwrap().push("send");
-            b"{\"ok\":true}".to_vec()
+            b"{\"ok\":true,\"result\":{\"message_id\":2}}".to_vec()
         })
         .expect(1)
         .create();
@@ -371,7 +371,7 @@ fn pin_after_all_messages() {
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
             Matcher::UrlEncoded("chat_id".into(), "42".into()),
-            Matcher::UrlEncoded("message_id".into(), "2".into()),
+            Matcher::UrlEncoded("message_id".into(), "3".into()),
         ]))
         .with_body_from_request(|_| {
             CALLS.lock().unwrap().push("delete");
