@@ -306,3 +306,83 @@ fn pin_first_message() {
     m3.assert();
     common::assert_valid_markdown(&posts[0]);
 }
+
+#[cfg(feature = "integration")]
+#[test]
+fn pin_after_all_messages() {
+    use mockito::Matcher;
+    use once_cell::sync::Lazy;
+    use std::sync::Mutex;
+
+    static CALLS: Lazy<Mutex<Vec<&str>>> = Lazy::new(|| Mutex::new(Vec::new()));
+
+    CALLS.lock().unwrap().clear();
+
+    let posts = vec!["first".to_string(), "second".to_string()];
+    let mut server = mockito::Server::new();
+
+    let _m1 = server
+        .mock("POST", "/botTEST/sendMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("text".into(), "first".into()),
+            Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+            Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+        ]))
+        .with_body_from_request(|_| {
+            CALLS.lock().unwrap().push("send");
+            b"{\"ok\":true,\"result\":{\"message_id\":1}}".to_vec()
+        })
+        .expect(1)
+        .create();
+
+    let _m2 = server
+        .mock("POST", "/botTEST/sendMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("text".into(), "second".into()),
+            Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
+            Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
+        ]))
+        .with_body_from_request(|_| {
+            CALLS.lock().unwrap().push("send");
+            b"{\"ok\":true}".to_vec()
+        })
+        .expect(1)
+        .create();
+
+    let _m_pin = server
+        .mock("POST", "/botTEST/pinChatMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("message_id".into(), "1".into()),
+        ]))
+        .with_body_from_request(|_| {
+            CALLS.lock().unwrap().push("pin");
+            b"{\"ok\":true,\"result\":true}".to_vec()
+        })
+        .expect(1)
+        .create();
+
+    let _m_del = server
+        .mock("POST", "/botTEST/deleteMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("message_id".into(), "2".into()),
+        ]))
+        .with_body_from_request(|_| {
+            CALLS.lock().unwrap().push("delete");
+            b"{\"ok\":true}".to_vec()
+        })
+        .expect(1)
+        .create();
+
+    generator::send_to_telegram(&posts, &server.url(), "TEST", "42", true, true).unwrap();
+
+    let order = CALLS.lock().unwrap().clone();
+    assert_eq!(order, ["send", "send", "pin", "delete"]);
+}
