@@ -11,7 +11,8 @@
 • [rust\-analyzer: use ROOT hygiene for args inside new format\_args\! expansion](https://github.com/rust-lang/rust-analyzer/pull/20073)
 • [rust\-analyzer: hide imported privates if private editable is disabled](https://github.com/rust-lang/rust-analyzer/pull/20025)
 • [rust\-analyzer: mimic rustc's new format\_args\! expansion](https://github.com/rust-lang/rust-analyzer/pull/20056)
-**Rust Compiler Performance Triage**
+
+**Rust Compiler Performance Triage:** 📊
 A week dominated by the landing of a large patch implementing [RFC\#3729](https://github.com/rust-lang/rfcs/pull/3729) which unfortunately introduced rather sizeable performance regressions \(avg of \~1% instruction count on 111 primary benchmarks\)\. This was deemed worth it so that the patch could land and performance could be won back in follow up PRs\.
 Triage done by [rylev](https://github.com/rylev)\. Revision range: [45acf54e\.\.42245d34](https://perf.rust-lang.org/?start=45acf54eea118ed27927282b5e0bfdcd80b7987c&end=42245d34d22ade32b3f276dcf74deb826841594c&absolute=false&stat=instructions%3Au)
 Summary:

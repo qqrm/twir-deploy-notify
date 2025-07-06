@@ -24,6 +24,7 @@ pub static SUBHEADING_EMOJIS: phf::Map<&'static str, &'static str> = phf_map! {
     "rustdoc" => "📖",
     "clippy" => "🔧",
     "rust-analyzer" => "🤖",
+    "rust compiler performance triage" => "📊",
     "tracking issues & prs" => "📌",
 };
 
