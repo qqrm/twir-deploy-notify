@@ -87,10 +87,10 @@ If these variables are absent, the Telegram tests are skipped.
 
 ## Restart command
 
-To restart a task, use the `Restart` command. The agent will duplicate the
-original task description and create a new task based on the latest commit. A
-prompt appears asking whether to launch the task in a clean environment. See
-[RESTART.md](RESTART.md) for details.
+To restart a task, use the `Restart` command. The agent duplicates the original
+task description and prepares a **task stub** that starts from the freshest
+commit on `main`. A prompt asks whether to launch the stub as a new merge
+request, avoiding stale branches. See [RESTART.md](RESTART.md) for details.
 
 ## Commit message template
 
