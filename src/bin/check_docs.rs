@@ -1,7 +1,26 @@
 use pulldown_cmark::{CodeBlockKind, Event, Parser, Tag};
-use regex::Regex;
 use std::{fs, path::Path};
 use walkdir::WalkDir;
+
+fn parse_rs_file(code: &str) -> Option<&str> {
+    let trimmed = code.trim();
+    trimmed
+        .strip_suffix(".rs")
+        .filter(|_| {
+            !trimmed.is_empty()
+                && trimmed
+                    .chars()
+                    .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '.' | '/' | '-'))
+        })
+        .map(|_| trimmed)
+}
+
+fn parse_function(code: &str) -> Option<&str> {
+    let trimmed = code.trim();
+    trimmed.strip_suffix('(').filter(|name| {
+        !name.is_empty() && name.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
+    })
+}
 
 fn function_exists(name: &str) -> std::io::Result<bool> {
     for entry in WalkDir::new("src").into_iter().chain(WalkDir::new("tests")) {
@@ -17,9 +36,6 @@ fn function_exists(name: &str) -> std::io::Result<bool> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let file_re = Regex::new(r"^([A-Za-z0-9_./-]+\\.rs)$")?;
-    let func_re = Regex::new(r"^([A-Za-z0-9_]+)\\()$")?;
-
     let mut missing = Vec::new();
 
     for entry in WalkDir::new(".").into_iter().filter_map(Result::ok) {
@@ -32,14 +48,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                     Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(_))) => in_block = true,
                     Event::End(Tag::CodeBlock(_)) => in_block = false,
                     Event::Code(code) | Event::Text(code) if in_block => {
-                        if let Some(cap) = file_re.captures(&code) {
-                            let p = cap.get(1).unwrap().as_str();
+                        if let Some(p) = parse_rs_file(&code) {
                             if !Path::new(p).exists() {
                                 missing
                                     .push(format!("{}: missing file {p}", entry.path().display()));
                             }
-                        } else if let Some(cap) = func_re.captures(&code) {
-                            let name = cap.get(1).unwrap().as_str();
+                        } else if let Some(name) = parse_function(&code) {
                             if !function_exists(name)? {
                                 missing.push(format!(
                                     "{}: missing function {name}",
@@ -49,14 +63,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                         }
                     }
                     Event::Code(code) => {
-                        if let Some(cap) = file_re.captures(&code) {
-                            let p = cap.get(1).unwrap().as_str();
+                        if let Some(p) = parse_rs_file(&code) {
                             if !Path::new(p).exists() {
                                 missing
                                     .push(format!("{}: missing file {p}", entry.path().display()));
                             }
-                        } else if let Some(cap) = func_re.captures(&code) {
-                            let name = cap.get(1).unwrap().as_str();
+                        } else if let Some(name) = parse_function(&code) {
                             if !function_exists(name)? {
                                 missing.push(format!(
                                     "{}: missing function {name}",
