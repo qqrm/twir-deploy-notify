@@ -602,6 +602,7 @@ pub fn send_to_telegram(
     let mut first_id: Option<i64> = None;
     let mut last_id: Option<i64> = None;
     for (i, post) in posts.iter().enumerate() {
+        info!("Posting {}/{} ({} chars)", i + 1, posts.len(), post.len());
         let url = format!(
             "{}/bot{}/sendMessage",
             base_url.trim_end_matches('/'),
@@ -633,6 +634,7 @@ pub fn send_to_telegram(
             error!("Telegram error for post {} {}: {}", i + 1, code, desc);
             return Err(format!("Telegram API error in post {} {}: {}", i + 1, code, desc).into());
         }
+        info!("Post {} sent", i + 1);
         if pin_first {
             match raw
                 .get("result")

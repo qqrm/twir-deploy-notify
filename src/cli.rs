@@ -22,13 +22,18 @@ pub fn main() -> std::io::Result<()> {
     env_logger::init();
     let cli = Cli::parse();
 
+    log::info!("Reading input file {}", cli.input);
     let input = fs::read_to_string(&cli.input)?;
+    log::info!("Generating posts");
     let mut posts = generate_posts(input).map_err(|e| std::io::Error::other(e.to_string()))?;
+    log::info!("Generated {} posts", posts.len());
 
     if cli.plain {
+        log::info!("Converting posts to plain text");
         posts = posts.into_iter().map(|p| markdown_to_plain(&p)).collect();
     }
 
+    log::info!("Writing posts to disk");
     write_posts(&posts, Path::new("."))?;
     for (i, _) in posts.iter().enumerate() {
         println!("Generated output_{}.md", i + 1);
@@ -41,9 +46,11 @@ pub fn main() -> std::io::Result<()> {
         let pin_first = env::var("TELEGRAM_PIN_FIRST")
             .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
             .unwrap_or(false);
-        log::info!("calling send_to_telegram");
+        log::info!("Sending posts to Telegram");
         send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain, pin_first)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
+    } else {
+        log::info!("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set; skipping send");
     }
     Ok(())
 }
