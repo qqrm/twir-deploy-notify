@@ -550,6 +550,15 @@ fn parse_call_for_participation() {
 }
 
 #[test]
+fn triage_heading_contains_emoji() {
+    let posts =
+        generator::generate_posts(include_str!("2025-06-25-this-week-in-rust.md").to_string())
+            .unwrap();
+    let combined = posts.join("\n");
+    assert!(combined.contains("**Rust Compiler Performance Triage:** 📈"));
+}
+
+#[test]
 fn jobs_links_present() {
     let input = include_str!("2025-07-05-this-week-in-rust.md");
     let posts = generator::generate_posts(input.to_string()).unwrap();

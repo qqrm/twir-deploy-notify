@@ -25,6 +25,7 @@ pub static SUBHEADING_EMOJIS: phf::Map<&'static str, &'static str> = phf_map! {
     "clippy" => "🔧",
     "rust-analyzer" => "🤖",
     "tracking issues & prs" => "📌",
+    "rust compiler performance triage" => "📈",
 };
 
 /// Short URL guiding contributors how to submit CFP tasks.
@@ -86,7 +87,6 @@ fn simplify_quote_section(section: &mut Section) {
     for line in &section.lines {
         if line.contains("Quote of the Week") {
             cleaned.push(format_subheading("Quote of the Week"));
-            cleaned.push(String::new());
             in_quote = true;
             continue;
         }
@@ -100,6 +100,7 @@ fn simplify_quote_section(section: &mut Section) {
             }
             if line.trim_start().starts_with('–') {
                 in_quote = false;
+                cleaned.push(String::new());
                 cleaned.push(line.trim_start().to_string());
                 continue;
             }

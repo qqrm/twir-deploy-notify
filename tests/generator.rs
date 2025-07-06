@@ -123,3 +123,26 @@ fn single_section_has_expected_prefix() {
     assert_eq!(posts.len(), 1);
     assert!(!posts[0].starts_with("*Part"));
 }
+
+#[test]
+fn quote_spacing_is_correct() {
+    let posts =
+        generator::generate_posts(include_str!("2025-06-25-this-week-in-rust.md").to_string())
+            .unwrap();
+    let post = posts.last().expect("missing final post");
+    let lines: Vec<_> = post.lines().collect();
+    let idx = lines
+        .iter()
+        .position(|l| l.contains("Quote of the Week"))
+        .expect("quote heading missing");
+    assert_eq!(lines[idx + 1], "");
+    assert!(!lines[idx + 2].is_empty());
+    assert_eq!(lines[idx + 3], "");
+    assert!(lines[idx + 4].starts_with('–'));
+}
+
+#[test]
+fn triage_heading_has_emoji() {
+    let out = generator::format_subheading("Rust Compiler Performance Triage");
+    assert!(out.contains('📈'));
+}
