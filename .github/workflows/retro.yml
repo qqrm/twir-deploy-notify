@@ -1,0 +1,73 @@
+name: Retro TWIR Processing
+
+on:
+  workflow_dispatch:
+
+jobs:
+  retro:
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout TWIR
+        uses: actions/checkout@v4
+        with:
+          repository: rust-lang/this-week-in-rust
+          path: twir
+
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: 1.88.0
+
+      - name: Determine last 10 posts
+        id: list
+        run: |
+          files=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n 10 | tr '\n' ' ')
+          echo "files=$files" >> "$GITHUB_OUTPUT"
+
+      - name: Build project
+        run: cargo build --quiet
+
+      - name: Compile validator helper
+        run: |
+          cat <<'RS' > validate.rs
+          extern crate twir_deploy_notify;
+          use std::{env, fs};
+          use twir_deploy_notify::validator::validate_telegram_markdown;
+          fn main() {
+              for file in env::args().skip(1) {
+                  let text = fs::read_to_string(&file).expect("read file");
+                  validate_telegram_markdown(&text).expect("invalid markdown");
+              }
+          }
+          RS
+          rustc validate.rs -L target/debug -L target/debug/deps \
+            --extern twir_deploy_notify=target/debug/libtwir_deploy_notify.rlib \
+            -o validate
+
+      - name: Process posts
+        run: |
+          set -e
+          mkdir -p artifacts
+          for path in ${{ steps.list.outputs.files }}; do
+            echo "Processing $path"
+            rm -f output_*.md
+            output=$(cargo run --quiet --bin twir-deploy-notify -- "$path")
+            messages=$(echo "$output" | grep -c '^Generated output_')
+            files=$(ls output_*.md | wc -l)
+            if [ "$messages" -ne "$files" ]; then
+              echo "Mismatch: stdout $messages vs files $files"
+              exit 1
+            fi
+            ./validate output_*.md
+            mv output_*.md artifacts/
+          done
+
+      - name: Upload generated posts
+        uses: actions/upload-artifact@v4
+        with:
+          name: retro-posts
+          path: artifacts
+          if-no-files-found: error

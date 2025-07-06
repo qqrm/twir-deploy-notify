@@ -536,19 +536,12 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
 }
 
 #[derive(Deserialize)]
-struct TelegramResponse<T> {
+struct TelegramResponse {
     ok: bool,
     #[serde(default)]
     error_code: Option<i32>,
     #[serde(default)]
     description: Option<String>,
-    result: Option<T>,
-}
-
-#[derive(Deserialize)]
-/// Subset of fields returned by `sendMessage`.
-struct SendMessageResult {
-    message_id: i64,
 }
 
 /// Send prepared posts to a Telegram chat via the HTTP API.
@@ -602,30 +595,38 @@ pub fn send_to_telegram(
         let status = resp.status();
         let body = resp.text()?;
         debug!("Telegram response {status}: {body}");
-        let data: TelegramResponse<SendMessageResult> = serde_json::from_str(&body)
+        let raw: serde_json::Value = serde_json::from_str(&body)
             .map_err(|e| format!("Failed to parse Telegram response: {e}: {body}"))?;
-        if !data.ok {
-            error!(
-                "Telegram error for post {} {}: {}",
-                i + 1,
-                data.error_code.unwrap_or_default(),
-                data.description.as_deref().unwrap_or("unknown")
-            );
-            return Err(format!(
-                "Telegram API error in post {} {}: {}",
-                i + 1,
-                data.error_code.unwrap_or_default(),
-                data.description.unwrap_or_default()
-            )
-            .into());
+        let ok = raw.get("ok").and_then(|v| v.as_bool()).unwrap_or(false);
+        if !ok {
+            let code = raw
+                .get("error_code")
+                .and_then(|v| v.as_i64())
+                .unwrap_or_default();
+            let desc = raw
+                .get("description")
+                .and_then(|v| v.as_str())
+                .unwrap_or("");
+            error!("Telegram error for post {} {}: {}", i + 1, code, desc);
+            return Err(format!("Telegram API error in post {} {}: {}", i + 1, code, desc).into());
         }
-        if let Some(result) = data.result {
-            if pin_first && i == 0 {
-                first_id = Some(result.message_id);
+        if pin_first {
+            match raw
+                .get("result")
+                .and_then(|v| v.get("message_id"))
+                .and_then(|v| v.as_i64())
+            {
+                Some(id) => {
+                    if i == 0 {
+                        first_id = Some(id);
+                    }
+                    last_id = Some(id);
+                }
+                None if i == 0 => {
+                    return Err("Telegram response missing message_id".into());
+                }
+                None => {}
             }
-            last_id = Some(result.message_id);
-        } else if pin_first && i == 0 {
-            return Err("Telegram response missing message_id".into());
         }
         thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
     }
@@ -642,8 +643,7 @@ pub fn send_to_telegram(
         let status = resp.status();
         let body = resp.text()?;
         debug!("Telegram pin response {status}: {body}");
-        use serde::de::IgnoredAny;
-        let pin_data: TelegramResponse<IgnoredAny> = serde_json::from_str(&body)
+        let pin_data: TelegramResponse = serde_json::from_str(&body)
             .map_err(|e| format!("Failed to parse Telegram pin response: {e}: {body}"))?;
         if !pin_data.ok {
             error!(
@@ -677,7 +677,7 @@ pub fn send_to_telegram(
         let status = resp.status();
         let body = resp.text()?;
         debug!("Telegram delete response {status}: {body}");
-        let delete_data: TelegramResponse<IgnoredAny> = serde_json::from_str(&body)
+        let delete_data: TelegramResponse = serde_json::from_str(&body)
             .map_err(|e| format!("Failed to parse Telegram delete response: {e}: {body}"))?;
         if !delete_data.ok {
             warn!(
