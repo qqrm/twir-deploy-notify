@@ -88,6 +88,18 @@ original task description and create a new task based on the latest commit. A
 prompt appears asking whether to launch the task in a clean environment. See
 [RESTART.md](RESTART.md) for details.
 
+## Commit message template
+
+Git can automatically include the required co-author line in every commit. Set
+the template once using:
+
+```bash
+git config commit.template .gitmessage
+```
+
+Adjust the agent name or email by editing `.gitmessage` directly or by setting
+`GIT_AUTHOR_NAME` and `GIT_AUTHOR_EMAIL` before committing.
+
 ## License
 
 This project is distributed under two licenses: the standard MIT terms in `LICENSE` and the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.
