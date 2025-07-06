@@ -4,12 +4,12 @@ use std::env;
 use std::fs;
 use std::path::Path;
 
+#[path = "src/generator.rs"]
+mod generator;
 #[path = "src/parser.rs"]
 mod parser;
 #[path = "src/validator.rs"]
 mod validator;
-#[path = "src/generator.rs"]
-mod generator;
 
 fn main() {
     let markdown = env::var("TWIR_MARKDOWN").ok();
