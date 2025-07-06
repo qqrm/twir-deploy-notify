@@ -7,7 +7,7 @@ The parser now derives the HTML link from the issue number and date and appends 
 
 ## Toolchain
 
-The project requires **Rust 1.88.0** and `rustfmt` **1.8.0**. The `rust-toolchain.toml` file pins the channel and lists the mandatory `clippy` and `rustfmt` components so `rustup` always uses the correct versions. If these components are not installed automatically, run:
+The project requires **Rust 1.88.0** and `rustfmt` **1.8.0**. The `rust-toolchain.toml` file pins the channel and lists the mandatory `clippy` and `rustfmt` components so `rustup` always uses the correct versions. All GitHub Actions workflows are configured with the same toolchain version. If these components are not installed automatically, run:
 
 ```bash
 rustup component add clippy rustfmt
