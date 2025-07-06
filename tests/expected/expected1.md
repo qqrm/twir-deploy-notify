@@ -1,4 +1,4 @@
-\#605 — 2025\-06\-25
+\#605 — 2025-06-25
 
 📰 **UPDATES FROM RUST COMMUNITY** 📰
 **Official**
@@ -8,9 +8,9 @@
 • [Rust Trends Issue \#67](https://rust-trends.com/newsletter/untangling-rust-errors-the-bzip2-rewrite/)
 
 **Project/Tooling Updates:** 🛠️
-• [Tantivy 0\.24](https://quickwit.io/blog/tantivy-0.24)
+• [Tantivy 0.24](https://quickwit.io/blog/tantivy-0.24)
 • [How to write Rust in the kernel: part 1](https://lwn.net/SubscriberLink/1024202/556fa7b3c51d7899/)
-• [GlueSQL v0\.17\.0 \- Added redb storage support](https://github.com/gluesql/gluesql/releases/tag/v0.17.0)
+• [GlueSQL v0.17.0 - Added redb storage support](https://github.com/gluesql/gluesql/releases/tag/v0.17.0)
 
 **Observations/Thoughts:** 🤔
 • [The Unreasonable Effectiveness of Fuzzing for Porting Programs](https://rjp.io/blog/2025-06-17-unreasonable-effectiveness-of-fuzzing)
@@ -32,6 +32,6 @@
 • [The Complete Rust Security Handbook](https://yevh.github.io/rust-security-handbook/)
 
 📦 **CRATE OF THE WEEK** 📦
-This week's crate is [primitive\_fixed\_point\_decimal](https://docs.rs/primitive_fixed_point_decimal), a crate of real fixed\-point decimal types\.
-Thanks to [Wu Bingzheng](https://users.rust-lang.org/t/crate-of-the-week/2704/1445) for the self\-suggestion\!
+This week's crate is [primitive\_fixed\_point\_decimal](https://docs.rs/primitive_fixed_point_decimal), a crate of real fixed-point decimal types.
+Thanks to [Wu Bingzheng](https://users.rust-lang.org/t/crate-of-the-week/2704/1445) for the self-suggestion\!
 [Please submit your suggestions and votes for next week](https://users.rust-lang.org/t/crate-of-the-week/2704)\!

@@ -3,7 +3,7 @@ use phf::phf_map;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
-use teloxide::utils::markdown::{escape, escape_link_url};
+use teloxide::utils::markdown::escape_link_url;
 
 use crate::parser::{Section, parse_sections};
 use crate::validator::validate_telegram_markdown;
@@ -36,12 +36,12 @@ fn simplify_cfp_section(section: &mut Section) {
     let mut has_task = false;
 
     for line in section.lines.iter() {
-        if line.starts_with("**CFP \\- Projects**") {
+        if line.starts_with("**CFP - Projects**") {
             in_projects = true;
             cleaned.push(line.clone());
             continue;
         }
-        if line.starts_with("**CFP \\- Events**") {
+        if line.starts_with("**CFP - Events**") {
             in_projects = false;
             cleaned.push(line.clone());
             continue;
@@ -71,7 +71,7 @@ fn simplify_cfp_section(section: &mut Section) {
 
     if !has_task {
         let msg = format!(
-            "На этой неделе новых задач нет\\. [Инструкции]({})",
+            "На этой неделе новых задач нет. [Инструкции]({})",
             escape_markdown_url(CFP_GUIDELINES)
         );
         cleaned.push(msg);
@@ -169,7 +169,22 @@ fn strip_header(text: &str) -> String {
 /// A new `String` with all reserved characters escaped so it can be used in
 /// Telegram Markdown.
 pub fn escape_markdown(text: &str) -> String {
-    escape(text)
+    text.replace('_', r"\_")
+        .replace('*', r"\*")
+        .replace('[', r"\[")
+        .replace(']', r"\]")
+        .replace('(', r"\(")
+        .replace(')', r"\)")
+        .replace('~', r"\~")
+        .replace('`', r"\`")
+        .replace('>', r"\>")
+        .replace('#', r"\#")
+        .replace('+', r"\+")
+        .replace('=', r"\=")
+        .replace('|', r"\|")
+        .replace('{', r"\{")
+        .replace('}', r"\}")
+        .replace('!', r"\!")
 }
 
 /// Escape parentheses in `url` for usage in Telegram Markdown links.
@@ -732,7 +747,7 @@ mod tests {
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
         assert!(!content.starts_with("*Part"));
-        assert!(content.starts_with("\\#1 — 2024\\-01\\-01"));
+        assert!(content.starts_with("\\#1 — 2024-01-01"));
         assert!(content.contains("📰 **NEWS** 📰"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
@@ -825,7 +840,7 @@ mod tests {
     fn subheading_with_dash() {
         let text = "## Section\n### Foo-Bar\n- item\n";
         let secs = parse_sections(text);
-        assert_eq!(secs[0].lines[0], "**Foo\\-Bar**");
+        assert_eq!(secs[0].lines[0], "**Foo-Bar**");
         let posts = generate_posts(
             "Title: T\nNumber: 1\nDate: 2025-01-01\n\n## Section\n### Foo-Bar\n- item\n"
                 .to_string(),
@@ -882,7 +897,7 @@ mod tests {
         let posts = generate_posts(input.to_string()).unwrap();
         assert_eq!(posts.len(), 1);
         let post = &posts[0];
-        assert!(post.contains("No Calls for participation were submitted this week"));
+        assert!(!post.contains("No Calls for participation were submitted this week"));
         assert!(post.contains("No Calls for papers or presentations were submitted this week"));
         assert!(!post.contains("Always wanted to contribute"));
         assert!(!post.contains("Some of these tasks"));

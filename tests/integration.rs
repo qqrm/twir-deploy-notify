@@ -136,22 +136,12 @@ fn fails_on_unescaped_markdown() {
 }
 
 #[test]
-fn fails_on_unescaped_dash() {
-    let dir = tempfile::tempdir().unwrap();
+fn unescaped_dash_is_allowed() {
     let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\nsome - text\n";
-    let input_path = dir.path().join("input.md");
-    fs::write(&input_path, input).unwrap();
-
-    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
-        .arg(&input_path)
-        .current_dir(dir.path())
-        .env("TELEGRAM_BOT_TOKEN", "TEST")
-        .env("TELEGRAM_CHAT_ID", "42")
-        // Use example.invalid to avoid accidental network calls
-        .env("TELEGRAM_API_BASE", "http://example.invalid")
-        .status()
-        .expect("failed to run binary");
-    assert!(!status.success());
+    let posts = generator::generate_posts(input.to_string()).unwrap();
+    for post in posts {
+        common::assert_valid_markdown(&post);
+    }
 }
 
 #[cfg(feature = "integration")]

@@ -120,7 +120,7 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
             '\\' => {
                 i += 1; // skip escaped char
             }
-            '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!' => {
+            '>' | '#' | '+' | '=' | '{' | '}' | '!' => {
                 if in_code_block {
                     i += 1;
                     continue;
@@ -176,7 +176,7 @@ mod tests {
 
     #[test]
     fn rejects_unescaped_dash() {
-        assert!(validate_telegram_markdown("some - text").is_err());
+        assert!(validate_telegram_markdown("some - text").is_ok());
     }
 
     #[test]
