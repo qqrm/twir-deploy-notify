@@ -1,4 +1,4 @@
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
@@ -9,6 +9,55 @@ use crate::validator::validate_telegram_markdown;
 
 pub const TELEGRAM_LIMIT: usize = 4000;
 pub const TELEGRAM_DELAY_MS: u64 = 1000;
+
+/// Short URL guiding contributors how to submit CFP tasks.
+const CFP_GUIDELINES: &str = "https://github.com/rust-lang/this-week-in-rust?tab=readme-ov-file#call-for-participation-guidelines";
+
+fn simplify_cfp_section(section: &mut Section) {
+    let mut cleaned = Vec::new();
+    let mut in_projects = false;
+    let mut has_task = false;
+    let mut events_index = None;
+
+    for line in section.lines.iter() {
+        if line.starts_with("**CFP - Projects**") {
+            in_projects = true;
+            cleaned.push(line.clone());
+            continue;
+        }
+        if line.starts_with("**CFP - Events**") {
+            in_projects = false;
+            events_index = Some(cleaned.len());
+            cleaned.push(line.clone());
+            continue;
+        }
+        if line.contains("guidelines") && line.contains("submit tasks") {
+            continue;
+        }
+        if in_projects {
+            if line.trim() == "No Calls for participation were submitted this week." {
+                continue;
+            }
+            if line.trim_start().starts_with('•') {
+                has_task = true;
+            }
+            cleaned.push(line.clone());
+        } else {
+            cleaned.push(line.clone());
+        }
+    }
+
+    if !has_task {
+        let msg = format!(
+            "На этой неделе новых задач нет\\. [Инструкции]({})",
+            escape_markdown_url(CFP_GUIDELINES)
+        );
+        let insert_at = events_index.unwrap_or(cleaned.len());
+        cleaned.insert(insert_at, msg);
+    }
+
+    section.lines = cleaned;
+}
 
 fn replace_links(text: &str) -> String {
     let mut result = String::new();
@@ -300,16 +349,14 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             sec.lines.insert(1, chat);
             sec.lines.insert(2, feed);
         }
-    }
-    let mut events_link = None;
-    sections.retain(|s| {
-        if s.title.eq_ignore_ascii_case("Upcoming Events") {
-            events_link = url.as_ref().map(|u| format!("{u}#upcoming-events"));
-            false
-        } else {
-            true
+        if sec
+            .title
+            .eq_ignore_ascii_case("Call for Participation; projects and speakers")
+        {
+            simplify_cfp_section(sec);
         }
-    });
+    }
+    sections.retain(|s| !s.title.eq_ignore_ascii_case("Upcoming Events"));
 
     if let Some(link) = url.as_ref() {
         let mut link_section = Section::default();
@@ -319,15 +366,6 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             escape_markdown_url(link)
         ));
         sections.push(link_section);
-        if let Some(ev) = events_link.clone() {
-            sections.push(Section {
-                title: String::new(),
-                lines: vec![format!(
-                    "🎉 [Upcoming Events]({})",
-                    escape_markdown_url(&ev)
-                )],
-            });
-        }
     }
 
     let mut posts = Vec::new();
@@ -518,6 +556,29 @@ pub fn send_to_telegram(
                     pin_data.description.unwrap_or_default()
                 )
                 .into());
+            }
+
+            // Attempt to remove the service message about the pinned post.
+            let delete_url = format!(
+                "{}/bot{}/deleteMessage",
+                base_url.trim_end_matches('/'),
+                token
+            );
+            let notif_id = (result.message_id + 1).to_string();
+            let delete_form = vec![("chat_id", chat_id), ("message_id", &notif_id)];
+            let resp = client.post(&delete_url).form(&delete_form).send()?;
+            let status = resp.status();
+            let body = resp.text()?;
+            debug!("Telegram delete response {status}: {body}");
+            let delete_data: TelegramResponse<()> = serde_json::from_str(&body)
+                .map_err(|e| format!("Failed to parse Telegram delete response: {e}: {body}"))?;
+            if !delete_data.ok {
+                warn!(
+                    "Telegram error deleting pin notification {} {}: {}",
+                    notif_id,
+                    delete_data.error_code.unwrap_or_default(),
+                    delete_data.description.as_deref().unwrap_or("unknown")
+                );
             }
         }
         thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
