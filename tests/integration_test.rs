@@ -77,22 +77,23 @@ fn parse_issue_607_full() {
 }
 
 #[test]
-fn validate_generated_posts() {
-    let input = include_str!("2025-06-25-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string()).unwrap();
-    assert!(!posts.is_empty());
-    for post in &posts {
-        common::assert_valid_markdown(post);
-    }
-}
+fn validate_fixture_posts() {
+    let fixtures = [
+        include_str!("2025-06-25-this-week-in-rust.md"),
+        include_str!("2025-07-02-this-week-in-rust.md"),
+        include_str!("complex.md"),
+    ];
 
-#[test]
-fn validate_issue_606_posts() {
-    let input = include_str!("2025-07-02-this-week-in-rust.md");
-    let posts = generate_posts(input.to_string()).unwrap();
-    assert!(!posts.is_empty());
-    for post in &posts {
-        common::assert_valid_markdown(post);
+    for (idx, input) in fixtures.iter().enumerate() {
+        let posts = generate_posts((*input).to_string()).unwrap();
+        assert!(
+            !posts.is_empty(),
+            "no posts generated for fixture {}",
+            idx + 1
+        );
+        for post in &posts {
+            common::assert_valid_markdown(post);
+        }
     }
 }
 
@@ -102,16 +103,6 @@ fn validate_issue_606_post_4() {
     let posts = generate_posts(input.to_string()).unwrap();
     assert!(posts.len() >= 4);
     common::assert_valid_markdown(&posts[3]);
-}
-
-#[test]
-fn validate_complex_posts() {
-    let input = include_str!("complex.md");
-    let posts = generate_posts(input.to_string()).unwrap();
-    assert!(!posts.is_empty());
-    for post in &posts {
-        common::assert_valid_markdown(post);
-    }
 }
 
 #[test]

@@ -33,13 +33,17 @@
 - Updated tests and expected outputs accordingly.
 
 ## 2025-07-09
+- Unified Markdown validation tests into a single function.
 - Simplified Call for Participation section when no tasks are available.
 - Added short instruction link and removed the events link at the bottom.
 - Updated expected test outputs accordingly.
 
 ## 2025-07-10
 - Removed `tests/dash_word.rs` since validator test covers this case.
+- Pinned posts now remove the automatic notification using `deleteMessage`.
+- Updated integration tests for the new behavior.
 
 ## Maintenance
 The development log keeps only the 20 most recent entries.
 When adding a new entry, delete the oldest if there are already 20.
+
