@@ -60,24 +60,47 @@ fn simplify_cfp_section(section: &mut Section) {
 }
 
 fn replace_links(text: &str) -> String {
+    use pulldown_cmark::{Event, Options, Parser, Tag};
+
+    let parser = Parser::new_ext(text, Options::empty());
     let mut result = String::new();
-    let mut rest = text;
-    while let Some(start) = rest.find('[') {
-        if let Some(mid) = rest[start..].find("](") {
-            let mid = start + mid;
-            if let Some(end) = rest[mid + 2..].find(')') {
-                result.push_str(&rest[..start]);
-                result.push_str(&rest[start + 1..mid]);
-                result.push_str(" (");
-                result.push_str(&rest[mid + 2..mid + 2 + end]);
-                result.push(')');
-                rest = &rest[mid + 2 + end + 1..];
-                continue;
+    let mut in_link = false;
+    let mut link_dest = String::new();
+    let mut link_text = String::new();
+
+    for event in parser {
+        match event {
+            Event::Start(Tag::Link(_, dest, _)) => {
+                in_link = true;
+                link_dest = dest.to_string();
+                link_text.clear();
             }
+            Event::End(Tag::Link(_, _, _)) => {
+                result.push_str(&link_text);
+                result.push_str(" (");
+                result.push_str(&link_dest);
+                result.push(')');
+                in_link = false;
+            }
+            Event::Text(t) | Event::Code(t) => {
+                if in_link {
+                    link_text.push_str(&t);
+                } else {
+                    result.push_str(&t);
+                }
+            }
+            Event::SoftBreak | Event::HardBreak => result.push('\n'),
+            _ => {}
         }
-        break;
     }
-    result.push_str(rest);
+
+    if in_link {
+        result.push_str(&link_text);
+        result.push_str(" (");
+        result.push_str(&link_dest);
+        result.push(')');
+    }
+
     result
 }
 
