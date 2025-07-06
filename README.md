@@ -63,6 +63,10 @@ Scheduled runs first send the posts to the development chat using the
 `verify-posts` binary. After the messages are confirmed to appear in the
 channel, the same release is posted to the main chat.
 
+Setting the `TWIR_MARKDOWN` environment variable before building will
+parse the referenced file at compile time and embed the generated posts
+in the crate. The resulting array is available as `twir_deploy_notify::posts::POSTS`.
+
 ## Development
 
 Continuous integration runs `cargo machete` to verify that `Cargo.toml` lists only used dependencies. Run this command locally before opening a pull request.
