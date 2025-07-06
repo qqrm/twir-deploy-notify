@@ -245,7 +245,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 buffer.push_str("```");
             }
             Event::Text(t) | Event::Code(t) => {
-                if in_heading {
+                if in_code_block || in_heading {
                     buffer.push_str(&t);
                 } else {
                     buffer.push_str(&escape_markdown(&t));

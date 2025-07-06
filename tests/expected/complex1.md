@@ -15,9 +15,9 @@ Back to first level
 
 📰 **CODE BLOCK** 📰
 ```
-fn greet\(\) \{
-    println\!\("Hello, world\!"\);
-\}
+fn greet() {
+    println!("Hello, world!");
+}
 ```
 
 📰 **TABLE EXAMPLE** 📰
