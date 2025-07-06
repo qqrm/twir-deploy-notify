@@ -32,6 +32,10 @@
 - Added Rust Jobs chat and feed links to the generated Jobs section.
 - Updated tests and expected outputs accordingly.
 
+## 2025-07-09
+- GitHub usernames prefixed with `@` are now converted to profile links.
+- Updated parser logic and revised expected test outputs.
+
 ## Maintenance
 The development log keeps only the 20 most recent entries.
 When adding a new entry, delete the oldest if there are already 20.
