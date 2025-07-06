@@ -34,6 +34,10 @@ path = "src/lib.rs"
 name = "check-docs"
 path = "src/bin/check_docs.rs"
 
+[[bin]]
+name = "verify-posts"
+path = "src/bin/verify_posts.rs"
+
 [profile.dev]
 opt-level = 0
 incremental = true
