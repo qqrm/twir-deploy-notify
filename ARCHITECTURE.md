@@ -21,7 +21,8 @@ This tool processes weekly "This Week in Rust" Markdown files and prepares messa
 
 ## Message Generation
 - Each section becomes a separate Telegram post capped at 4000 characters.
-- Long messages are split by `split_posts`, which scans for escaped characters when breaking lines so that Telegram accepts every chunk. Each post is prefixed with `*Part X/Y*`, where `X` and `Y` are plain digits.
+- Long messages are split by `split_posts`, which scans for escaped characters when breaking lines so that Telegram accepts every chunk. Every post after the first is prefixed with `*Part X/Y*`, where `X` and `Y` are plain digits.
+- The issue title in the first post is surrounded by crab emojis.
 - The optional `--plain` flag removes Markdown formatting for channels that require plain text.
 
 ## Dependencies
