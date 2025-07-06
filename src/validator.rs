@@ -7,21 +7,12 @@ pub enum MarkdownError {
     UnmatchedTag(String),
     /// The text contains an invalid escape or reserved character.
     InvalidEscape(String),
-    /// Placeholder for errors originating from `teloxide` utilities.
-    #[allow(dead_code)]
-    TeloxideError(String),
-    /// Any other validation problem not covered by the variants above.
-    #[allow(dead_code)]
-    Other(String),
 }
 
 impl std::fmt::Display for MarkdownError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            MarkdownError::UnmatchedTag(s)
-            | MarkdownError::InvalidEscape(s)
-            | MarkdownError::TeloxideError(s)
-            | MarkdownError::Other(s) => f.write_str(s),
+            MarkdownError::UnmatchedTag(s) | MarkdownError::InvalidEscape(s) => f.write_str(s),
         }
     }
 }
