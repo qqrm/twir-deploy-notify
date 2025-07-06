@@ -60,24 +60,47 @@ fn simplify_cfp_section(section: &mut Section) {
 }
 
 fn replace_links(text: &str) -> String {
+    use pulldown_cmark::{Event, Options, Parser, Tag};
+
+    let parser = Parser::new_ext(text, Options::empty());
     let mut result = String::new();
-    let mut rest = text;
-    while let Some(start) = rest.find('[') {
-        if let Some(mid) = rest[start..].find("](") {
-            let mid = start + mid;
-            if let Some(end) = rest[mid + 2..].find(')') {
-                result.push_str(&rest[..start]);
-                result.push_str(&rest[start + 1..mid]);
-                result.push_str(" (");
-                result.push_str(&rest[mid + 2..mid + 2 + end]);
-                result.push(')');
-                rest = &rest[mid + 2 + end + 1..];
-                continue;
+    let mut in_link = false;
+    let mut link_dest = String::new();
+    let mut link_text = String::new();
+
+    for event in parser {
+        match event {
+            Event::Start(Tag::Link(_, dest, _)) => {
+                in_link = true;
+                link_dest = dest.to_string();
+                link_text.clear();
             }
+            Event::End(Tag::Link(_, _, _)) => {
+                result.push_str(&link_text);
+                result.push_str(" (");
+                result.push_str(&link_dest);
+                result.push(')');
+                in_link = false;
+            }
+            Event::Text(t) | Event::Code(t) => {
+                if in_link {
+                    link_text.push_str(&t);
+                } else {
+                    result.push_str(&t);
+                }
+            }
+            Event::SoftBreak | Event::HardBreak => result.push('\n'),
+            _ => {}
         }
-        break;
     }
-    result.push_str(rest);
+
+    if in_link {
+        result.push_str(&link_text);
+        result.push_str(" (");
+        result.push_str(&link_dest);
+        result.push(')');
+    }
+
     result
 }
 
@@ -476,6 +499,8 @@ struct SendMessageResult {
 /// - `chat_id`: Identifier of the destination chat or channel.
 /// - `use_markdown`: Whether to enable Telegram Markdown parsing.
 /// - `pin_first`: Pin the first sent message using `pinChatMessage`.
+///   The pin request and deletion of the service message are performed
+///   *after* all posts have been successfully sent.
 ///
 /// # Errors
 /// Returns an error if the HTTP request fails or Telegram responds with an
@@ -490,6 +515,7 @@ pub fn send_to_telegram(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let client = Client::new();
     info!("Sending {} posts", posts.len());
+    let mut first_id: Option<i64> = None;
     for (i, post) in posts.iter().enumerate() {
         let url = format!(
             "{}/bot{}/sendMessage",
@@ -529,61 +555,64 @@ pub fn send_to_telegram(
             let Some(result) = data.result else {
                 return Err("Telegram response missing message_id".into());
             };
-            let pin_url = format!(
-                "{}/bot{}/pinChatMessage",
-                base_url.trim_end_matches('/'),
-                token
-            );
-            debug!("Pinning message {} via {}", result.message_id, pin_url);
-            let msg_id = result.message_id.to_string();
-            let pin_form = vec![("chat_id", chat_id), ("message_id", &msg_id)];
-            let resp = client.post(&pin_url).form(&pin_form).send()?;
-            let status = resp.status();
-            let body = resp.text()?;
-            debug!("Telegram pin response {status}: {body}");
-            use serde::de::IgnoredAny;
-            let pin_data: TelegramResponse<IgnoredAny> = serde_json::from_str(&body)
-                .map_err(|e| format!("Failed to parse Telegram pin response: {e}: {body}"))?;
-            if !pin_data.ok {
-                error!(
-                    "Telegram error pinning message {} {}: {}",
-                    result.message_id,
-                    pin_data.error_code.unwrap_or_default(),
-                    pin_data.description.as_deref().unwrap_or("unknown")
-                );
-                return Err(format!(
-                    "Telegram API error when pinning {} {}: {}",
-                    result.message_id,
-                    pin_data.error_code.unwrap_or_default(),
-                    pin_data.description.unwrap_or_default()
-                )
-                .into());
-            }
-
-            // Attempt to remove the service message about the pinned post.
-            let delete_url = format!(
-                "{}/bot{}/deleteMessage",
-                base_url.trim_end_matches('/'),
-                token
-            );
-            let notif_id = (result.message_id + 1).to_string();
-            let delete_form = vec![("chat_id", chat_id), ("message_id", &notif_id)];
-            let resp = client.post(&delete_url).form(&delete_form).send()?;
-            let status = resp.status();
-            let body = resp.text()?;
-            debug!("Telegram delete response {status}: {body}");
-            let delete_data: TelegramResponse<()> = serde_json::from_str(&body)
-                .map_err(|e| format!("Failed to parse Telegram delete response: {e}: {body}"))?;
-            if !delete_data.ok {
-                warn!(
-                    "Telegram error deleting pin notification {} {}: {}",
-                    notif_id,
-                    delete_data.error_code.unwrap_or_default(),
-                    delete_data.description.as_deref().unwrap_or("unknown")
-                );
-            }
+            first_id = Some(result.message_id);
         }
         thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
+    }
+    if let Some(msg_id) = first_id {
+        let pin_url = format!(
+            "{}/bot{}/pinChatMessage",
+            base_url.trim_end_matches('/'),
+            token
+        );
+        debug!("Pinning message {msg_id} via {pin_url}");
+        let msg_id_str = msg_id.to_string();
+        let pin_form = vec![("chat_id", chat_id), ("message_id", &msg_id_str)];
+        let resp = client.post(&pin_url).form(&pin_form).send()?;
+        let status = resp.status();
+        let body = resp.text()?;
+        debug!("Telegram pin response {status}: {body}");
+        use serde::de::IgnoredAny;
+        let pin_data: TelegramResponse<IgnoredAny> = serde_json::from_str(&body)
+            .map_err(|e| format!("Failed to parse Telegram pin response: {e}: {body}"))?;
+        if !pin_data.ok {
+            error!(
+                "Telegram error pinning message {} {}: {}",
+                msg_id,
+                pin_data.error_code.unwrap_or_default(),
+                pin_data.description.as_deref().unwrap_or("unknown")
+            );
+            return Err(format!(
+                "Telegram API error when pinning {} {}: {}",
+                msg_id,
+                pin_data.error_code.unwrap_or_default(),
+                pin_data.description.unwrap_or_default()
+            )
+            .into());
+        }
+
+        // Attempt to remove the service message about the pinned post.
+        let delete_url = format!(
+            "{}/bot{}/deleteMessage",
+            base_url.trim_end_matches('/'),
+            token
+        );
+        let notif_id = (msg_id + 1).to_string();
+        let delete_form = vec![("chat_id", chat_id), ("message_id", &notif_id)];
+        let resp = client.post(&delete_url).form(&delete_form).send()?;
+        let status = resp.status();
+        let body = resp.text()?;
+        debug!("Telegram delete response {status}: {body}");
+        let delete_data: TelegramResponse<()> = serde_json::from_str(&body)
+            .map_err(|e| format!("Failed to parse Telegram delete response: {e}: {body}"))?;
+        if !delete_data.ok {
+            warn!(
+                "Telegram error deleting pin notification {} {}: {}",
+                notif_id,
+                delete_data.error_code.unwrap_or_default(),
+                delete_data.description.as_deref().unwrap_or("unknown")
+            );
+        }
     }
     Ok(())
 }

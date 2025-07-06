@@ -6,6 +6,7 @@
 - Install required Rust components with `rustup component add clippy rustfmt`.
 - After making any changes, run `cargo fmt --all`, `cargo check --all-targets --all-features`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test`.
 - Before creating a pull request, also run `cargo machete` to ensure there are no unused dependencies.
+- Review `ARCHITECTURE.md` before starting work and verify final changes match the documented design.
 - Fix every issue reported by these commands before committing or submitting pull requests.
 - A pull request is complete only when formatting, linting, `cargo check`, and tests all succeed.
 - Configure the remote `origin` as `https://github.com/qqrm/twir-deploy-notify`.

@@ -58,6 +58,19 @@ Documentation Markdown is validated with `cargo run --bin check-docs`, which par
 Generated Telegram posts are verified with the shared `validator` module.
 Integration tests that send messages to Telegram run only when the CI workflow is manually triggered with the `run_integration` input.
 
+### Running integration tests
+
+The integration suite relies on the [`mockito`](https://crates.io/crates/mockito) crate to mock network requests.
+To exercise the Telegram end‑to‑end test, export the following environment variables before running the tests:
+
+```bash
+export TELEGRAM_BOT_TOKEN=<token>
+export TELEGRAM_CHAT_ID=<chat id>
+cargo test --features integration
+```
+
+If these variables are absent, the Telegram tests are skipped.
+
 ## License
 
 This project is distributed under two licenses: the standard MIT terms in `LICENSE` and the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.
