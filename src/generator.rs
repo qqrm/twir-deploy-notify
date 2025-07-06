@@ -85,16 +85,26 @@ fn simplify_quote_section(section: &mut Section) {
     let mut in_quote = false;
     for line in &section.lines {
         if line.contains("Quote of the Week") {
-            cleaned.push("\n**Quote of the Week:**".to_string());
+            cleaned.push(format_subheading("Quote of the Week"));
+            cleaned.push(String::new());
             in_quote = true;
             continue;
         }
         let lower = line.to_ascii_lowercase();
-        if in_quote
-            && (lower.contains("please submit quotes")
+        if in_quote {
+            if lower.contains("please submit quotes")
                 || lower.starts_with("thanks to")
-                || lower.starts_with("despite "))
-        {
+                || lower.starts_with("despite ")
+            {
+                continue;
+            }
+            if line.trim_start().starts_with('–') {
+                in_quote = false;
+                cleaned.push(line.trim_start().to_string());
+                continue;
+            }
+            let content = line.trim_start_matches("\\>").trim_start();
+            cleaned.push(format!("_{content}_"));
             continue;
         }
         cleaned.push(line.clone());
@@ -196,7 +206,7 @@ pub fn format_subheading(title: &str) -> String {
     let trimmed = title.trim();
     let lower = trimmed.to_ascii_lowercase();
     if lower == "quote of the week" {
-        return format!("\n**{}:**", escape_markdown(trimmed));
+        return format!("\n**{}:** 💬\n", escape_markdown(trimmed));
     }
     if let Some(emoji) = SUBHEADING_EMOJIS.get(lower.as_str()) {
         format!("\n**{}:** {}", escape_markdown(trimmed), emoji)
