@@ -8,7 +8,7 @@ This tool processes weekly "This Week in Rust" Markdown files and prepares messa
 - **src/generator.rs**: Builds Telegram posts and sends them to the API.
 - **src/parser.rs**: Splits Markdown into sections using `pulldown-cmark`.
 - **src/validator.rs**: Checks that generated posts follow Telegram Markdown rules.
-- **Cargo.toml**: Defines dependencies such as `pulldown-cmark`, `regex`, and `teloxide`.
+- **Cargo.toml**: Defines dependencies such as `pulldown-cmark` and `teloxide`.
 - **last_sent.txt**: Records the last processed issue for the workflow.
 - **src/bin/verify_posts.rs**: Sends posts to Telegram and confirms that they
   were delivered correctly.
@@ -27,6 +27,5 @@ This tool processes weekly "This Week in Rust" Markdown files and prepares messa
 
 ## Dependencies
 - `pulldown-cmark` handles Markdown parsing.
-- `regex` extracts metadata and processes links.
 - `teloxide` utilities assist with escaping text for Telegram Markdown.
 
