@@ -50,11 +50,6 @@ Telegram:
 - `TELEGRAM_CHAT_ID` – the identifier of the chat or channel.
 - `TELEGRAM_PIN_FIRST` – set to `1` or `true` to pin the first sent message.
   The service message about the pin will be deleted automatically.
-
-Running the workflow with [`act`](https://github.com/nektos/act) is possible, but it requires Docker.
-Restricted environments such as the provided container may not support Docker, so executing the above
-`cargo` commands manually remains the recommended approach.
-
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
 
 Responses from Telegram are verified with the `verify-posts` binary.
