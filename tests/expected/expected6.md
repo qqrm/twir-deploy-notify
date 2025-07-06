@@ -1,7 +1,7 @@
 *Part 6/6*
 
 📰 **JOBS** 📰
-Please see the latest [Who's Hiring thread on r/rust](https://www.reddit.com/r/rust/comments/1knkfb6/official_rrust_whos_hiring_thread_for_jobseekers/)
+🦀 [Rust Job Reddit Thread](https://www.reddit.com/r/rust/comments/1knkfb6/official_rrust_whos_hiring_thread_for_jobseekers/)
 💼 [Rust Jobs chat](https://t.me/rust_jobs)
 📢 [Rust Jobs feed](https://t.me/rust_jobs_feed)
 

@@ -1,5 +1,6 @@
 use log::{debug, error, info, warn};
 use phf::phf_map;
+use regex::Regex;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
@@ -101,6 +102,16 @@ fn simplify_quote_section(section: &mut Section) {
         cleaned.push(line.clone());
     }
     section.lines = cleaned;
+}
+
+fn simplify_jobs_section(section: &mut Section) {
+    let re = Regex::new(r"\[Who'?s Hiring thread on r/rust\]\(([^)]+)\)").unwrap();
+    for line in &mut section.lines {
+        if let Some(caps) = re.captures(line) {
+            let url = caps.get(1).unwrap().as_str();
+            *line = format!("🦀 [Rust Job Reddit Thread]({})", escape_markdown_url(url));
+        }
+    }
 }
 
 fn find_value(text: &str, prefix: &str) -> Option<String> {
@@ -391,6 +402,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
     let mut sections = parse_sections(&body);
     for sec in &mut sections {
         if sec.title.eq_ignore_ascii_case("Jobs") && !sec.lines.is_empty() {
+            simplify_jobs_section(sec);
             let chat = format!(
                 "💼 [Rust Jobs chat]({})",
                 escape_markdown_url("https://t.me/rust_jobs")
