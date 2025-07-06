@@ -284,6 +284,18 @@ fn pin_first_message() {
             Matcher::UrlEncoded("message_id".into(), "1".into()),
         ]))
         .with_status(200)
+        .with_body("{\"ok\":true,\"result\":true}")
+        .expect(1)
+        .create();
+
+    let m3 = server
+        .mock("POST", "/botTEST/deleteMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("message_id".into(), "2".into()),
+        ]))
+        .with_status(200)
         .with_body("{\"ok\":true}")
         .expect(1)
         .create();
@@ -291,5 +303,6 @@ fn pin_first_message() {
     generator::send_to_telegram(&posts, &server.url(), "TEST", "42", true, true).unwrap();
     m1.assert();
     m2.assert();
+    m3.assert();
     common::assert_valid_markdown(&posts[0]);
 }
