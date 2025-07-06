@@ -43,6 +43,7 @@ impl std::error::Error for MarkdownError {}
 pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
     let chars: Vec<char> = text.chars().collect();
     let mut stack: VecDeque<&str> = VecDeque::new();
+    let mut in_code_block = false;
     if let Some(&first) = chars.first() {
         if matches!(first, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!') {
             return Err(MarkdownError::InvalidEscape(
@@ -82,6 +83,7 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
             '`' => {
                 let token = if i + 2 < chars.len() && chars[i + 1] == '`' && chars[i + 2] == '`' {
                     i += 2;
+                    in_code_block = !in_code_block;
                     "```"
                 } else {
                     "`"
@@ -119,6 +121,10 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
                 i += 1; // skip escaped char
             }
             '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!' => {
+                if in_code_block {
+                    i += 1;
+                    continue;
+                }
                 let prev = if i == 0 { None } else { Some(chars[i - 1]) };
                 let next = chars.get(i + 1).copied();
                 if prev != Some('\\')
