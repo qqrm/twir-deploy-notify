@@ -40,3 +40,7 @@
 ## Maintenance
 The development log keeps only the 20 most recent entries.
 When adding a new entry, delete the oldest if there are already 20.
+
+## 2025-07-10
+- Fixed parsing of pinChatMessage response handling boolean result.
+- Updated integration test accordingly.
