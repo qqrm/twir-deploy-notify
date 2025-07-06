@@ -143,11 +143,12 @@ pub fn escape_markdown_url(url: &str) -> String {
 /// - `title`: Raw section title text.
 ///
 /// # Returns
-/// A bold heading prefixed with a newspaper emoji.
+/// A bold heading prefixed with an appropriate emoji.
 pub fn format_heading(title: &str) -> String {
     let upper = title.to_uppercase();
     let emoji = match upper.as_str() {
         "UPCOMING EVENTS" => "🎉",
+        "CRATE OF THE WEEK" => "📦",
         _ => "📰",
     };
     format!("{e} **{}** {e}", escape_markdown(&upper), e = emoji)
