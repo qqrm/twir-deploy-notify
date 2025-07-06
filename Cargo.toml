@@ -2,7 +2,8 @@
 name = "twir-deploy-notify"
 version = "0.1.0"
 edition = "2024"
-license = "MIT"
+license = "QQRM-LAPOCHKA"
+license-file = "LICENSE_QQRM_LAPOCHKA"
 
 [dependencies]
 regex = "1"
