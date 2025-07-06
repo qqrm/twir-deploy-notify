@@ -1,5 +1,7 @@
 # Development Log
 
+## 2025-07-09
+- Unified Telegram integration tests using a helper function to reduce duplication.
 ## 2025-06-26
 - Initial project setup and scheduled GitHub Actions workflow.
 - Implemented basic Telegram notifier and bug fixes.
@@ -31,6 +33,11 @@
 - Removed extraneous separator line from web link section and updated tests.
 - Added Rust Jobs chat and feed links to the generated Jobs section.
 - Updated tests and expected outputs accordingly.
+
+## 2025-07-09
+- Simplified Call for Participation section when no tasks are available.
+- Added short instruction link and removed the events link at the bottom.
+- Updated expected test outputs accordingly.
 
 ## Maintenance
 The development log keeps only the 20 most recent entries.
