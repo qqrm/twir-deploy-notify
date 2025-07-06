@@ -1,4 +1,4 @@
-use log::{debug, error, info};
+use log::{debug, error, info, warn};
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
@@ -557,6 +557,29 @@ pub fn send_to_telegram(
                     pin_data.description.unwrap_or_default()
                 )
                 .into());
+            }
+
+            // Attempt to remove the service message about the pinned post.
+            let delete_url = format!(
+                "{}/bot{}/deleteMessage",
+                base_url.trim_end_matches('/'),
+                token
+            );
+            let notif_id = (result.message_id + 1).to_string();
+            let delete_form = vec![("chat_id", chat_id), ("message_id", &notif_id)];
+            let resp = client.post(&delete_url).form(&delete_form).send()?;
+            let status = resp.status();
+            let body = resp.text()?;
+            debug!("Telegram delete response {status}: {body}");
+            let delete_data: TelegramResponse<()> = serde_json::from_str(&body)
+                .map_err(|e| format!("Failed to parse Telegram delete response: {e}: {body}"))?;
+            if !delete_data.ok {
+                warn!(
+                    "Telegram error deleting pin notification {} {}: {}",
+                    notif_id,
+                    delete_data.error_code.unwrap_or_default(),
+                    delete_data.description.as_deref().unwrap_or("unknown")
+                );
             }
         }
         thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
