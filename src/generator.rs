@@ -50,6 +50,12 @@ fn simplify_cfp_section(section: &mut Section) {
         if line.contains("guidelines") && line.contains("submit tasks") {
             continue;
         }
+        if line.starts_with("Always wanted to contribute")
+            || line.starts_with("Some of these tasks")
+            || line.starts_with("Are you a new or experienced speaker")
+        {
+            continue;
+        }
         if in_projects {
             if line.trim() == "No Calls for participation were submitted this week." {
                 continue;
@@ -825,6 +831,19 @@ mod tests {
         let posts = vec!["bad *text".to_string()];
         let err = send_to_telegram(&posts, "http://example.com", "TOKEN", "42", true, false);
         assert!(err.is_err());
+    }
+
+    #[test]
+    fn cfp_sections_without_content_are_short() {
+        let input = include_str!("../tests/2025-07-05-call-for-participation.md");
+        let posts = generate_posts(input.to_string()).unwrap();
+        assert_eq!(posts.len(), 1);
+        let post = &posts[0];
+        assert!(post.contains("No Calls for participation were submitted this week"));
+        assert!(post.contains("No Calls for papers or presentations were submitted this week"));
+        assert!(!post.contains("Always wanted to contribute"));
+        assert!(!post.contains("Some of these tasks"));
+        assert!(!post.contains("Are you a new or experienced speaker"));
     }
 
     mod property {
