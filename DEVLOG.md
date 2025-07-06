@@ -39,6 +39,7 @@
 - Updated expected test outputs accordingly.
 
 ## 2025-07-10
+- Removed `tests/dash_word.rs` since validator test covers this case.
 - Pinned posts now remove the automatic notification using `deleteMessage`.
 - Updated integration tests for the new behavior.
 
