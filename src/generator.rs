@@ -636,7 +636,9 @@ pub fn send_to_telegram(
                 None => {}
             }
         }
-        thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
+        if i + 1 < posts.len() {
+            thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
+        }
     }
     if let Some(msg_id) = first_id {
         let pin_url = format!(
