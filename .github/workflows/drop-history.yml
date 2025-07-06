@@ -1,0 +1,29 @@
+name: Drop Git history
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  drop-history:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create orphan branch with final state
+        run: |
+          git checkout --orphan new-main
+          git add -A
+          git commit -m "Preserve final project state"
+
+      - name: Push new branch
+        run: git push origin HEAD:new-main --force
+
+      - name: Replace main with new branch
+        run: |
+          git push origin --delete main || true
+          git push origin new-main:main --force
