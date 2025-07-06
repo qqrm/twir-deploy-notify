@@ -426,7 +426,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 
     let mut header = String::new();
     if let Some(ref t) = title {
-        header.push_str(&format!("**{}**", escape_markdown(t)));
+        header.push_str(&format!("🦀 **{}**", escape_markdown(t)));
     }
     if let Some(ref n) = number {
         let already_in_title = title.as_ref().map(|t| t.contains(n)).unwrap_or(false);
@@ -483,7 +483,16 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         if !post.ends_with('\n') {
             post.push('\n');
         }
-        let formatted = format!("*Part {}/{}*\n{}", i + 1, total, post);
+        let formatted = if i == 0 {
+            post.trim_start_matches('\n').to_string()
+        } else {
+            format!(
+                "*Part {}/{}*\n\n{}",
+                i + 1,
+                total,
+                post.trim_start_matches('\n')
+            )
+        };
         validate_telegram_markdown(&formatted)
             .map_err(|e| ValidationError(format!("Generated post {} invalid: {e}", i + 1)))?;
         result.push(formatted);
@@ -689,7 +698,7 @@ mod tests {
         let first = dir.join("output_1.md");
         assert!(first.exists());
         let content = fs::read_to_string(first).unwrap();
-        assert!(content.contains("*Part 1/1*"));
+        assert!(!content.starts_with("*Part"));
         assert!(content.contains("📰 **NEWS** 📰"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
