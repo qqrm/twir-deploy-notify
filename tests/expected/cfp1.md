@@ -1,4 +1,5 @@
 *Part 1/1*
+
 **This Week in Rust 607** — 2025\-07\-05
 
 📰 **CALL FOR PARTICIPATION; PROJECTS AND SPEAKERS** 📰
