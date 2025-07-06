@@ -59,51 +59,6 @@ fn simplify_cfp_section(section: &mut Section) {
     section.lines = cleaned;
 }
 
-fn replace_links(text: &str) -> String {
-    use pulldown_cmark::{Event, Options, Parser, Tag};
-
-    let parser = Parser::new_ext(text, Options::empty());
-    let mut result = String::new();
-    let mut in_link = false;
-    let mut link_dest = String::new();
-    let mut link_text = String::new();
-
-    for event in parser {
-        match event {
-            Event::Start(Tag::Link(_, dest, _)) => {
-                in_link = true;
-                link_dest = dest.to_string();
-                link_text.clear();
-            }
-            Event::End(Tag::Link(_, _, _)) => {
-                result.push_str(&link_text);
-                result.push_str(" (");
-                result.push_str(&link_dest);
-                result.push(')');
-                in_link = false;
-            }
-            Event::Text(t) | Event::Code(t) => {
-                if in_link {
-                    link_text.push_str(&t);
-                } else {
-                    result.push_str(&t);
-                }
-            }
-            Event::SoftBreak | Event::HardBreak => result.push('\n'),
-            _ => {}
-        }
-    }
-
-    if in_link {
-        result.push_str(&link_text);
-        result.push_str(" (");
-        result.push_str(&link_dest);
-        result.push(')');
-    }
-
-    result
-}
-
 fn find_value(text: &str, prefix: &str) -> Option<String> {
     for line in text.lines() {
         if let Some(rest) = line.strip_prefix(prefix) {
@@ -208,17 +163,48 @@ pub fn format_subheading(title: &str) -> String {
 /// # Returns
 /// A plain text version with formatting markers removed.
 pub fn markdown_to_plain(text: &str) -> String {
+    use pulldown_cmark::{Event, Options, Parser, Tag};
+
     let without_escapes = text.replace('\\', "");
-    let replaced = replace_links(&without_escapes);
-    let mut result = String::with_capacity(replaced.len());
-    for (i, line) in replaced.lines().enumerate() {
-        if i > 0 {
-            result.push('\n');
+    let parser = Parser::new_ext(&without_escapes, Options::empty());
+    let mut result = String::new();
+    let mut in_link = false;
+    let mut link_dest = String::new();
+    let mut link_text = String::new();
+
+    for event in parser {
+        match event {
+            Event::Start(Tag::Link(_, dest, _)) => {
+                in_link = true;
+                link_dest = dest.to_string();
+                link_text.clear();
+            }
+            Event::End(Tag::Link(_, _, _)) => {
+                result.push_str(&link_text.replace('•', "-"));
+                result.push_str(" (");
+                result.push_str(&link_dest);
+                result.push(')');
+                in_link = false;
+            }
+            Event::Text(t) | Event::Code(t) => {
+                if in_link {
+                    link_text.push_str(&t);
+                } else {
+                    result.push_str(&t.replace('•', "-"));
+                }
+            }
+            Event::SoftBreak | Event::HardBreak => result.push('\n'),
+            _ => {}
         }
-        let mut line_no_format = line.replace('*', "");
-        line_no_format = line_no_format.replace('•', "-");
-        result.push_str(&line_no_format);
     }
+
+    if in_link {
+        result.push_str(&link_text.replace('•', "-"));
+        result.push_str(" (");
+        result.push_str(&link_dest);
+        result.push(')');
+    }
+
     result
 }
 
@@ -528,6 +514,7 @@ pub fn send_to_telegram(
     let client = Client::new();
     info!("Sending {} posts", posts.len());
     let mut first_id: Option<i64> = None;
+    let mut last_id: Option<i64> = None;
     for (i, post) in posts.iter().enumerate() {
         let url = format!(
             "{}/bot{}/sendMessage",
@@ -562,11 +549,13 @@ pub fn send_to_telegram(
             )
             .into());
         }
-        if pin_first && i == 0 {
-            let Some(result) = data.result else {
-                return Err("Telegram response missing message_id".into());
-            };
-            first_id = Some(result.message_id);
+        if let Some(result) = data.result {
+            if pin_first && i == 0 {
+                first_id = Some(result.message_id);
+            }
+            last_id = Some(result.message_id);
+        } else if pin_first && i == 0 {
+            return Err("Telegram response missing message_id".into());
         }
         thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
     }
@@ -608,7 +597,11 @@ pub fn send_to_telegram(
             base_url.trim_end_matches('/'),
             token
         );
-        let notif_id = (msg_id + 1).to_string();
+        let notif_id = match last_id {
+            Some(id) => id + 1,
+            None => msg_id + 1,
+        };
+        let notif_id = notif_id.to_string();
         let delete_form = vec![("chat_id", chat_id), ("message_id", &notif_id)];
         let resp = client.post(&delete_url).form(&delete_form).send()?;
         let status = resp.status();
