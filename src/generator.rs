@@ -631,7 +631,14 @@ pub fn send_to_telegram(
                 .get("description")
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
-            error!("Telegram error for post {} {}: {}", i + 1, code, desc);
+            error!(
+                "Telegram error for post {} {}: {} (status {})",
+                i + 1,
+                code,
+                desc,
+                status.as_u16()
+            );
+            error!("Full response: {body}");
             return Err(format!("Telegram API error in post {} {}: {}", i + 1, code, desc).into());
         }
         info!("Post {} sent", i + 1);
