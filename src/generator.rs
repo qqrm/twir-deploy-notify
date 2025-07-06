@@ -507,6 +507,7 @@ pub fn send_to_telegram(
     let client = Client::new();
     info!("Sending {} posts", posts.len());
     let mut first_id: Option<i64> = None;
+    let mut last_id: Option<i64> = None;
     for (i, post) in posts.iter().enumerate() {
         let url = format!(
             "{}/bot{}/sendMessage",
@@ -516,7 +517,7 @@ pub fn send_to_telegram(
         debug!("Posting message {} to {}", i + 1, url);
         let mut form = vec![("chat_id", chat_id), ("text", post)];
         if use_markdown {
-            validate_telegram_markdown(post).map_err(ValidationError)?;
+            validate_telegram_markdown(post).map_err(|e| ValidationError(e.to_string()))?;
             form.push(("parse_mode", "MarkdownV2"));
         }
         form.push(("disable_web_page_preview", "true"));
@@ -542,11 +543,13 @@ pub fn send_to_telegram(
             )
             .into());
         }
-        if pin_first && i == 0 {
-            let Some(result) = data.result else {
-                return Err("Telegram response missing message_id".into());
-            };
-            first_id = Some(result.message_id);
+        if let Some(result) = data.result {
+            if pin_first && i == 0 {
+                first_id = Some(result.message_id);
+            }
+            last_id = Some(result.message_id);
+        } else if pin_first && i == 0 {
+            return Err("Telegram response missing message_id".into());
         }
         thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
     }
@@ -588,7 +591,11 @@ pub fn send_to_telegram(
             base_url.trim_end_matches('/'),
             token
         );
-        let notif_id = (msg_id + 1).to_string();
+        let notif_id = match last_id {
+            Some(id) => id + 1,
+            None => msg_id + 1,
+        };
+        let notif_id = notif_id.to_string();
         let delete_form = vec![("chat_id", chat_id), ("message_id", &notif_id)];
         let resp = client.post(&delete_url).form(&delete_form).send()?;
         let status = resp.status();

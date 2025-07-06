@@ -1,5 +1,33 @@
 use std::collections::VecDeque;
 
+/// Errors returned by [`validate_telegram_markdown`].
+#[derive(Debug)]
+pub enum MarkdownError {
+    /// A Markdown entity was not closed properly or tags are mismatched.
+    UnmatchedTag(String),
+    /// The text contains an invalid escape or reserved character.
+    InvalidEscape(String),
+    /// Placeholder for errors originating from `teloxide` utilities.
+    #[allow(dead_code)]
+    TeloxideError(String),
+    /// Any other validation problem not covered by the variants above.
+    #[allow(dead_code)]
+    Other(String),
+}
+
+impl std::fmt::Display for MarkdownError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MarkdownError::UnmatchedTag(s)
+            | MarkdownError::InvalidEscape(s)
+            | MarkdownError::TeloxideError(s)
+            | MarkdownError::Other(s) => f.write_str(s),
+        }
+    }
+}
+
+impl std::error::Error for MarkdownError {}
+
 /// Validate that the provided text conforms to the Telegram Markdown V2 rules
 /// used in this project.
 /// `teloxide` does not currently expose a validator, hence this lightweight
@@ -10,14 +38,16 @@ use std::collections::VecDeque;
 ///
 /// # Returns
 /// - `Ok(())` if the text is valid.
-/// - `Err(String)` with a description of the first encountered problem
+/// - `Err(MarkdownError)` describing the first encountered problem
 ///   otherwise.
-pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
+pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
     let chars: Vec<char> = text.chars().collect();
     let mut stack: VecDeque<&str> = VecDeque::new();
     if let Some(&first) = chars.first() {
         if matches!(first, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!') {
-            return Err("Post starts with reserved character".to_string());
+            return Err(MarkdownError::InvalidEscape(
+                "Post starts with reserved character".to_string(),
+            ));
         }
     }
     let mut i = 0;
@@ -69,7 +99,7 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
                     j += 1;
                 }
                 if j >= chars.len() || j + 1 >= chars.len() || chars[j + 1] != '(' {
-                    return Err(format!("Unmatched [ at {i}"));
+                    return Err(MarkdownError::UnmatchedTag(format!("Unmatched [ at {i}")));
                 }
                 j += 2;
                 while j < chars.len() {
@@ -81,7 +111,7 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
                     j += 1;
                 }
                 if j >= chars.len() {
-                    return Err(format!("Unmatched [ at {i}"));
+                    return Err(MarkdownError::UnmatchedTag(format!("Unmatched [ at {i}")));
                 }
                 i = j;
             }
@@ -95,7 +125,9 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
                     && !(prev.map(|c| c.is_ascii_alphanumeric()).unwrap_or(false)
                         && next.map(|c| c.is_ascii_alphanumeric()).unwrap_or(false))
                 {
-                    return Err(format!("Unescaped {ch} at {i}"));
+                    return Err(MarkdownError::InvalidEscape(format!(
+                        "Unescaped {ch} at {i}"
+                    )));
                 }
             }
             _ => {}
@@ -103,19 +135,23 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), String> {
         i += 1;
     }
     if let Some(tok) = stack.pop_back() {
-        return Err(format!("Unclosed {tok} entity"));
+        return Err(MarkdownError::UnmatchedTag(format!(
+            "Unclosed {tok} entity"
+        )));
     }
     Ok(())
 }
 
-fn toggle_token<'a>(token: &'a str, stack: &mut VecDeque<&'a str>) -> Result<(), String> {
+fn toggle_token<'a>(token: &'a str, stack: &mut VecDeque<&'a str>) -> Result<(), MarkdownError> {
     if let Some(last) = stack.back() {
         if *last == token {
             stack.pop_back();
             return Ok(());
         }
         if stack.contains(&token) {
-            return Err(format!("Mismatched {token} entity"));
+            return Err(MarkdownError::UnmatchedTag(format!(
+                "Mismatched {token} entity"
+            )));
         }
     }
     stack.push_back(token);
