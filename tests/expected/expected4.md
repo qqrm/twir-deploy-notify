@@ -24,9 +24,11 @@ Summary:
 | All ❌✅ \(primary\)              | 1\.0%   | \[\-7\.3%, 9\.1%\]    | 125   |
 2 Regressions, 4 Improvements, 10 Mixed; 7 of them in rollups 40 artifact comparisons made in total
 [Full report here](https://github.com/rust-lang/rustc-perf/blob/a63db4d1799853b334e4106d914fba24e49c8782/triage/2025/2025-06-24.md)
+
 **\[Approved RFCs\]\(https://github\.com/rust\-lang/rfcs/commits/master\)**
 Changes to Rust follow the Rust [RFC \(request for comments\) process](https://github.com/rust-lang/rfcs#rust-rfcs)\. These are the RFCs that were approved for implementation this week:
 • No RFCs were approved this week\.
+
 **Final Comment Period**
 Every week, [the team](https://www.rust-lang.org/team.html) announces the 'final comment period' for RFCs and key PRs which are reaching a decision\. Express your opinions now\.
 

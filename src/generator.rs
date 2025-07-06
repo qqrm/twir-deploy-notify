@@ -36,12 +36,12 @@ fn simplify_cfp_section(section: &mut Section) {
     let mut has_task = false;
 
     for line in section.lines.iter() {
-        if line.starts_with("**CFP \\- Projects**") {
+        if line.trim_start().starts_with("**CFP \\- Projects**") {
             in_projects = true;
             cleaned.push(line.clone());
             continue;
         }
-        if line.starts_with("**CFP \\- Events**") {
+        if line.trim_start().starts_with("**CFP \\- Events**") {
             in_projects = false;
             cleaned.push(line.clone());
             continue;
@@ -216,7 +216,7 @@ pub fn format_subheading(title: &str) -> String {
     if let Some(emoji) = SUBHEADING_EMOJIS.get(lower.as_str()) {
         format!("\n**{}:** {}", escape_markdown(trimmed), emoji)
     } else {
-        format!("**{}**", escape_markdown(trimmed))
+        format!("\n**{}**", escape_markdown(trimmed))
     }
 }
 
@@ -825,7 +825,7 @@ mod tests {
     fn subheading_with_dash() {
         let text = "## Section\n### Foo-Bar\n- item\n";
         let secs = parse_sections(text);
-        assert_eq!(secs[0].lines[0], "**Foo\\-Bar**");
+        assert_eq!(secs[0].lines[0], "\n**Foo\\-Bar**");
         let posts = generate_posts(
             "Title: T\nNumber: 1\nDate: 2025-01-01\n\n## Section\n### Foo-Bar\n- item\n"
                 .to_string(),

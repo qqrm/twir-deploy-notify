@@ -3,3 +3,4 @@ output_*.md
 twir/
 
 last_sent.txt
+# Ignore generated outputs
