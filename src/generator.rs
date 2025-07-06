@@ -33,17 +33,15 @@ fn simplify_cfp_section(section: &mut Section) {
     let mut cleaned = Vec::new();
     let mut in_projects = false;
     let mut has_task = false;
-    let mut events_index = None;
 
     for line in section.lines.iter() {
-        if line.starts_with("**CFP - Projects**") {
+        if line.starts_with("**CFP \\- Projects**") {
             in_projects = true;
             cleaned.push(line.clone());
             continue;
         }
-        if line.starts_with("**CFP - Events**") {
+        if line.starts_with("**CFP \\- Events**") {
             in_projects = false;
-            events_index = Some(cleaned.len());
             cleaned.push(line.clone());
             continue;
         }
@@ -60,7 +58,8 @@ fn simplify_cfp_section(section: &mut Section) {
             if line.trim() == "No Calls for participation were submitted this week." {
                 continue;
             }
-            if line.trim_start().starts_with('•') {
+            let trimmed = line.trim_start();
+            if trimmed.starts_with('•') || trimmed.starts_with('*') {
                 has_task = true;
             }
             cleaned.push(line.clone());
@@ -74,8 +73,7 @@ fn simplify_cfp_section(section: &mut Section) {
             "На этой неделе новых задач нет\\. [Инструкции]({})",
             escape_markdown_url(CFP_GUIDELINES)
         );
-        let insert_at = events_index.unwrap_or(cleaned.len());
-        cleaned.insert(insert_at, msg);
+        cleaned.push(msg);
     }
 
     section.lines = cleaned;
