@@ -14,8 +14,10 @@
   check whether `origin/main` contains new commits. Rebase your branch onto the
   latest `origin/main` if needed so all development starts from the most recent
   commit.
-- If the task includes the word "рестарт", start by updating `main` to the
-  freshest commit before continuing.
+- If the task includes the word "рестарт" or `Restart`, create a **task stub**
+  from the most recent `origin/main` commit. The stub repeats the current task's
+  requirements and launches a new merge request, leaving the previous branch
+  untouched. Prompt the user before continuing.
 - Read all Markdown (`*.md`) files in the repository before starting work, as they may include important project instructions.
 - Follow the guidelines in `PARSING.md`, especially the requirement to rely on crates for Markdown processing instead of custom parsing code.
 
