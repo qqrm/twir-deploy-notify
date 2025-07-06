@@ -530,7 +530,7 @@ pub fn send_to_telegram(
         debug!("Posting message {} to {}", i + 1, url);
         let mut form = vec![("chat_id", chat_id), ("text", post)];
         if use_markdown {
-            validate_telegram_markdown(post).map_err(ValidationError)?;
+            validate_telegram_markdown(post).map_err(|e| ValidationError(e.to_string()))?;
             form.push(("parse_mode", "MarkdownV2"));
         }
         form.push(("disable_web_page_preview", "true"));
