@@ -63,6 +63,10 @@ Scheduled runs first send the posts to the development chat using the
 `verify-posts` binary. After the messages are confirmed to appear in the
 channel, the same release is posted to the main chat.
 
+Two manual workflows exist in GitHub Actions. **Send TWIR summary** publishes
+the post only to the development channel, while **Release TWIR summary** sends
+the verified messages to the main chat.
+
 Setting the `TWIR_MARKDOWN` environment variable before building will
 parse the referenced file at compile time and embed the generated posts
 in the crate. The resulting array is available as `twir_deploy_notify::posts::POSTS`.
