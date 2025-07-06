@@ -189,10 +189,12 @@ pub fn format_subheading(title: &str) -> String {
     let lower = trimmed.to_ascii_lowercase();
     if lower == "newsletters" {
         format!("\n**{}:** 📰", escape_markdown(trimmed))
-    } else if lower == "project/tooling updates" {
+    } else if lower == "project/tooling updates" || lower == "compiler" {
         format!("\n**{}:** 🛠️", escape_markdown(trimmed))
     } else if lower == "observations/thoughts" {
         format!("\n**{}:** 🤔", escape_markdown(trimmed))
+    } else if lower == "rust walkthroughs" {
+        format!("\n**{}:** 📚", escape_markdown(trimmed))
     } else {
         format!("**{}**", escape_markdown(trimmed))
     }
