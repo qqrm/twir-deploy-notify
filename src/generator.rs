@@ -1,4 +1,5 @@
 use log::{debug, error, info, warn};
+use phf::phf_map;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
@@ -9,6 +10,22 @@ use crate::validator::validate_telegram_markdown;
 
 pub const TELEGRAM_LIMIT: usize = 4000;
 pub const TELEGRAM_DELAY_MS: u64 = 1000;
+
+/// Mapping of subheading titles to emojis used in Telegram posts.
+pub static SUBHEADING_EMOJIS: phf::Map<&'static str, &'static str> = phf_map! {
+    "newsletters" => "📰",
+    "project/tooling updates" => "🛠️",
+    "compiler" => "🛠️",
+    "observations/thoughts" => "🤔",
+    "rust walkthroughs" => "📚",
+    "library" => "📚",
+    "cargo" => "📦",
+    "rustdoc" => "📖",
+    "clippy" => "🔧",
+    "rust-analyzer" => "🤖",
+    "tracking issues & prs" => "📌",
+    "quote of the week" => "💬",
+};
 
 /// Short URL guiding contributors how to submit CFP tasks.
 const CFP_GUIDELINES: &str = "https://github.com/rust-lang/this-week-in-rust?tab=readme-ov-file#call-for-participation-guidelines";
@@ -187,14 +204,8 @@ pub fn format_heading(title: &str) -> String {
 pub fn format_subheading(title: &str) -> String {
     let trimmed = title.trim();
     let lower = trimmed.to_ascii_lowercase();
-    if lower == "newsletters" {
-        format!("\n**{}:** 📰", escape_markdown(trimmed))
-    } else if lower == "project/tooling updates" || lower == "compiler" {
-        format!("\n**{}:** 🛠️", escape_markdown(trimmed))
-    } else if lower == "observations/thoughts" {
-        format!("\n**{}:** 🤔", escape_markdown(trimmed))
-    } else if lower == "rust walkthroughs" {
-        format!("\n**{}:** 📚", escape_markdown(trimmed))
+    if let Some(emoji) = SUBHEADING_EMOJIS.get(lower.as_str()) {
+        format!("\n**{}:** {}", escape_markdown(trimmed), emoji)
     } else {
         format!("**{}**", escape_markdown(trimmed))
     }
