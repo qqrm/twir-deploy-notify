@@ -2,6 +2,8 @@ use std::collections::VecDeque;
 
 /// Validate that the provided text conforms to the Telegram Markdown V2 rules
 /// used in this project.
+/// `teloxide` does not currently expose a validator, hence this lightweight
+/// implementation.
 ///
 /// # Parameters
 /// - `text`: Telegram-formatted Markdown to validate.
