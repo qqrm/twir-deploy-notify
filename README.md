@@ -53,9 +53,9 @@ Telegram:
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
 
 Responses from Telegram are verified with the `verify-posts` binary.
-Scheduled runs send the posts to the development chat through the `dev.yml` workflow.
-After the messages are confirmed to appear in the channel, the manual `release.yml` workflow
-posts the same release to the main chat.
+The `release.yml` workflow runs on a daily schedule at 09:00 UTC. It first sends the
+posts to the development chat and, once verified, delivers the same release to the
+main chat. The `dev.yml` workflow is triggered manually for integration tests.
 
 Setting the `TWIR_MARKDOWN` environment variable before building will
 parse the referenced file at compile time and embed the generated posts
