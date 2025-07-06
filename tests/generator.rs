@@ -143,3 +143,11 @@ fn quote_section_spacing() {
         .unwrap();
     assert!(lines.get(author_idx + 1).is_some_and(|l| l.is_empty()));
 }
+
+#[test]
+fn jobs_url_simplified() {
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## Jobs\nPlease see the latest [Who's Hiring thread on r/rust](https://example.com/thread)\n";
+    let posts = generator::generate_posts(input.to_string()).unwrap();
+    let combined = posts.join("\n");
+    assert!(combined.contains("[Rust Job Reddit Thread](https://example.com/thread)"));
+}

@@ -1,6 +1,5 @@
 use log::{debug, error, info, warn};
 use phf::phf_map;
-use regex::Regex;
 use reqwest::blocking::Client;
 use serde::Deserialize;
 use std::{fs, path::Path, thread, time::Duration};
@@ -114,11 +113,16 @@ fn simplify_quote_section(section: &mut Section) {
 }
 
 fn simplify_jobs_section(section: &mut Section) {
-    let re = Regex::new(r"\[Who'?s Hiring thread on r/rust\]\(([^)]+)\)").unwrap();
+    const PAT: &str = "Hiring thread on r/rust](";
     for line in &mut section.lines {
-        if let Some(caps) = re.captures(line) {
-            let url = caps.get(1).unwrap().as_str();
-            *line = format!("🦀 [Rust Job Reddit Thread]({})", escape_markdown_url(url));
+        if let Some(start) = line.find(PAT) {
+            let url_start = start + PAT.len();
+            if let Some(rest) = line.get(url_start..) {
+                if let Some(end) = rest.find(')') {
+                    let url = &rest[..end];
+                    *line = format!("🦀 [Rust Job Reddit Thread]({})", escape_markdown_url(url));
+                }
+            }
         }
     }
 }
