@@ -106,6 +106,6 @@ Adjust the agent name or email by editing `.gitmessage` directly or by setting
 
 ## License
 
-This project is distributed under two licenses: the standard MIT terms in `LICENSE` and the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.
+This project is distributed under the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.
 Contributors must generate changes via an AI agent and mention it as a co-author in commits.
-Manual code submissions may be humorously called a "skill issue" by the community.
+Manual code submissions may still be humorously called a "skill issue" by the community.
