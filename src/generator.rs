@@ -59,51 +59,6 @@ fn simplify_cfp_section(section: &mut Section) {
     section.lines = cleaned;
 }
 
-fn replace_links(text: &str) -> String {
-    use pulldown_cmark::{Event, Options, Parser, Tag};
-
-    let parser = Parser::new_ext(text, Options::empty());
-    let mut result = String::new();
-    let mut in_link = false;
-    let mut link_dest = String::new();
-    let mut link_text = String::new();
-
-    for event in parser {
-        match event {
-            Event::Start(Tag::Link(_, dest, _)) => {
-                in_link = true;
-                link_dest = dest.to_string();
-                link_text.clear();
-            }
-            Event::End(Tag::Link(_, _, _)) => {
-                result.push_str(&link_text);
-                result.push_str(" (");
-                result.push_str(&link_dest);
-                result.push(')');
-                in_link = false;
-            }
-            Event::Text(t) | Event::Code(t) => {
-                if in_link {
-                    link_text.push_str(&t);
-                } else {
-                    result.push_str(&t);
-                }
-            }
-            Event::SoftBreak | Event::HardBreak => result.push('\n'),
-            _ => {}
-        }
-    }
-
-    if in_link {
-        result.push_str(&link_text);
-        result.push_str(" (");
-        result.push_str(&link_dest);
-        result.push(')');
-    }
-
-    result
-}
-
 fn find_value(text: &str, prefix: &str) -> Option<String> {
     for line in text.lines() {
         if let Some(rest) = line.strip_prefix(prefix) {
@@ -208,18 +163,83 @@ pub fn format_subheading(title: &str) -> String {
 /// # Returns
 /// A plain text version with formatting markers removed.
 pub fn markdown_to_plain(text: &str) -> String {
+    use pulldown_cmark::{Event, Options, Parser, Tag};
+
     let without_escapes = text.replace('\\', "");
-    let replaced = replace_links(&without_escapes);
-    let mut result = String::with_capacity(replaced.len());
-    for (i, line) in replaced.lines().enumerate() {
-        if i > 0 {
-            result.push('\n');
+    let parser = Parser::new_ext(&without_escapes, Options::ENABLE_TABLES);
+    let mut result = String::new();
+    let mut link_dest: Option<String> = None;
+    let mut list_depth = 0usize;
+
+    for event in parser {
+        match event {
+            Event::Start(Tag::Link(_, dest, _)) => {
+                link_dest = Some(dest.to_string());
+            }
+            Event::End(Tag::Link(_, _, _)) => {
+                if let Some(d) = link_dest.take() {
+                    result.push_str(" (");
+                    result.push_str(&d);
+                    result.push(')');
+                }
+            }
+            Event::Start(Tag::List(_)) => {
+                if !result.ends_with('\n') && !result.is_empty() {
+                    result.push('\n');
+                }
+                list_depth += 1;
+            }
+            Event::End(Tag::List(_)) => {
+                list_depth = list_depth.saturating_sub(1);
+                if !result.ends_with('\n') {
+                    result.push('\n');
+                }
+            }
+            Event::Start(Tag::Item) => {
+                if !result.ends_with('\n') && !result.is_empty() {
+                    result.push('\n');
+                }
+                for _ in 1..list_depth {
+                    result.push_str("  ");
+                }
+                result.push_str("- ");
+            }
+            Event::Text(t) | Event::Code(t) => {
+                result.push_str(&t);
+            }
+            Event::Start(Tag::Heading(..)) => {}
+            Event::End(Tag::Heading(..)) | Event::End(Tag::Paragraph) => {
+                if !result.ends_with('\n') {
+                    result.push('\n');
+                }
+            }
+            Event::Start(Tag::BlockQuote) => {
+                if !result.ends_with('\n') && !result.is_empty() {
+                    result.push('\n');
+                }
+                result.push_str("> ");
+            }
+            Event::End(Tag::BlockQuote) | Event::End(Tag::CodeBlock(_)) => {
+                if !result.ends_with('\n') {
+                    result.push('\n');
+                }
+            }
+            Event::Start(Tag::CodeBlock(_)) => {
+                if !result.ends_with('\n') && !result.is_empty() {
+                    result.push('\n');
+                }
+            }
+            Event::SoftBreak | Event::HardBreak | Event::Rule => {
+                result.push('\n');
+            }
+            _ => {}
         }
-        let mut line_no_format = line.replace('*', "");
-        line_no_format = line_no_format.replace('•', "-");
-        result.push_str(&line_no_format);
     }
-    result
+
+    while result.ends_with('\n') {
+        result.pop();
+    }
+    result.replace('•', "-")
 }
 
 #[derive(Debug)]
