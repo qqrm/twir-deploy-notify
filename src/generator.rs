@@ -416,6 +416,9 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             section_text.push_str(&header);
         }
         if !sec.title.is_empty() {
+            if idx > 0 {
+                section_text.push('\n');
+            }
             section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
         }
         for line in &sec.lines {
