@@ -28,7 +28,8 @@ pub static SUBHEADING_EMOJIS: phf::Map<&'static str, &'static str> = phf_map! {
 };
 
 /// Short URL guiding contributors how to submit CFP tasks.
-const CFP_GUIDELINES: &str = "https://github.com/rust-lang/this-week-in-rust?tab=readme-ov-file#call-for-participation-guidelines";
+const CFP_GUIDELINES: &str =
+    "https://github.com/rust-lang/this-week-in-rust#call-for-participation-guidelines";
 
 fn simplify_cfp_section(section: &mut Section) {
     let mut cleaned = Vec::new();
