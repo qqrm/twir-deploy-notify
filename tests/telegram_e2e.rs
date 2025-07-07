@@ -77,3 +77,64 @@ fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 
     Ok(())
 }
+
+#[test]
+fn telegram_pin_message() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let token = match env::var("TELEGRAM_BOT_TOKEN") {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!("Missing TELEGRAM_BOT_TOKEN, skipping");
+            return Ok(());
+        }
+    };
+    let chat_id = match env::var("TELEGRAM_CHAT_ID") {
+        Ok(v) => v,
+        Err(_) => {
+            eprintln!("Missing TELEGRAM_CHAT_ID, skipping");
+            return Ok(());
+        }
+    };
+    let base =
+        env::var("TELEGRAM_API_BASE").unwrap_or_else(|_| "https://api.telegram.org".to_string());
+
+    let client = Client::new();
+    let send_url = format!("{}/bot{}/sendMessage", base.trim_end_matches('/'), token);
+    let resp: Value = client
+        .post(&send_url)
+        .form(&[
+            ("chat_id", chat_id.as_str()),
+            ("text", "pin test"),
+            ("parse_mode", "MarkdownV2"),
+            ("disable_web_page_preview", "true"),
+        ])
+        .send()?
+        .json()?;
+    assert!(
+        resp["ok"].as_bool().unwrap_or(false),
+        "sendMessage failed: {resp:?}"
+    );
+    let msg_id = resp["result"]["message_id"]
+        .as_i64()
+        .ok_or("missing message_id")?
+        .to_string();
+
+    std::thread::sleep(std::time::Duration::from_millis(
+        generator::TELEGRAM_PIN_DELAY_MS,
+    ));
+
+    let pin_url = format!("{}/bot{}/pinChatMessage", base.trim_end_matches('/'), token);
+    let pin_resp: Value = client
+        .post(&pin_url)
+        .form(&[
+            ("chat_id", chat_id.as_str()),
+            ("message_id", msg_id.as_str()),
+        ])
+        .send()?
+        .json()?;
+    assert!(
+        pin_resp["ok"].as_bool().unwrap_or(false),
+        "pinChatMessage failed: {pin_resp:?}"
+    );
+
+    Ok(())
+}
