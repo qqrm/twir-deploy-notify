@@ -2,7 +2,7 @@ use log::{debug, error, info, warn};
 use phf::phf_map;
 use reqwest::blocking::Client;
 use serde::Deserialize;
-use std::{fs, path::Path, thread, time::Duration};
+use std::{borrow::Cow, fs, path::Path, thread, time::Duration};
 use teloxide::utils::markdown::escape;
 
 use crate::parser::{Section, parse_sections};
@@ -567,6 +567,14 @@ struct TelegramResponse {
     description: Option<String>,
 }
 
+fn normalize_chat_id(chat_id: &str) -> Cow<'_, str> {
+    if chat_id.starts_with('@') || chat_id.starts_with("-100") {
+        Cow::Borrowed(chat_id)
+    } else {
+        Cow::Owned(format!("-100{}", chat_id.trim_start_matches('-')))
+    }
+}
+
 /// Send prepared posts to a Telegram chat via the HTTP API.
 ///
 /// # Parameters
@@ -598,6 +606,7 @@ pub fn send_to_telegram(
     }
 
     let client = Client::new();
+    let chat_id = normalize_chat_id(chat_id);
     info!("Sending {} posts", posts.len());
     let mut first_id: Option<i64> = None;
     let mut last_id: Option<i64> = None;
@@ -609,7 +618,7 @@ pub fn send_to_telegram(
             token
         );
         debug!("Posting message {} to {}", i + 1, url);
-        let mut form = vec![("chat_id", chat_id), ("text", post)];
+        let mut form = vec![("chat_id", chat_id.as_ref()), ("text", post)];
         if use_markdown {
             form.push(("parse_mode", "MarkdownV2"));
         }
@@ -672,7 +681,7 @@ pub fn send_to_telegram(
         );
         debug!("Pinning message {msg_id} via {pin_url}");
         let msg_id_str = msg_id.to_string();
-        let pin_form = vec![("chat_id", chat_id), ("message_id", &msg_id_str)];
+        let pin_form = vec![("chat_id", chat_id.as_ref()), ("message_id", &msg_id_str)];
         let resp = client.post(&pin_url).form(&pin_form).send()?;
         let status = resp.status();
         let body = resp.text()?;
@@ -706,7 +715,7 @@ pub fn send_to_telegram(
             None => msg_id + 1,
         };
         let notif_id = notif_id.to_string();
-        let delete_form = vec![("chat_id", chat_id), ("message_id", &notif_id)];
+        let delete_form = vec![("chat_id", chat_id.as_ref()), ("message_id", &notif_id)];
         let resp = client.post(&delete_url).form(&delete_form).send()?;
         let status = resp.status();
         let body = resp.text()?;

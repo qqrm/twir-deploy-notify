@@ -22,7 +22,7 @@ fn run_single_post(input: &str, plain: bool, validate_markdown: bool) {
             .match_header("content-type", "application/x-www-form-urlencoded")
             .match_request(|req| {
                 let body = req.utf8_lossy_body().unwrap();
-                body.contains("chat_id=42")
+                body.contains("chat_id=-10042")
                     && body.contains("disable_web_page_preview=true")
                     && !body.contains("parse_mode")
             })
@@ -35,7 +35,7 @@ fn run_single_post(input: &str, plain: bool, validate_markdown: bool) {
             .mock("POST", "/botTEST/sendMessage")
             .match_header("content-type", "application/x-www-form-urlencoded")
             .match_body(Matcher::AllOf(vec![
-                Matcher::UrlEncoded("chat_id".into(), "42".into()),
+                Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
                 Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
                 Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
             ]))
@@ -49,7 +49,7 @@ fn run_single_post(input: &str, plain: bool, validate_markdown: bool) {
     cmd.arg(&input_path)
         .current_dir(dir.path())
         .env("TELEGRAM_BOT_TOKEN", "TEST")
-        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_CHAT_ID", "-10042")
         .env("TELEGRAM_API_BASE", server.url());
     if plain {
         cmd.arg("--plain");
@@ -127,7 +127,7 @@ fn fails_on_unescaped_markdown() {
         .arg(&input_path)
         .current_dir(dir.path())
         .env("TELEGRAM_BOT_TOKEN", "TEST")
-        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_CHAT_ID", "-10042")
         // Use example.invalid to avoid accidental network calls
         .env("TELEGRAM_API_BASE", "http://example.invalid")
         .status()
@@ -146,7 +146,7 @@ fn fails_on_unescaped_dash() {
         .arg(&input_path)
         .current_dir(dir.path())
         .env("TELEGRAM_BOT_TOKEN", "TEST")
-        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_CHAT_ID", "-10042")
         // Use example.invalid to avoid accidental network calls
         .env("TELEGRAM_API_BASE", "http://example.invalid")
         .status()
@@ -192,7 +192,7 @@ fn full_issue_end_to_end() {
                 .mock("POST", "/botTEST/sendMessage")
                 .match_header("content-type", "application/x-www-form-urlencoded")
                 .match_body(Matcher::AllOf(vec![
-                    Matcher::UrlEncoded("chat_id".into(), "42".into()),
+                    Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
                     Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
                     Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
                 ]))
@@ -206,7 +206,7 @@ fn full_issue_end_to_end() {
         .arg(&input_path)
         .current_dir(dir.path())
         .env("TELEGRAM_BOT_TOKEN", "TEST")
-        .env("TELEGRAM_CHAT_ID", "42")
+        .env("TELEGRAM_CHAT_ID", "-10042")
         .env("TELEGRAM_API_BASE", server.url())
         .status()
         .expect("failed to run binary");
@@ -233,7 +233,7 @@ fn send_issue_606_post_4() {
         .mock("POST", "/botTEST/sendMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
             Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
             Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
         ]))
@@ -246,7 +246,7 @@ fn send_issue_606_post_4() {
         &[posts[3].clone()],
         &server.url(),
         "TEST",
-        "42",
+        "-10042",
         true,
         false,
     )
@@ -266,7 +266,7 @@ fn pin_first_message() {
         .mock("POST", "/botTEST/sendMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
             Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
             Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
         ]))
@@ -279,7 +279,7 @@ fn pin_first_message() {
         .mock("POST", "/botTEST/pinChatMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
             Matcher::UrlEncoded("message_id".into(), "1".into()),
         ]))
         .with_status(200)
@@ -291,7 +291,7 @@ fn pin_first_message() {
         .mock("POST", "/botTEST/deleteMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
             Matcher::UrlEncoded("message_id".into(), "2".into()),
         ]))
         .with_status(200)
@@ -299,7 +299,7 @@ fn pin_first_message() {
         .expect(1)
         .create();
 
-    generator::send_to_telegram(&posts, &server.url(), "TEST", "42", true, true).unwrap();
+    generator::send_to_telegram(&posts, &server.url(), "TEST", "-10042", true, true).unwrap();
     m1.assert();
     m2.assert();
     m3.assert();
@@ -324,7 +324,7 @@ fn pin_after_all_messages() {
         .mock("POST", "/botTEST/sendMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
             Matcher::UrlEncoded("text".into(), "first".into()),
             Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
             Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
@@ -340,7 +340,7 @@ fn pin_after_all_messages() {
         .mock("POST", "/botTEST/sendMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
             Matcher::UrlEncoded("text".into(), "second".into()),
             Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
             Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
@@ -356,7 +356,7 @@ fn pin_after_all_messages() {
         .mock("POST", "/botTEST/pinChatMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
             Matcher::UrlEncoded("message_id".into(), "1".into()),
         ]))
         .with_body_from_request(|_| {
@@ -370,7 +370,7 @@ fn pin_after_all_messages() {
         .mock("POST", "/botTEST/deleteMessage")
         .match_header("content-type", "application/x-www-form-urlencoded")
         .match_body(Matcher::AllOf(vec![
-            Matcher::UrlEncoded("chat_id".into(), "42".into()),
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
             Matcher::UrlEncoded("message_id".into(), "3".into()),
         ]))
         .with_body_from_request(|_| {
@@ -380,7 +380,7 @@ fn pin_after_all_messages() {
         .expect(1)
         .create();
 
-    generator::send_to_telegram(&posts, &server.url(), "TEST", "42", true, true).unwrap();
+    generator::send_to_telegram(&posts, &server.url(), "TEST", "-10042", true, true).unwrap();
 
     let order = CALLS.lock().unwrap().clone();
     assert_eq!(order, ["send", "send", "pin", "delete"]);
@@ -504,7 +504,7 @@ fn send_long_escaped_dash() {
                 .mock("POST", "/botTEST/sendMessage")
                 .match_header("content-type", "application/x-www-form-urlencoded")
                 .match_body(Matcher::AllOf(vec![
-                    Matcher::UrlEncoded("chat_id".into(), "42".into()),
+                    Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
                     Matcher::UrlEncoded("parse_mode".into(), "MarkdownV2".into()),
                     Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
                 ]))
@@ -514,7 +514,7 @@ fn send_long_escaped_dash() {
         );
     }
 
-    let result = generator::send_to_telegram(&posts, &server.url(), "TEST", "42", true, false);
+    let result = generator::send_to_telegram(&posts, &server.url(), "TEST", "-10042", true, false);
     assert!(result.is_ok(), "send_to_telegram failed: {result:?}");
     for m in mocks {
         m.assert();
@@ -568,7 +568,7 @@ fn send_to_telegram_rejects_invalid_before_request() {
         .expect(0)
         .create();
 
-    let result = generator::send_to_telegram(&posts, &server.url(), "TEST", "42", true, false);
+    let result = generator::send_to_telegram(&posts, &server.url(), "TEST", "-10042", true, false);
     assert!(result.is_err());
     m.assert();
 }
