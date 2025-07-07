@@ -78,7 +78,7 @@ fn cfp_without_tasks_inserts_message() {
     let input = format!("Title: Test\nNumber: 1\nDate: 2025-07-05\n\n{CFP_EMPTY_SNIPPET}");
     let posts = generate_posts(input).unwrap();
     let combined = posts.join("\n");
-    assert!(combined.contains("На этой неделе новых задач нет"));
+    assert!(combined.contains("No new tasks this week"));
     for post in posts {
         common::assert_valid_markdown(&post);
     }
@@ -89,7 +89,7 @@ fn cfp_with_tasks_does_not_insert_message() {
     let input = format!("Title: Test\nNumber: 1\nDate: 2025-06-25\n\n{CFP_SNIPPET}");
     let posts = generate_posts(input).unwrap();
     let combined = posts.join("\n");
-    assert!(!combined.contains("На этой неделе новых задач нет"));
+    assert!(!combined.contains("No new tasks this week"));
     for post in posts {
         common::assert_valid_markdown(&post);
     }
