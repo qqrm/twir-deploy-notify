@@ -43,11 +43,8 @@ pub fn main() -> std::io::Result<()> {
         log::debug!("chat id: {chat_id}");
         let base = env::var("TELEGRAM_API_BASE")
             .unwrap_or_else(|_| "https://api.telegram.org".to_string());
-        let pin_first = env::var("TELEGRAM_PIN_FIRST")
-            .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
-            .unwrap_or(false);
         log::info!("Sending posts to Telegram");
-        send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain, pin_first)
+        send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain, true)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
     } else {
         log::info!("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set; skipping send");
