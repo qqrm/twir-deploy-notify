@@ -10,6 +10,8 @@ use crate::validator::validate_telegram_markdown;
 
 pub const TELEGRAM_LIMIT: usize = 4000;
 pub const TELEGRAM_DELAY_MS: u64 = 1000;
+/// Delay before attempting to pin the first message.
+pub const TELEGRAM_PIN_DELAY_MS: u64 = 2000;
 
 /// Mapping of subheading titles to emojis used in Telegram posts.
 pub static SUBHEADING_EMOJIS: phf::Map<&'static str, &'static str> = phf_map! {
@@ -660,6 +662,7 @@ pub fn send_to_telegram(
                 .and_then(|v| v.as_i64())
             {
                 Some(id) => {
+                    debug!("Received message_id {id}");
                     if i == 0 {
                         first_id = Some(id);
                     }
@@ -676,6 +679,8 @@ pub fn send_to_telegram(
         }
     }
     if let Some(msg_id) = first_id {
+        debug!("Sleeping {TELEGRAM_PIN_DELAY_MS} ms before pinning");
+        thread::sleep(Duration::from_millis(TELEGRAM_PIN_DELAY_MS));
         let pin_url = format!(
             "{}/bot{}/pinChatMessage",
             base_url.trim_end_matches('/'),
