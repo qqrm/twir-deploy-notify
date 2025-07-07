@@ -69,6 +69,13 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
                 if i + 1 < chars.len() && chars[i + 1] == '|' {
                     i += 1;
                     toggle_token("||", &mut stack)?;
+                } else if !in_code_block {
+                    let prev = if i == 0 { None } else { Some(chars[i - 1]) };
+                    if prev != Some('\\') {
+                        return Err(MarkdownError::InvalidEscape(format!(
+                            "Unescaped {ch} at {i}"
+                        )));
+                    }
                 }
             }
             '`' => {
@@ -108,6 +115,16 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
                 }
                 i = j;
             }
+            ']' => {
+                if !in_code_block {
+                    let prev = if i == 0 { None } else { Some(chars[i - 1]) };
+                    if prev != Some('\\') {
+                        return Err(MarkdownError::InvalidEscape(format!(
+                            "Unescaped {ch} at {i}"
+                        )));
+                    }
+                }
+            }
             '\\' => {
                 i += 1; // skip escaped char
             }
@@ -125,6 +142,16 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
                     return Err(MarkdownError::InvalidEscape(format!(
                         "Unescaped {ch} at {i}"
                     )));
+                }
+            }
+            '(' | ')' => {
+                if !in_code_block {
+                    let prev = if i == 0 { None } else { Some(chars[i - 1]) };
+                    if prev != Some('\\') {
+                        return Err(MarkdownError::InvalidEscape(format!(
+                            "Unescaped {ch} at {i}"
+                        )));
+                    }
                 }
             }
             _ => {}
@@ -185,5 +212,25 @@ mod tests {
     #[test]
     fn rejects_dash_at_start() {
         assert!(validate_telegram_markdown("- bad").is_err());
+    }
+
+    #[test]
+    fn rejects_unescaped_parentheses() {
+        assert!(validate_telegram_markdown("text (test)").is_err());
+    }
+
+    #[test]
+    fn accepts_escaped_parentheses() {
+        assert!(validate_telegram_markdown("text \\(test\\)").is_ok());
+    }
+
+    #[test]
+    fn rejects_unescaped_bracket() {
+        assert!(validate_telegram_markdown("text ] ok").is_err());
+    }
+
+    #[test]
+    fn rejects_single_pipe() {
+        assert!(validate_telegram_markdown("a | b").is_err());
     }
 }
