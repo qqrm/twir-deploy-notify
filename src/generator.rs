@@ -72,7 +72,7 @@ fn simplify_cfp_section(section: &mut Section) {
 
     if !has_task {
         let msg = format!(
-            "На этой неделе новых задач нет\\. [Инструкции]({})",
+            "No new tasks this week\\. [Instructions]({})",
             escape_markdown_url(CFP_GUIDELINES)
         );
         cleaned.push(msg);
