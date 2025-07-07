@@ -551,6 +551,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 /// # Returns
 /// `Ok(())` on success or any file I/O error encountered.
 pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
+    fs::create_dir_all(dir)?;
     for (i, post) in posts.iter().enumerate() {
         let file_name = dir.join(format!("output_{}.md", i + 1));
         fs::write(&file_name, post)?;
@@ -755,7 +756,6 @@ mod tests {
         let mut dir = std::env::temp_dir();
         dir.push("twir_test");
         let _ = fs::remove_dir_all(&dir);
-        fs::create_dir(&dir).unwrap();
         write_posts(&posts, &dir).unwrap();
         let first = dir.join("output_1.md");
         assert!(first.exists());
