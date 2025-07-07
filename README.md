@@ -67,7 +67,7 @@ in the crate. The resulting array is available as `twir_deploy_notify::posts::PO
 Continuous integration runs `cargo machete` to verify that `Cargo.toml` lists only used dependencies. Run this command locally before opening a pull request.
 Install it with `cargo install cargo-machete` if it is not available.
 
-Documentation Markdown is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
+Documentation in `DOCS/` is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
 Generated Telegram posts are verified with the shared `validator` module.
 Integration tests that send messages to Telegram run only when the CI workflow is manually triggered with the `run_integration` input.
 
