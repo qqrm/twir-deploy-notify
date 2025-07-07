@@ -1,14 +1,12 @@
-#![allow(dead_code)]
-
 use std::env;
 use std::fs;
 use std::path::Path;
 
-#[path = "src/generator.rs"]
+#[path = "build_modules/generator.rs"]
 mod generator;
-#[path = "src/parser.rs"]
+#[path = "build_modules/parser.rs"]
 mod parser;
-#[path = "src/validator.rs"]
+#[path = "build_modules/validator.rs"]
 mod validator;
 
 fn main() {
