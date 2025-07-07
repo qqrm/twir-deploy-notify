@@ -38,7 +38,7 @@ fn function_exists(name: &str) -> std::io::Result<bool> {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut missing = Vec::new();
 
-    for entry in WalkDir::new(".").into_iter().filter_map(Result::ok) {
+    for entry in WalkDir::new("DOCS").into_iter().filter_map(Result::ok) {
         if entry.path().extension().and_then(|e| e.to_str()) == Some("md") {
             let content = fs::read_to_string(entry.path())?;
             let parser = Parser::new(&content);
