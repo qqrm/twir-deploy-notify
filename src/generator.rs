@@ -617,7 +617,7 @@ pub fn send_to_telegram(
             base_url.trim_end_matches('/'),
             token
         );
-        debug!("Posting message {} to {}", i + 1, url);
+        debug!("Posting message {} via /sendMessage", i + 1);
         let mut form = vec![("chat_id", chat_id.as_ref()), ("text", post)];
         if use_markdown {
             form.push(("parse_mode", "MarkdownV2"));
@@ -679,7 +679,7 @@ pub fn send_to_telegram(
             base_url.trim_end_matches('/'),
             token
         );
-        debug!("Pinning message {msg_id} via {pin_url}");
+        debug!("Pinning message {msg_id} via /pinChatMessage");
         let msg_id_str = msg_id.to_string();
         let pin_form = vec![("chat_id", chat_id.as_ref()), ("message_id", &msg_id_str)];
         let resp = client.post(&pin_url).form(&pin_form).send()?;
