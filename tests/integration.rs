@@ -27,7 +27,7 @@ fn run_single_post(input: &str, plain: bool, validate_markdown: bool) {
                     && !body.contains("parse_mode")
             })
             .with_status(200)
-            .with_body("{\"ok\":true}")
+            .with_body("{\"ok\":true,\"result\":{\"message_id\":1}}")
             .expect(1)
             .create()
     } else {
@@ -40,10 +40,34 @@ fn run_single_post(input: &str, plain: bool, validate_markdown: bool) {
                 Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
             ]))
             .with_status(200)
-            .with_body("{\"ok\":true}")
+            .with_body("{\"ok\":true,\"result\":{\"message_id\":1}}")
             .expect(1)
             .create()
     };
+
+    let _pin = server
+        .mock("POST", "/botTEST/pinChatMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
+            Matcher::UrlEncoded("message_id".into(), "1".into()),
+        ]))
+        .with_status(200)
+        .with_body("{\"ok\":true,\"result\":true}")
+        .expect(1)
+        .create();
+
+    let _del = server
+        .mock("POST", "/botTEST/deleteMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
+            Matcher::UrlEncoded("message_id".into(), "2".into()),
+        ]))
+        .with_status(200)
+        .with_body("{\"ok\":true,\"result\":true}")
+        .expect(1)
+        .create();
 
     let mut cmd = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"));
     cmd.arg(&input_path)
@@ -197,10 +221,37 @@ fn full_issue_end_to_end() {
                     Matcher::UrlEncoded("disable_web_page_preview".into(), "true".into()),
                 ]))
                 .with_status(200)
-                .with_body("{\"ok\":true}")
+                .with_body("{\"ok\":true,\"result\":{\"message_id\":1}}")
                 .create(),
         );
     }
+
+    let m_pin = server
+        .mock("POST", "/botTEST/pinChatMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
+            Matcher::UrlEncoded("message_id".into(), "1".into()),
+        ]))
+        .with_status(200)
+        .with_body("{\"ok\":true,\"result\":true}")
+        .expect(1)
+        .create();
+
+    let m_del = server
+        .mock("POST", "/botTEST/deleteMessage")
+        .match_header("content-type", "application/x-www-form-urlencoded")
+        .match_body(Matcher::AllOf(vec![
+            Matcher::UrlEncoded("chat_id".into(), "-10042".into()),
+            Matcher::UrlEncoded("message_id".into(), "2".into()),
+        ]))
+        .with_status(200)
+        .with_body("{\"ok\":true,\"result\":true}")
+        .expect(1)
+        .create();
+
+    mocks.push(m_pin);
+    mocks.push(m_del);
 
     let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
         .arg(&input_path)
