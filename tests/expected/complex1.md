@@ -21,8 +21,8 @@ fn greet() {
 ```
 
 📰 **TABLE EXAMPLE** 📰
-| Short | Much Longer Column | C  |
-| 1     | a                  | 3  |
-| 2     | abcdef             | 44 |
+\| Short \| Much Longer Column \| C  \|
+\| 1     \| a                  \| 3  \|
+\| 2     \| abcdef             \| 44 \|
 
 🌐 [View web version](https://this-week-in-rust.org/blog/2025/07/10/this-week-in-rust-999/) 🌐

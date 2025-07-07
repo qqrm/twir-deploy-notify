@@ -826,9 +826,9 @@ mod tests {
     fn table_rendering() {
         let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
         let posts = generate_posts(input.to_string()).unwrap();
-        assert!(posts[0].contains("| Name | Score |"));
-        assert!(posts[0].contains("| Foo  | 10    |"));
-        assert!(posts[0].contains("| Bar  | 20    |"));
+        assert!(posts[0].contains("\\| Name \\| Score \\|"));
+        assert!(posts[0].contains("\\| Foo  \\| 10    \\|"));
+        assert!(posts[0].contains("\\| Bar  \\| 20    \\|"));
     }
 
     #[test]
