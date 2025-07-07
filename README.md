@@ -49,8 +49,9 @@ Telegram:
 - `TELEGRAM_BOT_TOKEN` – the bot token used for authentication.
 - `TELEGRAM_CHAT_ID` – the identifier of the chat or channel. Numeric IDs are
   automatically prefixed with `-100` when sending requests to Telegram.
-- `TELEGRAM_PIN_FIRST` – set to `1` or `true` to pin the first sent message.
-  The service message about the pin will be deleted automatically.
+
+The first sent message is automatically pinned, and the service notification is
+removed.
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
 
 Responses from Telegram are verified with the `verify-posts` binary.
