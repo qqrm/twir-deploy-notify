@@ -85,14 +85,6 @@ cargo test --features integration
 
 If these variables are absent, the Telegram tests are skipped.
 
-## Restart command
-
-To restart a task, use the `Restart` command. The agent duplicates the original
-task description and prepares a **task stub** that starts from the freshest
-commit on `main`. A prompt asks whether to launch the stub as a new merge
-request, avoiding stale branches. See [RESTART.md](DOCS/RESTART.md) for details.
-
-
 ## License
 
 This project is distributed under the "QQRM LAPOCHKA v1.0 License (AI-first Vibecoder)" in `LICENSE_QQRM_LAPOCHKA`.

@@ -4,21 +4,13 @@
 - All code comments and technical documentation must be written in English.
 - Interpret user questions as tasks whenever possible and prefer providing a full merge request solution instead of a short code snippet.
 - Install required Rust components with `rustup component add clippy rustfmt`.
-- After making any changes, run `cargo fmt --all`, `cargo check --all-targets --all-features`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test`.
+- After making any changes, run `cargo fmt --all`, `cargo clippy --all-targets --all-features -- -D warnings`, and `cargo test`.
 - Before creating a pull request, also run `cargo machete` to ensure there are no unused dependencies.
 - Review `DOCS/ARCHITECTURE.md` before starting work and verify final changes match the documented design.
 - Fix every issue reported by these commands before committing or submitting pull requests.
-- A pull request is complete only when formatting, linting, `cargo check`, and tests all succeed.
+- A pull request is complete only when formatting, linting, tests, and `cargo machete` all succeed.
 - Configure the remote `origin` as `https://github.com/qqrm/twir-deploy-notify`.
-- Before beginning or finalizing work on a task, run `git fetch origin` and
-  check whether `origin/main` contains new commits. Rebase your branch onto the
-  latest `origin/main` if needed so all development starts from the most recent
-  commit.
-- If the task includes the word "рестарт" or `Restart`, create a **task stub**
-  from the most recent `origin/main` commit. The stub repeats the current task's
-  requirements and launches a new merge request, leaving the previous branch
-  untouched. Prompt the user before continuing.
-- Read all Markdown (`*.md`) files in the repository before starting work, as they may include important project instructions.
+- Read all Markdown (`*.md`) files from the `.docs` directory before starting work. Markdown in tests can be ignored.
 - Follow the guidelines in `DOCS/PARSING.md`, especially the requirement to rely on crates for Markdown processing instead of custom parsing code.
 
 - Avoid committed dead code; remove unused functions or feature-gate them.
