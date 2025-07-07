@@ -1,4 +1,4 @@
-name: Retro TWIR Processing
+name: Retro TWIR Summary
 
 on:
   workflow_dispatch:
