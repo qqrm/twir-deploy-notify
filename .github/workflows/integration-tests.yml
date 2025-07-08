@@ -1,0 +1,19 @@
+name: Integration Tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: 1.88.0
+      - run: cargo test --features integration -- --test-threads=1
+        env:
+          CARGO_TERM_PROGRESS_WHEN: never
