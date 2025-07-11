@@ -71,6 +71,7 @@ Install it with `cargo install cargo-machete` if it is not available.
 Documentation in `DOCS/` is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
 Generated Telegram posts are verified with the shared `validator` module.
 Integration tests that send messages to Telegram run only when the CI workflow is manually triggered with the `run_integration` input.
+Security checks using `cargo-audit` can be enabled in the same way by setting the `run_audit` input.
 
 ### Running integration tests
 
