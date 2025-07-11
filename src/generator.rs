@@ -555,6 +555,20 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 /// `Ok(())` on success or any file I/O error encountered.
 pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dir)?;
+
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries {
+            let entry = entry?;
+            if entry.file_type()?.is_file() {
+                if let Some(name) = entry.file_name().to_str() {
+                    if name.starts_with("output_") && name.ends_with(".md") {
+                        let _ = fs::remove_file(entry.path());
+                    }
+                }
+            }
+        }
+    }
+
     for (i, post) in posts.iter().enumerate() {
         let file_name = dir.join(format!("output_{}.md", i + 1));
         fs::write(&file_name, post)?;
