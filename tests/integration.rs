@@ -9,8 +9,6 @@ mod common;
 
 #[cfg(feature = "integration")]
 fn run_single_post(input: &str, plain: bool, validate_markdown: bool) {
-    use mockito::Matcher;
-
     let dir = tempfile::tempdir().unwrap();
     let input_path = dir.path().join("input.md");
     fs::write(&input_path, input).unwrap();
