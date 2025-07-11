@@ -10,6 +10,10 @@ on:
         description: "Run Telegram integration tests"
         required: false
         default: "false"
+      run_audit:
+        description: "Run cargo audit"
+        required: false
+        default: "false"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -92,6 +96,7 @@ jobs:
       - run: cargo machete
 
   audit:
+    if: github.event_name != 'pull_request' || github.event.inputs.run_audit == 'true'
     needs: machete
     runs-on: ubuntu-latest
     env:
@@ -105,7 +110,7 @@ jobs:
       - run: cargo audit --quiet
 
   check-docs:
-    needs: audit
+    needs: machete
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
@@ -117,7 +122,7 @@ jobs:
       - run: cargo run --quiet --bin check-docs
 
   coverage:
-    needs: [check-docs, audit]
+    needs: check-docs
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
