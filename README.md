@@ -25,6 +25,9 @@ After that you can run the tool manually with:
 cargo run --bin twir-deploy-notify -- twir/content/<file-name>.md
 ```
 
+All files matching `output_*.md` in the current directory are removed before the
+new posts are written.
+
 Set `RUST_LOG=info` to see detailed logs including Telegram API responses:
 
 ```bash
