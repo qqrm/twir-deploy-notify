@@ -555,6 +555,16 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 /// `Ok(())` on success or any file I/O error encountered.
 pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dir)?;
+    for entry in fs::read_dir(dir)? {
+        let entry = entry?;
+        if entry.file_type()?.is_file() {
+            if let Some(name) = entry.file_name().to_str() {
+                if name.starts_with("output_") && name.ends_with(".md") {
+                    fs::remove_file(entry.path())?;
+                }
+            }
+        }
+    }
     for (i, post) in posts.iter().enumerate() {
         let file_name = dir.join(format!("output_{}.md", i + 1));
         fs::write(&file_name, post)?;
@@ -771,6 +781,21 @@ mod tests {
         assert!(content.contains("📰 **NEWS** 📰"));
         assert!(content.contains("[Link](https://example.com)"));
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn old_output_files_are_removed() {
+        let dir = tempfile::tempdir().unwrap();
+        let output1 = dir.path().join("output_1.md");
+        let output2 = dir.path().join("output_2.md");
+        fs::write(&output1, "old").unwrap();
+        fs::write(&output2, "old").unwrap();
+        let posts = vec!["new".to_string()];
+        write_posts(&posts, dir.path()).unwrap();
+        assert!(output1.exists());
+        assert!(!output2.exists());
+        let content = fs::read_to_string(output1).unwrap();
+        assert_eq!(content, "new");
     }
 
     #[test]
