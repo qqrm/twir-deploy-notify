@@ -163,18 +163,6 @@ fn strip_header(text: &str) -> String {
     out
 }
 
-/// Escape Telegram Markdown special characters in `text`.
-///
-/// # Parameters
-/// - `text`: Plain text that may contain Markdown control characters.
-///
-/// # Returns
-/// A new `String` with all reserved characters escaped so it can be used in
-/// Telegram Markdown.
-pub fn escape_markdown(text: &str) -> String {
-    escape(text)
-}
-
 /// Escape parentheses in `url` for usage in Telegram Markdown links.
 ///
 /// # Parameters
@@ -200,7 +188,7 @@ pub fn format_heading(title: &str) -> String {
         "CRATE OF THE WEEK" => "📦",
         _ => "📰",
     };
-    format!("{e} **{}** {e}", escape_markdown(&upper), e = emoji)
+    format!("{e} **{}** {e}", escape(&upper), e = emoji)
 }
 
 /// Format a level 3 or level 4 heading.
@@ -216,21 +204,17 @@ pub fn format_subheading(title: &str) -> String {
         if let Some(idx) = trimmed.find("](") {
             let text = &trimmed[1..idx];
             let url = &trimmed[idx + 2..trimmed.len() - 1];
-            return format!(
-                "**[{}]({})**",
-                escape_markdown(text),
-                escape_markdown_url(url)
-            );
+            return format!("**[{}]({})**", escape(text), escape_markdown_url(url));
         }
     }
     let lower = trimmed.to_ascii_lowercase();
     if lower == "quote of the week" {
-        return format!("\n**{}:** 💬\n", escape_markdown(trimmed));
+        return format!("\n**{}:** 💬\n", escape(trimmed));
     }
     if let Some(emoji) = SUBHEADING_EMOJIS.get(lower.as_str()) {
-        format!("\n**{}:** {}", escape_markdown(trimmed), emoji)
+        format!("\n**{}:** {}", escape(trimmed), emoji)
     } else {
-        format!("**{}**", escape_markdown(trimmed))
+        format!("**{}**", escape(trimmed))
     }
 }
 
@@ -474,10 +458,10 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 
     let mut header = String::new();
     if let Some(ref n) = number {
-        header.push_str(&format!("\\#{}", escape_markdown(n)));
+        header.push_str(&format!("\\#{}", escape(n)));
     }
     if let Some(ref d) = date {
-        header.push_str(&format!(" — {}", escape_markdown(d)));
+        header.push_str(&format!(" — {}", escape(d)));
     }
     if !header.is_empty() {
         header.push_str("\n\n");
@@ -836,7 +820,7 @@ mod tests {
     #[test]
     fn escape_markdown_basic() {
         let text = "_bold_ *italic*";
-        let escaped = escape_markdown(text);
+        let escaped = escape(text);
         assert_eq!(escaped, "\\_bold\\_ \\*italic\\*");
     }
 

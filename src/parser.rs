@@ -1,6 +1,7 @@
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
 
-use crate::generator::{escape_markdown, escape_markdown_url, format_subheading};
+use crate::generator::{escape_markdown_url, format_subheading};
+use teloxide::utils::markdown::escape;
 
 /// Representation of a single TWIR section.
 #[derive(Default)]
@@ -22,7 +23,7 @@ fn fix_bare_link(line: &str) -> String {
         {
             let url = &trimmed[start + 1..trimmed.len() - 1];
             let text = trimmed[..start].trim_end();
-            return format!("[{}]({})", escape_markdown(text), escape_markdown_url(url));
+            return format!("[{}]({})", escape(text), escape_markdown_url(url));
         }
     }
     line.to_string()
@@ -248,7 +249,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 if in_code_block || in_heading {
                     buffer.push_str(&t);
                 } else {
-                    buffer.push_str(&escape_markdown(&t));
+                    buffer.push_str(&escape(&t));
                 }
             }
             Event::SoftBreak | Event::HardBreak => {
