@@ -573,6 +573,18 @@ fn normalize_chat_id(chat_id: &str) -> Cow<'_, str> {
     }
 }
 
+/// Replace the bot token in `url` with "<token>" for logging purposes.
+///
+/// # Parameters
+/// - `url`: The full Telegram API URL.
+/// - `token`: The bot token to redact.
+///
+/// # Returns
+/// The URL with the token substituted by the placeholder.
+fn sanitize_url(url: &str, token: &str) -> String {
+    url.replace(token, "<token>")
+}
+
 /// Send prepared posts to a Telegram chat via the HTTP API.
 ///
 /// # Parameters
@@ -615,7 +627,8 @@ pub fn send_to_telegram(
             base_url.trim_end_matches('/'),
             token
         );
-        debug!("Posting message {} via /sendMessage", i + 1);
+        let safe_url = sanitize_url(&url, token);
+        debug!("Posting message {} via {safe_url}", i + 1);
         let mut form = vec![("chat_id", chat_id.as_ref()), ("text", post)];
         if use_markdown {
             form.push(("parse_mode", "MarkdownV2"));
@@ -639,13 +652,17 @@ pub fn send_to_telegram(
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
             error!(
-                "Telegram error for post {} {}: {} (status {})",
+                "Telegram error for post {} to {} via {} {}: {} (status {})",
                 i + 1,
+                chat_id,
+                safe_url,
                 code,
                 desc,
                 status.as_u16()
             );
             error!("Full response: {body}");
+            let snippet: String = post.chars().take(100).collect();
+            error!("Post snippet: {snippet}");
             return Err(format!("Telegram API error in post {} {}: {}", i + 1, code, desc).into());
         }
         info!("Post {} sent", i + 1);
