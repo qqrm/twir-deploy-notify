@@ -60,8 +60,8 @@ jobs:
       - name: Send to dev chat
         if: steps.prepare.outputs.send == 'true'
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.DEV_TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
         run: |
           rm -f output_*.md
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
@@ -70,23 +70,23 @@ jobs:
       - name: Verify dev delivery
         if: steps.prepare.outputs.send == 'true' && github.event_name == 'schedule'
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.DEV_TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
         run: |
           cargo run --quiet --bin verify-posts -- "${{ steps.prepare.outputs.latest_post }}"
 
       - name: Run integration tests
         if: inputs.run_integration == true
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.DEV_TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
         run: cargo test --quiet --all-targets --features integration -- --test-threads=1
 
       - name: Send to main chat
         if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.RELEASE_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.RELEASE_CHAT_ID }}
         run: |
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
 
