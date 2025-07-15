@@ -35,9 +35,6 @@ pub fn main() -> std::io::Result<()> {
 
     log::info!("Writing posts to disk");
     write_posts(&posts, Path::new("."))?;
-    for (i, _) in posts.iter().enumerate() {
-        println!("Generated output_{}.md", i + 1);
-    }
     if let (Ok(token), Ok(chat_id)) = (env::var("TELEGRAM_BOT_TOKEN"), env::var("TELEGRAM_CHAT_ID"))
     {
         log::debug!("chat id: {chat_id}");
