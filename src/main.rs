@@ -1,4 +1,5 @@
 mod cli;
+mod shared;
 mod generator;
 mod parser;
 mod validator;
