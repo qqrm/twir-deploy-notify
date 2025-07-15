@@ -3,6 +3,16 @@ use std::{env, fs, path::Path};
 
 use crate::generator::{generate_posts, markdown_to_plain, send_to_telegram, write_posts};
 
+fn read_env_var(name: &str) -> Option<String> {
+    match env::var(name) {
+        Ok(v) if !v.trim().is_empty() => Some(v),
+        _ => {
+            log::warn!("{name} not set or empty; skipping send");
+            None
+        }
+    }
+}
+
 #[derive(ClapParser)]
 struct Cli {
     /// Input Markdown file
@@ -35,12 +45,8 @@ pub fn main() -> std::io::Result<()> {
 
     log::info!("Writing posts to disk");
     write_posts(&posts, Path::new("."))?;
-    let token = env::var("TELEGRAM_BOT_TOKEN")
-        .ok()
-        .filter(|t| !t.trim().is_empty());
-    let chat_id = env::var("TELEGRAM_CHAT_ID")
-        .ok()
-        .filter(|c| !c.trim().is_empty());
+    let token = read_env_var("TELEGRAM_BOT_TOKEN");
+    let chat_id = read_env_var("TELEGRAM_CHAT_ID");
     if let (Some(token), Some(chat_id)) = (token, chat_id) {
         log::debug!("chat id: {chat_id}");
         let base = env::var("TELEGRAM_API_BASE")
@@ -49,7 +55,7 @@ pub fn main() -> std::io::Result<()> {
         send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain, true)
             .map_err(|e| std::io::Error::other(e.to_string()))?;
     } else {
-        log::info!("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set; skipping send");
+        log::info!("Skipping Telegram delivery due to missing credentials");
     }
     Ok(())
 }
