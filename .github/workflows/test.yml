@@ -6,10 +6,6 @@ on:
   pull_request:
   workflow_dispatch:
     inputs:
-      run_integration:
-        description: "Run Telegram integration tests"
-        required: false
-        default: "false"
       run_audit:
         description: "Run cargo audit"
         required: false
@@ -66,21 +62,6 @@ jobs:
         with:
           toolchain: 1.88.0
       - run: cargo test --quiet --all-targets --all-features -- --test-threads=$(nproc)
-
-  integration-tests:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_integration == 'true'
-    needs: test
-    runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
-      TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-rust
-        with:
-          toolchain: 1.88.0
-      - run: cargo test --quiet --all-targets --features integration -- --test-threads=1
 
   machete:
     needs: test

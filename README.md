@@ -62,11 +62,8 @@ The workflow stores the last processed file in `last_sent.txt` as an artifact an
 Responses from Telegram are verified with the `verify-posts` binary.
 The `release.yml` workflow runs on a daily schedule at 09:00 UTC. It first sends the
 posts to the development chat and, once verified, delivers the same release to the
-main chat. The `dev.yml` workflow is triggered manually for integration tests.
-
-The `integration-tests.yml` workflow runs the integration suite with real
-Telegram credentials and can be started manually. The `retro.yml` workflow
-builds posts for the last ten issues and uploads them as artifacts.
+main chat. The `retro.yml` workflow builds posts for the last ten issues and uploads
+them as artifacts.
 
 Setting the `TWIR_MARKDOWN` environment variable before building will
 parse the referenced file at compile time and embed the generated posts
@@ -79,7 +76,6 @@ Install it with `cargo install cargo-machete` if it is not available.
 
 Documentation in `DOCS/` is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
 Generated Telegram posts are verified with the shared `validator` module.
-Integration tests that send messages to Telegram run only when the TWIR CI workflow is manually triggered with the `run_integration` input.
 Security checks using `cargo-audit` can be enabled in the same way by setting the `run_audit` input.
 
 ### Auto merge
@@ -90,18 +86,6 @@ check runs via `gh api` and waits until each one finishes. The job succeeds
 if every required check reports the `success` or `skipped` conclusion, allowing
 partially skipped pipelines to be merged.
 
-### Running integration tests
-
-The integration suite relies on the [`mockito`](https://crates.io/crates/mockito) crate to mock network requests.
-To exercise the Telegram end‑to‑end test, export the following environment variables before running the tests:
-
-```bash
-export TELEGRAM_BOT_TOKEN=<token>
-export TELEGRAM_CHAT_ID=<chat id>
-cargo test --features integration
-```
-
-If these variables are absent, the Telegram tests are skipped.
 
 ## License
 

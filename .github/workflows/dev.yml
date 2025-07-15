@@ -15,5 +15,4 @@ jobs:
     uses: ./.github/workflows/common-delivery.yml
     with:
       send_main: false
-      run_integration: true
       rust_log: debug

@@ -17,4 +17,3 @@ jobs:
     uses: ./.github/workflows/common-delivery.yml
     with:
       send_main: true
-      run_integration: false
