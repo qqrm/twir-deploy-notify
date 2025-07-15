@@ -1,4 +1,4 @@
-name: Dev TWIR summary
+name: TWIR Dev summary
 
 on:
   workflow_dispatch:

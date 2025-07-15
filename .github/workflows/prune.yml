@@ -1,4 +1,4 @@
-name: Prune old workflow runs
+name: TWIR Prune old workflow runs
 
 on:
   schedule:
