@@ -947,7 +947,7 @@ mod tests {
 
     #[test]
     fn cfp_sections_without_content_are_short() {
-        let input = include_str!("../tests/2025-07-05-call-for-participation.md");
+        let input = include_str!("../../tests/2025-07-05-call-for-participation.md");
         let posts = generate_posts(input.to_string()).unwrap();
         assert_eq!(posts.len(), 1);
         let post = &posts[0];
