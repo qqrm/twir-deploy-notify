@@ -24,7 +24,7 @@ jobs:
 
       - name: Download last_sent artifact from previous successful run
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success -L 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [ -n "$prev" ]; then
