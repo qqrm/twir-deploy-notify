@@ -52,6 +52,8 @@ Telegram:
 - `TELEGRAM_BOT_TOKEN` – the bot token used for authentication.
 - `TELEGRAM_CHAT_ID` – the identifier of the chat or channel. Numeric IDs are
   automatically prefixed with `-100` when sending requests to Telegram.
+- GitHub Actions expect the following secrets to populate these variables:
+  `DEV_BOT_TOKEN`, `DEV_CHAT_ID`, `RELEASE_BOT_TOKEN`, and `RELEASE_CHAT_ID`.
 
 The first sent message is automatically pinned, and the service notification is
 removed.
