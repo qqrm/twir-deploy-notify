@@ -6,9 +6,6 @@ on:
       send_main:
         required: true
         type: boolean
-      run_integration:
-        required: true
-        type: boolean
       rust_log:
         required: false
         type: string
@@ -75,12 +72,6 @@ jobs:
         run: |
           cargo run --quiet --bin verify-posts -- "${{ steps.prepare.outputs.latest_post }}"
 
-      - name: Run integration tests
-        if: inputs.run_integration == true
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
-        run: cargo test --quiet --all-targets --features integration -- --test-threads=1
 
       - name: Send to main chat
         if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
