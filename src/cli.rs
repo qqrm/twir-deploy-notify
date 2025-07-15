@@ -35,8 +35,13 @@ pub fn main() -> std::io::Result<()> {
 
     log::info!("Writing posts to disk");
     write_posts(&posts, Path::new("."))?;
-    if let (Ok(token), Ok(chat_id)) = (env::var("TELEGRAM_BOT_TOKEN"), env::var("TELEGRAM_CHAT_ID"))
-    {
+    let token = env::var("TELEGRAM_BOT_TOKEN")
+        .ok()
+        .filter(|t| !t.trim().is_empty());
+    let chat_id = env::var("TELEGRAM_CHAT_ID")
+        .ok()
+        .filter(|c| !c.trim().is_empty());
+    if let (Some(token), Some(chat_id)) = (token, chat_id) {
         log::debug!("chat id: {chat_id}");
         let base = env::var("TELEGRAM_API_BASE")
             .unwrap_or_else(|_| "https://api.telegram.org".to_string());
