@@ -2,14 +2,15 @@ use reqwest::blocking::Client;
 use serde_json::Value;
 use std::{env, fs};
 
-use twir_deploy_notify::generator::{generate_posts, send_to_telegram};
+use twir_deploy_notify::generator::{generate_posts, normalize_chat_id, send_to_telegram};
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let path = std::env::args().nth(1).expect("missing input file");
     let input = fs::read_to_string(path)?;
     let posts = generate_posts(input).map_err(|e| format!("{e}"))?;
     let token = env::var("TELEGRAM_BOT_TOKEN")?;
-    let chat_id = env::var("TELEGRAM_CHAT_ID")?;
+    let chat_id_raw = env::var("TELEGRAM_CHAT_ID")?;
+    let chat_id_norm = normalize_chat_id(&chat_id_raw);
     let base =
         env::var("TELEGRAM_API_BASE").unwrap_or_else(|_| "https://api.telegram.org".to_string());
     let client = Client::new();
@@ -25,9 +26,9 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             }
         }
     }
-    let chat_id_num = chat_id.parse::<i64>().ok();
+    let chat_id_num = chat_id_norm.as_ref().parse::<i64>().ok();
     for p in &posts {
-        send_to_telegram(&[p.clone()], &base, &token, &chat_id, true, false)?;
+        send_to_telegram(&[p.clone()], &base, &token, &chat_id_raw, true, false)?;
         let updates_url = format!(
             "{}/bot{}/getUpdates?offset={}",
             base.trim_end_matches('/'),
@@ -46,7 +47,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                 let msg = upd.get("channel_post").or_else(|| upd.get("message"));
                 if let Some(m) = msg
                     && (m["chat"]["id"].as_i64() == chat_id_num
-                        || m["chat"]["id"].as_str() == Some(&chat_id))
+                        || m["chat"]["id"].as_str() == Some(chat_id_norm.as_ref()))
                     && let Some(text) = m["text"].as_str()
                 {
                     last_text = Some(text.to_string());
