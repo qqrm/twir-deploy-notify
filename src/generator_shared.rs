@@ -565,7 +565,8 @@ struct TelegramResponse {
     description: Option<String>,
 }
 
-fn normalize_chat_id(chat_id: &str) -> Cow<'_, str> {
+/// Normalize chat identifier to the `-100` prefix used for channels.
+pub fn normalize_chat_id(chat_id: &str) -> Cow<'_, str> {
     if chat_id.starts_with('@') || chat_id.starts_with("-100") {
         Cow::Borrowed(chat_id)
     } else {
