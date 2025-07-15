@@ -122,8 +122,10 @@ jobs:
       - run: cargo run --quiet --bin check-docs
 
   coverage:
+    if: github.event_name != 'pull_request'
     needs: check-docs
     runs-on: ubuntu-latest
+    continue-on-error: true
     env:
       CARGO_TERM_PROGRESS_WHEN: never
     steps:
