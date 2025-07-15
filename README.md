@@ -60,7 +60,8 @@ The workflow stores the last processed file in `last_sent.txt` as an artifact an
 Responses from Telegram are verified with the `verify-posts` binary.
 The `release.yml` workflow runs on a daily schedule at 09:00 UTC. It first sends the
 posts to the development chat and, once verified, delivers the same release to the
-main chat. The `dev.yml` workflow is triggered manually for integration tests.
+main chat. Integration tests run automatically for pull requests. The `dev.yml`
+workflow can still trigger them manually.
 
 Setting the `TWIR_MARKDOWN` environment variable before building will
 parse the referenced file at compile time and embed the generated posts
@@ -73,7 +74,7 @@ Install it with `cargo install cargo-machete` if it is not available.
 
 Documentation in `DOCS/` is validated with `cargo run --bin check-docs`, which parses files using [`pulldown-cmark`](https://crates.io/crates/pulldown-cmark).
 Generated Telegram posts are verified with the shared `validator` module.
-Integration tests that send messages to Telegram run only when the CI workflow is manually triggered with the `run_integration` input.
+Integration tests that send messages to Telegram run automatically for every pull request or when the CI workflow is triggered with the `run_integration` input. Each post is deleted after its delivery is confirmed, including the pin notification, so the shared development chat remains clean even when multiple pipelines use the same chat.
 Security checks using `cargo-audit` can be enabled in the same way by setting the `run_audit` input.
 
 ### Auto merge

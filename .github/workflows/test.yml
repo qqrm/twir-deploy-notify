@@ -68,7 +68,7 @@ jobs:
       - run: cargo test --quiet --all-targets --all-features -- --test-threads=$(nproc)
 
   integration-tests:
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.run_integration == 'true'
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.run_integration == 'true') || github.event_name == 'pull_request'
     needs: test
     runs-on: ubuntu-latest
     env:
