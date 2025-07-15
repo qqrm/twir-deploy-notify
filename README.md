@@ -76,6 +76,14 @@ Generated Telegram posts are verified with the shared `validator` module.
 Integration tests that send messages to Telegram run only when the CI workflow is manually triggered with the `run_integration` input.
 Security checks using `cargo-audit` can be enabled in the same way by setting the `run_audit` input.
 
+### Auto merge
+
+Pull requests targeting the `main` branch are merged automatically once all required
+CI checks complete. The `automerge.yml` workflow retrieves the list of required
+check runs via `gh api` and waits until each one finishes. The job succeeds
+if every required check reports the `success` or `skipped` conclusion, allowing
+partially skipped pipelines to be merged.
+
 ### Running integration tests
 
 The integration suite relies on the [`mockito`](https://crates.io/crates/mockito) crate to mock network requests.
