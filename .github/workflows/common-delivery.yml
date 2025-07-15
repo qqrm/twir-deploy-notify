@@ -9,12 +9,17 @@ on:
       run_integration:
         required: true
         type: boolean
+      rust_log:
+        required: false
+        type: string
+        default: info
 
 jobs:
   notify:
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
+      RUST_LOG: ${{ inputs.rust_log }}
     steps:
       - uses: actions/checkout@v4
         with:
