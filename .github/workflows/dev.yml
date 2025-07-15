@@ -1,4 +1,4 @@
-name: Dev TWIR summary
+name: TWIR Dev summary
 
 on:
   workflow_dispatch:
@@ -16,5 +16,3 @@ jobs:
     with:
       send_main: false
       run_integration: true
-    env:
-      RUST_LOG: debug

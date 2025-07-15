@@ -1,4 +1,4 @@
-name: Cancel PR CI
+name: TWIR Cancel CI
 
 on:
   pull_request:

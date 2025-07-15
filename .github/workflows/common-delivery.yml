@@ -1,4 +1,4 @@
-name: Common TWIR delivery
+name: TWIR Common delivery
 
 on:
   workflow_call:

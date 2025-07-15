@@ -1,7 +1,7 @@
 #![cfg(feature = "integration")]
 use twir_deploy_notify::generator;
 
-use generator::{generate_posts, send_to_telegram};
+use generator::{TELEGRAM_DELAY_MS, generate_posts};
 use reqwest::blocking::Client;
 use serde_json::Value;
 use std::env;
@@ -43,9 +43,27 @@ fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
     let input = include_str!("2025-06-25-this-week-in-rust.md");
     let posts = generate_posts(input.to_string()).unwrap();
     let chat_id_num = chat_id.parse::<i64>().ok();
-    for p in &posts {
+    let send_url = format!("{}/bot{}/sendMessage", base.trim_end_matches('/'), token);
+    let delete_url = format!("{}/bot{}/deleteMessage", base.trim_end_matches('/'), token);
+    for (i, p) in posts.iter().enumerate() {
         common::assert_valid_markdown(p);
-        send_to_telegram(&[p.clone()], &base, &token, &chat_id, true, false)?;
+        let resp: Value = client
+            .post(&send_url)
+            .form(&[
+                ("chat_id", chat_id.as_str()),
+                ("text", p.as_str()),
+                ("parse_mode", "MarkdownV2"),
+                ("disable_web_page_preview", "true"),
+            ])
+            .send()?
+            .json()?;
+        assert!(
+            resp["ok"].as_bool().unwrap_or(false),
+            "sendMessage failed: {resp:?}"
+        );
+        let msg_id = resp["result"]["message_id"]
+            .as_i64()
+            .ok_or("missing message_id")?;
         let updates_url = format!(
             "{}/bot{}/getUpdates?offset={}",
             base.trim_end_matches('/'),
@@ -73,6 +91,23 @@ fn telegram_end_to_end() -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 
         let received = last_text.expect("No message from Telegram");
         assert_eq!(p, &received, "Telegram message mismatch");
+
+        let msg_id_str = msg_id.to_string();
+        let del_resp: Value = client
+            .post(&delete_url)
+            .form(&[
+                ("chat_id", chat_id.as_str()),
+                ("message_id", msg_id_str.as_str()),
+            ])
+            .send()?
+            .json()?;
+        assert!(
+            del_resp["ok"].as_bool().unwrap_or(false),
+            "deleteMessage failed: {del_resp:?}"
+        );
+        if i + 1 < posts.len() {
+            std::thread::sleep(std::time::Duration::from_millis(TELEGRAM_DELAY_MS));
+        }
     }
 
     Ok(())

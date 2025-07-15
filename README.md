@@ -63,6 +63,10 @@ posts to the development chat and, once verified, delivers the same release to t
 main chat. Integration tests run automatically for pull requests. The `dev.yml`
 workflow can still trigger them manually.
 
+The `integration-tests.yml` workflow runs the integration suite with real
+Telegram credentials and can be started manually. The `retro.yml` workflow
+builds posts for the last ten issues and uploads them as artifacts.
+
 Setting the `TWIR_MARKDOWN` environment variable before building will
 parse the referenced file at compile time and embed the generated posts
 in the crate. The resulting array is available as `twir_deploy_notify::posts::POSTS`.
