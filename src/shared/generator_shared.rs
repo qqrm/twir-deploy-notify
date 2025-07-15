@@ -9,8 +9,10 @@ use crate::parser::{Section, parse_sections};
 use crate::validator::validate_telegram_markdown;
 
 pub const TELEGRAM_LIMIT: usize = 4000;
+#[cfg_attr(not(test), allow(dead_code))]
 pub const TELEGRAM_DELAY_MS: u64 = 1000;
 /// Delay before attempting to pin the first message.
+#[cfg_attr(not(test), allow(dead_code))]
 pub const TELEGRAM_PIN_DELAY_MS: u64 = 2000;
 
 /// Mapping of subheading titles to emojis used in Telegram posts.
@@ -225,6 +227,7 @@ pub fn format_subheading(title: &str) -> String {
 ///
 /// # Returns
 /// A plain text version with formatting markers removed.
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn markdown_to_plain(text: &str) -> String {
     use pulldown_cmark::{Event, Options, Parser, Tag};
 
@@ -537,6 +540,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
 ///
 /// # Returns
 /// `Ok(())` on success or any file I/O error encountered.
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dir)?;
     for entry in fs::read_dir(dir)? {
@@ -556,6 +560,7 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     Ok(())
 }
 
+#[cfg_attr(not(test), allow(dead_code))]
 #[derive(Deserialize)]
 struct TelegramResponse {
     ok: bool,
@@ -566,6 +571,7 @@ struct TelegramResponse {
 }
 
 /// Normalize chat identifier to the `-100` prefix used for channels.
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn normalize_chat_id(chat_id: &str) -> Cow<'_, str> {
     if chat_id.starts_with('@') || chat_id.starts_with("-100") {
         Cow::Borrowed(chat_id)
@@ -582,6 +588,7 @@ pub fn normalize_chat_id(chat_id: &str) -> Cow<'_, str> {
 ///
 /// # Returns
 /// The URL with the token substituted by the placeholder.
+#[cfg_attr(not(test), allow(dead_code))]
 fn sanitize_url(url: &str, token: &str) -> String {
     url.replace(token, "<token>")
 }
@@ -601,6 +608,7 @@ fn sanitize_url(url: &str, token: &str) -> String {
 /// # Errors
 /// Returns an error if the HTTP request fails or Telegram responds with an
 /// error code.
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn send_to_telegram(
     posts: &[String],
     base_url: &str,
