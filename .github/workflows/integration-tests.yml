@@ -1,4 +1,4 @@
-name: Integration Tests
+name: TWIR Integration tests
 
 on:
   workflow_dispatch:

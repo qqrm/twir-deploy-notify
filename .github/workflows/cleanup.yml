@@ -1,4 +1,4 @@
-name: Delete merged branches
+name: TWIR Delete merged branches
 
 on:
   pull_request:

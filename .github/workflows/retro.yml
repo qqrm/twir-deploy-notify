@@ -1,4 +1,4 @@
-name: Retro TWIR Summary
+name: TWIR Retro summary
 
 on:
   workflow_dispatch:
