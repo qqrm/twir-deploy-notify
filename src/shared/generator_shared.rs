@@ -552,6 +552,9 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     for (i, post) in posts.iter().enumerate() {
         let file_name = dir.join(format!("output_{}.md", i + 1));
         fs::write(&file_name, post)?;
+        if let Some(name) = file_name.file_name() {
+            println!("Generated {}", name.to_string_lossy());
+        }
     }
     Ok(())
 }
