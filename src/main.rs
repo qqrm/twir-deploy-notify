@@ -1,7 +1,7 @@
 mod cli;
-mod shared;
 mod generator;
 mod parser;
+mod shared;
 mod validator;
 
 fn main() -> std::io::Result<()> {
