@@ -182,10 +182,10 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                         }
                     }
                     for r in table.drain(..) {
-                        let mut line = String::from("|");
+                        let mut line = String::from("\\|");
                         for (i, cell) in r.into_iter().enumerate() {
                             let width = widths[i];
-                            line.push_str(&format!(" {cell:width$} |"));
+                            line.push_str(&format!(" {cell:width$} \\|"));
                         }
                         sec.lines.push(line);
                     }

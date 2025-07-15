@@ -181,3 +181,56 @@ fn toggle_token<'a>(token: &'a str, stack: &mut VecDeque<&'a str>) -> Result<(),
     stack.push_back(token);
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn basic_validation() {
+        validate_telegram_markdown("*bold*").unwrap();
+        assert!(validate_telegram_markdown("*bold").is_err());
+    }
+
+    #[test]
+    fn rejects_unescaped_dash() {
+        assert!(validate_telegram_markdown("some - text").is_err());
+    }
+
+    #[test]
+    fn accepts_escaped_dash() {
+        assert!(validate_telegram_markdown("some \\- text").is_ok());
+    }
+
+    #[test]
+    fn dash_inside_word_is_ok() {
+        let msg =
+            "Always wanted to contribute to open-source projects but did not know where to start?";
+        assert!(validate_telegram_markdown(msg).is_ok());
+    }
+
+    #[test]
+    fn rejects_dash_at_start() {
+        assert!(validate_telegram_markdown("- bad").is_err());
+    }
+
+    #[test]
+    fn rejects_unescaped_parentheses() {
+        assert!(validate_telegram_markdown("text (test)").is_err());
+    }
+
+    #[test]
+    fn accepts_escaped_parentheses() {
+        assert!(validate_telegram_markdown("text \\(test\\)").is_ok());
+    }
+
+    #[test]
+    fn rejects_unescaped_bracket() {
+        assert!(validate_telegram_markdown("text ] ok").is_err());
+    }
+
+    #[test]
+    fn rejects_single_pipe() {
+        assert!(validate_telegram_markdown("a | b").is_err());
+    }
+}
