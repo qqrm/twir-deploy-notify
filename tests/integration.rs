@@ -621,3 +621,25 @@ fn send_to_telegram_rejects_invalid_before_request() {
     assert!(result.is_err());
     m.assert();
 }
+
+#[test]
+fn cli_skips_send_when_vars_empty() {
+    let dir = tempfile::tempdir().unwrap();
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\n- item\n";
+    let input_path = dir.path().join("input.md");
+    fs::write(&input_path, input).unwrap();
+
+    let mut server = mockito::Server::new();
+    let m = server.mock("POST", "/bot/sendMessage").expect(0).create();
+
+    let status = Command::new(env!("CARGO_BIN_EXE_twir-deploy-notify"))
+        .arg(&input_path)
+        .current_dir(dir.path())
+        .env("TELEGRAM_BOT_TOKEN", "")
+        .env("TELEGRAM_CHAT_ID", "")
+        .env("TELEGRAM_API_BASE", server.url())
+        .status()
+        .expect("failed to run binary");
+    assert!(status.success());
+    m.assert();
+}
