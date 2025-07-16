@@ -76,8 +76,8 @@ jobs:
       - name: Send to main chat
         if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.RELEASE_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.RELEASE_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
 
