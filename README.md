@@ -53,7 +53,7 @@ Telegram:
 - `TELEGRAM_CHAT_ID` – the identifier of the chat or channel. Numeric IDs are
   automatically prefixed with `-100` when sending requests to Telegram.
 - GitHub Actions expect the following secrets to populate these variables:
-  `DEV_BOT_TOKEN`, `DEV_CHAT_ID`, `RELEASE_BOT_TOKEN`, and `RELEASE_CHAT_ID`.
+  `DEV_BOT_TOKEN`, `DEV_CHAT_ID`, `TELEGRAM_BOT_TOKEN`, and `TELEGRAM_CHAT_ID`.
 
 If either variable is missing, the program terminates with a non-zero exit code
 to ensure that automated workflows fail early.
