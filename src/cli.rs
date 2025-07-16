@@ -35,21 +35,37 @@ pub fn main() -> std::io::Result<()> {
 
     log::info!("Writing posts to disk");
     write_posts(&posts, Path::new("."))?;
-    let token = env::var("TELEGRAM_BOT_TOKEN")
-        .ok()
-        .filter(|t| !t.trim().is_empty());
-    let chat_id = env::var("TELEGRAM_CHAT_ID")
-        .ok()
-        .filter(|c| !c.trim().is_empty());
-    if let (Some(token), Some(chat_id)) = (token, chat_id) {
-        log::debug!("chat id: {chat_id}");
+    let token = env::var("TELEGRAM_BOT_TOKEN").ok();
+    let chat_id = env::var("TELEGRAM_CHAT_ID").ok();
+
+    let token_valid = token.as_ref().is_some_and(|t| !t.trim().is_empty());
+    let chat_id_valid = chat_id.as_ref().is_some_and(|c| !c.trim().is_empty());
+
+    if token_valid && chat_id_valid {
+        let token_ref = token.as_ref().unwrap();
+        let chat_id_ref = chat_id.as_ref().unwrap();
+        log::debug!("chat id: {chat_id_ref}");
         let base = env::var("TELEGRAM_API_BASE")
             .unwrap_or_else(|_| "https://api.telegram.org".to_string());
         log::info!("Sending posts to Telegram");
-        send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain, true)
+        send_to_telegram(&posts, &base, token_ref, chat_id_ref, !cli.plain, true)
             .map_err(|e| io::Error::other(e.to_string()))?;
     } else {
-        log::error!("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set; aborting");
+        match token {
+            Some(ref t) if t.trim().is_empty() => {
+                log::error!("TELEGRAM_BOT_TOKEN is empty");
+            }
+            None => log::error!("TELEGRAM_BOT_TOKEN not set"),
+            _ => {}
+        }
+        match chat_id {
+            Some(ref c) if c.trim().is_empty() => {
+                log::error!("TELEGRAM_CHAT_ID is empty");
+            }
+            None => log::error!("TELEGRAM_CHAT_ID not set"),
+            _ => {}
+        }
+        log::error!("Telegram credentials missing; aborting");
         return Err(io::Error::new(
             io::ErrorKind::NotFound,
             "Telegram credentials missing",
