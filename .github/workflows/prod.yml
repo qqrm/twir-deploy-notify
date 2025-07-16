@@ -16,5 +16,7 @@ permissions:
 jobs:
   notify:
     uses: ./.github/workflows/common-delivery.yml
+    environment: ProdEnvironment
+    secrets: inherit
     with:
       send_main: true
