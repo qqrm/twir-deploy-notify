@@ -84,11 +84,11 @@ Security checks using `cargo-audit` can be enabled in the same way by setting th
 
 ### Auto merge
 
-Pull requests targeting the `main` branch are merged automatically once all required
-CI checks complete. The `automerge.yml` workflow retrieves the list of required
-check runs via `gh api` and waits until each one finishes. The job succeeds
-if every required check reports the `success` or `skipped` conclusion, allowing
-partially skipped pipelines to be merged.
+Pull requests targeting the `main` branch are merged automatically once all CI
+checks have completed. The `automerge.yml` workflow waits for every check run on
+the pull request commit to finish and fails only if a run reports a non-success
+conclusion. Checks that are skipped or marked as neutral do not block merging,
+so partially skipped pipelines can still be merged.
 
 
 ## License
