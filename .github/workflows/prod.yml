@@ -2,6 +2,7 @@ name: TWIR Prod summary
 
 on:
   schedule:
+    # раз в час
     - cron: '0 * * * *'
   workflow_dispatch:
 
@@ -16,7 +17,10 @@ permissions:
 jobs:
   notify:
     uses: ./.github/workflows/common-delivery.yml
-    environment: ProdEnvironment
+
+    environment: prod
+
     secrets: inherit
+
     with:
       send_main: true
