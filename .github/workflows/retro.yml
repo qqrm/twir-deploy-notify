@@ -9,6 +9,7 @@ jobs:
     env:
       CARGO_TERM_PROGRESS_WHEN: never
     steps:
+      - uses: actions/checkout@v4
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
         with:
