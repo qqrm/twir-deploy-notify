@@ -8,8 +8,14 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let path = std::env::args().nth(1).expect("missing input file");
     let input = fs::read_to_string(path)?;
     let posts = generate_posts(input).map_err(|e| format!("{e}"))?;
-    let token = env::var("TELEGRAM_BOT_TOKEN")?;
-    let chat_id_raw = env::var("TELEGRAM_CHAT_ID")?;
+    let token = env::var("TELEGRAM_BOT_TOKEN").map_err(|_| "TELEGRAM_BOT_TOKEN not set")?;
+    if token.trim().is_empty() {
+        return Err("TELEGRAM_BOT_TOKEN is empty".into());
+    }
+    let chat_id_raw = env::var("TELEGRAM_CHAT_ID").map_err(|_| "TELEGRAM_CHAT_ID not set")?;
+    if chat_id_raw.trim().is_empty() {
+        return Err("TELEGRAM_CHAT_ID is empty".into());
+    }
     let chat_id_norm = normalize_chat_id(&chat_id_raw);
     let base =
         env::var("TELEGRAM_API_BASE").unwrap_or_else(|_| "https://api.telegram.org".to_string());
