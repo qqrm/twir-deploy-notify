@@ -60,7 +60,7 @@ removed.
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
 
 Responses from Telegram are verified with the `verify-posts` binary.
-The `release.yml` workflow runs on a daily schedule at 09:00 UTC. It first sends the
+The `release.yml` workflow runs hourly on the zeroth minute. It first sends the
 posts to the development chat and, once verified, delivers the same release to the
 main chat. The `retro.yml` workflow builds posts for the last ten issues and uploads
 them as artifacts.
