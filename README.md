@@ -53,16 +53,17 @@ compilations target the current machine's CPU features.
 The application expects several environment variables when sending posts to
 Telegram:
 
-- `TELEGRAM_BOT_TOKEN` – bot token for the main chat.
-- `TELEGRAM_CHAT_ID` – identifier of the main chat or channel. Numeric IDs are
+- `TELEGRAM_BOT_TOKEN` – bot token for the selected environment.
+- `TELEGRAM_CHAT_ID` – identifier of the chat or channel. Numeric IDs are
   automatically prefixed with `-100` when sending requests to Telegram.
-- `DEV_BOT_TOKEN` and `DEV_CHAT_ID` – optional credentials used in the
-  development pipeline.
+- `DEV_BOT_TOKEN` and `DEV_CHAT_ID` – deprecated variables still recognized by
+  the CLI for local runs.
 
-The CLI first looks for `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`. If either
-is not set, it falls back to `DEV_BOT_TOKEN` and `DEV_CHAT_ID`. This allows
-running the development workflow without main chat credentials. If no valid
-credentials are found, the program only writes the generated posts to disk.
+The CLI first uses `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, which are
+provided by the GitHub environment (`DevEnvironment` or `ProdEnvironment`). If
+either variable is unset, it falls back to `DEV_BOT_TOKEN` and `DEV_CHAT_ID` for
+backward compatibility. If no valid credentials are found, the program only
+writes the generated posts to disk.
 
 The first sent message is automatically pinned, and the service notification is
 removed.
