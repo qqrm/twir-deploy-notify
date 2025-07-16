@@ -16,7 +16,10 @@ rustup component add clippy rustfmt
 To run the workflow locally you must clone the `this-week-in-rust` repository into a `twir` subdirectory:
 
 ```bash
-git clone https://github.com/rust-lang/this-week-in-rust twir
+git clone --depth 1 --filter=blob:none --sparse \
+  https://github.com/rust-lang/this-week-in-rust twir
+cd twir && git sparse-checkout set content
+cd ..
 ```
 
 After that you can run the tool manually with:

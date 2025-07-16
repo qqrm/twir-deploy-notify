@@ -36,6 +36,10 @@ jobs:
         with:
           repository: rust-lang/this-week-in-rust
           path: twir
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            content/
 
       - uses: actions-rs/toolchain@v1
         with:
