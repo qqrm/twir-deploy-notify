@@ -23,15 +23,17 @@ jobs:
       CARGO_TERM_PROGRESS_WHEN: never
       RUST_LOG: ${{ inputs.rust_log }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup Rust environment
+        uses: ./.github/actions/setup-rust
         with:
-          persist-credentials: true
+          toolchain: 1.88.0
 
       - name: Download last_sent artifact from previous successful run
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success -L 1 --json databaseId -q '.[0].databaseId' || echo "")
+          prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success \
+            -L 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [ -n "$prev" ]; then
             gh run download "$prev" -n last-sent --dir . || true
           fi
@@ -45,11 +47,6 @@ jobs:
           filter: blob:none
           sparse-checkout: |
             content/
-
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: 1.88.0
-          profile: minimal
 
       - name: Determine latest post
         id: prepare
