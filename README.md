@@ -4,6 +4,7 @@ This repository contains a small tool and workflow for sending summaries of the 
 
 The GitHub Actions workflow checks out the [`rust-lang/this-week-in-rust`](https://github.com/rust-lang/this-week-in-rust) repository and detects the newest Markdown file in its `content` directory. If a new issue is found, it is parsed with the Rust application in `src/main.rs`, and the generated message is posted to the configured Telegram chat. Each section becomes an individual Telegram post, and sections or overly long lines exceeding Telegram's size limit are automatically split.
 The parser now derives the HTML link from the issue number and date and appends it at the end of each Telegram message.
+A single GitHub release tagged `latest` always provides the most recent binary.
 
 ## Toolchain
 
