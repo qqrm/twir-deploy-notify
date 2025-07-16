@@ -55,6 +55,9 @@ Telegram:
 - GitHub Actions expect the following secrets to populate these variables:
   `DEV_BOT_TOKEN`, `DEV_CHAT_ID`, `RELEASE_BOT_TOKEN`, and `RELEASE_CHAT_ID`.
 
+If either variable is missing, the program terminates with a non-zero exit code
+to ensure that automated workflows fail early.
+
 The first sent message is automatically pinned, and the service notification is
 removed.
 The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
