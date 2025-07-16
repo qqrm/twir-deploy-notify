@@ -58,28 +58,21 @@ jobs:
             const { owner, repo } = context.repo;
             const pr = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
             const ref = pr.data.head.sha;
-            const branch = pr.data.base.ref;
-            const protection = await github.request(
-              'GET /repos/{owner}/{repo}/branches/{branch}/protection/required_status_checks',
-              { owner, repo, branch }
-            );
-            const required = protection.data.contexts;
             const wait = ms => new Promise(r => setTimeout(r, ms));
 
-            for (const ctx of required) {
-              while (true) {
-                const checks = await github.rest.checks.listForRef({ owner, repo, ref, check_name: ctx });
-                const run = checks.data.check_runs[0];
-                const conclusion = run?.conclusion;
-                if (!conclusion || conclusion === 'queued' || conclusion === 'in_progress') {
-                  await wait(5000);
-                  continue;
-                }
-                if (conclusion !== 'success' && conclusion !== 'skipped') {
-                  core.setFailed(`Required check ${ctx} concluded with ${conclusion}`);
-                }
-                break;
+            while (true) {
+              const checks = await github.rest.checks.listForRef({ owner, repo, ref });
+              const runs = checks.data.check_runs;
+              const pending = runs.filter(r => !r.conclusion || r.conclusion === 'queued' || r.conclusion === 'in_progress');
+              if (pending.length > 0) {
+                await wait(5000);
+                continue;
               }
+              const failed = runs.find(r => !['success', 'skipped', 'neutral'].includes(r.conclusion));
+              if (failed) {
+                core.setFailed(`Check ${failed.name} concluded with ${failed.conclusion}`);
+              }
+              break;
             }
         env:
           PR_NUMBER: ${{ steps.pr.outputs.number }}
