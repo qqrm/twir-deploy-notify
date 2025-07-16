@@ -1,5 +1,5 @@
 use clap::Parser as ClapParser;
-use std::{env, fs, path::Path};
+use std::{env, fs, io, path::Path};
 
 use crate::generator::{generate_posts, markdown_to_plain, send_to_telegram, write_posts};
 
@@ -47,9 +47,13 @@ pub fn main() -> std::io::Result<()> {
             .unwrap_or_else(|_| "https://api.telegram.org".to_string());
         log::info!("Sending posts to Telegram");
         send_to_telegram(&posts, &base, &token, &chat_id, !cli.plain, true)
-            .map_err(|e| std::io::Error::other(e.to_string()))?;
+            .map_err(|e| io::Error::other(e.to_string()))?;
     } else {
-        log::info!("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set; skipping send");
+        log::error!("TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not set; aborting");
+        return Err(io::Error::new(
+            io::ErrorKind::NotFound,
+            "Telegram credentials missing",
+        ));
     }
     Ok(())
 }
