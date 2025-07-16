@@ -1,0 +1,34 @@
+name: TWIR Release
+
+on:
+  workflow_run:
+    workflows: ["TWIR CI"]
+    branches: [ main ]
+    types:
+      - completed
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-rust
+        with:
+          toolchain: 1.88.0
+      - run: cargo build --quiet --release
+      - name: Remove existing releases
+        run: |
+          gh release list --limit 100 --json tagName --jq '.[].tagName' | while read -r tag; do
+            gh release delete "$tag" -y
+          done
+      - name: Create latest release
+        run: |
+          gh release create latest target/release/twir-deploy-notify \
+            -t "Latest Release" -n ""
