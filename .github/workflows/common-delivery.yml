@@ -23,6 +23,11 @@ jobs:
       CARGO_TERM_PROGRESS_WHEN: never
       RUST_LOG: ${{ inputs.rust_log }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
       - name: Setup Rust environment
         uses: ./.github/actions/setup-rust
         with:
