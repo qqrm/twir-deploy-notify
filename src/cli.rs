@@ -17,7 +17,7 @@ struct Cli {
 ///
 /// Reads the provided Markdown file, generates Telegram posts, optionally
 /// converts them to plain text and sends them to Telegram if credentials are
-/// set.
+/// available.
 pub fn main() -> std::io::Result<()> {
     env_logger::init();
     let cli = Cli::parse();
@@ -35,8 +35,15 @@ pub fn main() -> std::io::Result<()> {
 
     log::info!("Writing posts to disk");
     write_posts(&posts, Path::new("."))?;
-    let token = env::var("TELEGRAM_BOT_TOKEN").ok();
-    let chat_id = env::var("TELEGRAM_CHAT_ID").ok();
+    // Use main chat credentials if available, otherwise fall back to the
+    // development variables. This allows running the debug pipeline without
+    // requiring production secrets.
+    let token = env::var("TELEGRAM_BOT_TOKEN")
+        .or_else(|_| env::var("DEV_BOT_TOKEN"))
+        .ok();
+    let chat_id = env::var("TELEGRAM_CHAT_ID")
+        .or_else(|_| env::var("DEV_CHAT_ID"))
+        .ok();
 
     let token_valid = token.as_ref().is_some_and(|t| !t.trim().is_empty());
     let chat_id_valid = chat_id.as_ref().is_some_and(|c| !c.trim().is_empty());
@@ -52,24 +59,16 @@ pub fn main() -> std::io::Result<()> {
             .map_err(|e| io::Error::other(e.to_string()))?;
     } else {
         match token {
-            Some(ref t) if t.trim().is_empty() => {
-                log::error!("TELEGRAM_BOT_TOKEN is empty");
-            }
+            Some(ref t) if t.trim().is_empty() => log::error!("TELEGRAM_BOT_TOKEN is empty"),
             None => log::error!("TELEGRAM_BOT_TOKEN not set"),
             _ => {}
         }
         match chat_id {
-            Some(ref c) if c.trim().is_empty() => {
-                log::error!("TELEGRAM_CHAT_ID is empty");
-            }
+            Some(ref c) if c.trim().is_empty() => log::error!("TELEGRAM_CHAT_ID is empty"),
             None => log::error!("TELEGRAM_CHAT_ID not set"),
             _ => {}
         }
-        log::error!("Telegram credentials missing; aborting");
-        return Err(io::Error::new(
-            io::ErrorKind::NotFound,
-            "Telegram credentials missing",
-        ));
+        log::warn!("Telegram credentials missing; skipping send");
     }
     Ok(())
 }
