@@ -1,4 +1,4 @@
-name: TWIR Release summary
+name: TWIR Prod summary
 
 on:
   schedule:
