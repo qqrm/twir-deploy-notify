@@ -18,9 +18,6 @@ jobs:
   notify:
     uses: ./.github/workflows/common-delivery.yml
 
-    environment: prod
-
     secrets: inherit
-
     with:
       send_main: true
