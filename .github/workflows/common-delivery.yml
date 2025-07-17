@@ -98,6 +98,7 @@ jobs:
           TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
+          echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
 
       - name: Upload generated posts
         if: ${{ always() }}
