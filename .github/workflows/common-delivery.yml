@@ -10,6 +10,9 @@ on:
         required: false
         type: string
         default: info
+      environment:
+        required: true
+        type: string
     secrets:
       TELEGRAM_BOT_TOKEN:
         required: true
@@ -19,6 +22,7 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
     env:
       CARGO_TERM_PROGRESS_WHEN: never
       RUST_LOG: ${{ inputs.rust_log }}
