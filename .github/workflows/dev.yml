@@ -14,8 +14,8 @@ permissions:
 jobs:
   notify:
     uses: ./.github/workflows/common-delivery.yml
-    environment: dev
     secrets: inherit
     with:
+      environment: dev
       send_main: false
       rust_log: debug
