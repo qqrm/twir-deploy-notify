@@ -60,7 +60,7 @@ Telegram:
   the CLI for local runs.
 
 The CLI first uses `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, which are
-provided by the GitHub environment (`DevEnvironment` or `ProdEnvironment`). If
+provided by the GitHub environment (`dev` or `prod`). If
 either variable is unset, it falls back to `DEV_BOT_TOKEN` and `DEV_CHAT_ID` for
 backward compatibility. If no valid credentials are found, the program only
 writes the generated posts to disk.
