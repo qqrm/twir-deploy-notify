@@ -35,3 +35,27 @@ fn fenced_code_block_round_trip() {
         vec!["```\nfn main() {\n    println!(\"Hello_world\");\n}\n```"]
     );
 }
+
+#[test]
+fn regression_table_ascii_aligned() {
+    let input = include_str!("regression_table.md");
+    let sections = parse_sections(input);
+    assert_eq!(sections.len(), 1);
+    let lines = &sections[0].lines;
+    assert!(lines.first().is_some_and(|l| l == "```"));
+    assert!(lines.last().is_some_and(|l| l == "```"));
+    let body = &lines[1..lines.len() - 1];
+    let width = body.first().unwrap().len();
+    let positions: Vec<_> = body
+        .first()
+        .unwrap()
+        .match_indices('|')
+        .map(|(i, _)| i)
+        .collect();
+    for line in body {
+        assert_eq!(line.len(), width);
+        assert!(line.is_ascii());
+        let pos: Vec<_> = line.match_indices('|').map(|(i, _)| i).collect();
+        assert_eq!(pos, positions);
+    }
+}
