@@ -1,4 +1,5 @@
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
+use unicode_width::UnicodeWidthStr;
 
 use crate::generator::{escape_markdown_url, format_subheading};
 use teloxide::utils::markdown::escape;
@@ -56,6 +57,13 @@ fn replace_github_mentions(text: &str) -> String {
         i += 1;
     }
     result
+}
+
+fn normalize_table_text(text: &str) -> String {
+    text.replace("Regressions", "Reg")
+        .replace("Improvements", "Imp")
+        .replace('❌', "x")
+        .replace('✅', "v")
 }
 
 /// Parse TWIR Markdown into logical sections using `pulldown-cmark`.
@@ -174,20 +182,30 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                     let mut widths: Vec<usize> = vec![];
                     for r in &table {
                         for (i, cell) in r.iter().enumerate() {
+                            let w = UnicodeWidthStr::width(cell.as_str());
                             if i >= widths.len() {
-                                widths.push(cell.len());
-                            } else if widths[i] < cell.len() {
-                                widths[i] = cell.len();
+                                widths.push(w);
+                            } else if widths[i] < w {
+                                widths[i] = w;
                             }
                         }
                     }
+                    let add_fence = !table.is_empty();
+                    if add_fence {
+                        sec.lines.push("```".to_string());
+                    }
                     for r in table.drain(..) {
-                        let mut line = String::from("\\|");
+                        let mut line = String::from("|");
                         for (i, cell) in r.into_iter().enumerate() {
                             let width = widths[i];
-                            line.push_str(&format!(" {cell:width$} \\|"));
+                            let cell_width = UnicodeWidthStr::width(cell.as_str());
+                            let pad = width.saturating_sub(cell_width);
+                            line.push_str(&format!(" {cell}{} |", " ".repeat(pad)));
                         }
                         sec.lines.push(line);
+                    }
+                    if add_fence {
+                        sec.lines.push("```".to_string());
                     }
                 }
             }
@@ -201,7 +219,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 buffer.clear();
             }
             Event::End(Tag::TableCell) => {
-                row.push(buffer.trim().to_string());
+                row.push(normalize_table_text(buffer.trim()).to_string());
                 buffer.clear();
             }
             Event::End(Tag::Paragraph) => {
@@ -256,6 +274,11 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 if in_code_block {
                     buffer.push('\n');
                 } else {
+                    buffer.push(' ');
+                }
+            }
+            Event::Html(html) => {
+                if html.trim_start().starts_with("<br") {
                     buffer.push(' ');
                 }
             }
