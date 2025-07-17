@@ -2,8 +2,8 @@ name: TWIR Prod summary
 
 on:
   schedule:
-    # раз в час
-    - cron: '0 * * * *'
+    # once per day
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 concurrency:
