@@ -81,7 +81,6 @@ jobs:
         run: |
           rm -f output_*.md
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
-          echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
 
       - name: Verify dev delivery
         if: steps.prepare.outputs.send == 'true' && inputs.send_dev == true && github.event_name == 'schedule'
@@ -99,6 +98,10 @@ jobs:
         run: |
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
           echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
+
+      - name: Save last_sent marker
+        if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
+        run: echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
 
       - name: Upload generated posts
         if: ${{ always() }}
