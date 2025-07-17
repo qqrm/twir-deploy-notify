@@ -67,7 +67,7 @@ writes the generated posts to disk.
 
 The first sent message is automatically pinned, and the service notification is
 removed.
-The workflow stores the last processed file in `last_sent.txt` as an artifact and downloads it on the next run.
+Production runs store the last processed file in `last_sent.txt` as an artifact and download it on the next run.
 
 Responses from Telegram are verified with the `verify-posts` binary.
 The `prod.yml` workflow runs hourly on the zeroth minute and publishes the latest post directly to the main chat. The `retro.yml` workflow builds posts for the last ten issues and uploads
