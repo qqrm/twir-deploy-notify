@@ -303,12 +303,32 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     let mut posts = Vec::new();
     let mut current = String::new();
     let mut join_next = false;
+    let mut in_code_block = false;
 
     fn needs_escape(c: char) -> bool {
         matches!(c, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!')
     }
 
     for line in text.lines() {
+        if line.trim() == "```" {
+            let extra = if current.is_empty() { 3 } else { 4 };
+            if current.len() + extra > limit && !current.is_empty() {
+                if in_code_block {
+                    current.push_str("\n```");
+                    posts.push(current.clone());
+                    current.clear();
+                    current.push_str("```");
+                } else {
+                    posts.push(current.clone());
+                    current.clear();
+                }
+            } else if !current.is_empty() {
+                current.push('\n');
+            }
+            current.push_str("```");
+            in_code_block = !in_code_block;
+            continue;
+        }
         if line.len() > limit {
             if !current.is_empty() {
                 posts.push(current.clone());
@@ -349,7 +369,12 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
         };
 
         if new_len > limit && !current.is_empty() {
-            if current.ends_with('\\') {
+            if in_code_block {
+                current.push_str("\n```");
+                posts.push(current.clone());
+                current.clear();
+                current.push_str("```");
+            } else if current.ends_with('\\') {
                 current.pop();
                 posts.push(current.clone());
                 current.clear();
@@ -856,9 +881,8 @@ mod tests {
     fn table_rendering() {
         let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
         let posts = generate_posts(input.to_string()).unwrap();
-        assert!(posts[0].contains("\\| Name \\| Score \\|"));
-        assert!(posts[0].contains("\\| Foo  \\| 10    \\|"));
-        assert!(posts[0].contains("\\| Bar  \\| 20    \\|"));
+        let table = "```\n| Name | Score |\n| Foo  | 10    |\n| Bar  | 20    |\n```";
+        assert!(posts[0].contains(table));
     }
 
     #[test]
