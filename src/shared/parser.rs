@@ -64,8 +64,6 @@ fn normalize_table_text(text: &str) -> String {
         .replace("Improvements", "Imp")
         .replace('❌', "x")
         .replace('✅', "v")
-        .replace("(primary)", "(prim)")
-        .replace("(secondary)", "(sec)")
 }
 
 /// Parse TWIR Markdown into logical sections using `pulldown-cmark`.
