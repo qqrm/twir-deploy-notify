@@ -202,11 +202,11 @@ Revision range: [45acf54e..42245d34](https://perf.rust-lang.org/?start=45acf54ee
 
 | (instructions:u)                   | mean  | range           | count |
 |:----------------------------------:|:-----:|:---------------:|:-----:|
-| Regressions ❌ <br /> (primary)    | 1.1%  | [0.2%, 9.1%]    | 123   |
-| Regressions ❌ <br /> (secondary)  | 1.0%  | [0.1%, 4.6%]    | 86    |
-| Improvements ✅ <br /> (primary)   | -3.8% | [-7.3%, -0.3%]  | 2     |
-| Improvements ✅ <br /> (secondary) | -2.3% | [-18.5%, -0.2%] | 44    |
-| All ❌✅ (primary)                 | 1.0%  | [-7.3%, 9.1%]   | 125   |
+| Regressions ❌ <br /> (prim)    | 1.1%  | [0.2%, 9.1%]    | 123   |
+| Regressions ❌ <br /> (sec)  | 1.0%  | [0.1%, 4.6%]    | 86    |
+| Improvements ✅ <br /> (prim)   | -3.8% | [-7.3%, -0.3%]  | 2     |
+| Improvements ✅ <br /> (sec) | -2.3% | [-18.5%, -0.2%] | 44    |
+| All ❌✅ (prim)                 | 1.0%  | [-7.3%, 9.1%]   | 125   |
 
 
 2 Regressions, 4 Improvements, 10 Mixed; 7 of them in rollups
