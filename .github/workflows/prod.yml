@@ -3,7 +3,7 @@ name: TWIR Prod summary
 on:
   schedule:
     # once per day
-    - cron: '0 0 * * *'
+    - cron: '0 8 * * *'
   workflow_dispatch:
 
 concurrency:
