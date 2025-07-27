@@ -457,7 +457,7 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
                 escape_markdown_url("https://t.me/rust_jobs_feed")
             );
             let hh = format!(
-                "📝 [Rust HH jobs]({}) — channel with Rust jobs from HeadHunter",
+                "📝 [Rust HH jobs]({})",
                 escape_markdown_url("https://t.me/rusthhjobs")
             );
             sec.lines.insert(1, chat);
