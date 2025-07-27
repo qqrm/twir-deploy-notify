@@ -48,7 +48,10 @@ jobs:
           prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success \
             -L 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [ -n "$prev" ]; then
-            gh run download "$prev" -n last-sent --dir . || true
+            if ! gh run download "$prev" -n last-sent --dir .; then
+              echo "Unable to download last-sent artifact" >&2
+              exit 1
+            fi
           fi
 
       - name: Checkout TWIR
