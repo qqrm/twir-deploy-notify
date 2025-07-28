@@ -29,6 +29,9 @@ After that you can run the tool manually with:
 cargo run --bin twir-deploy-notify -- twir/content/<file-name>.md
 ```
 
+Pass `--plain` to generate plain text output. Tables are now rendered without
+code fences or extra padding by default.
+
 All files matching `output_*.md` in the current directory are removed before the
 new posts are written.
 

@@ -422,6 +422,7 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
 /// # Returns
 /// A vector of validated Telegram Markdown posts or a `ValidationError` if any
 /// post fails validation.
+#[allow(dead_code)]
 pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError> {
     let _title = find_title(&input);
     let number = find_number(&input);
@@ -886,7 +887,7 @@ mod tests {
     fn table_rendering() {
         let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
         let posts = generate_posts(input.to_string()).unwrap();
-        let table = "```\n| Name | Score |\n| Foo  | 10    |\n| Bar  | 20    |\n```";
+        let table = "\\| Name \\| Score \\|\n\\| Foo \\| 10 \\|\n\\| Bar \\| 20 \\|";
         assert!(posts[0].contains(table));
     }
 
