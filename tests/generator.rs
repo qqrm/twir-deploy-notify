@@ -1,6 +1,6 @@
 use twir_deploy_notify::generator;
 
-use generator::{TELEGRAM_LIMIT, split_posts};
+use generator::{TELEGRAM_LIMIT, generate_posts, split_posts};
 use proptest::prelude::*;
 mod common;
 
@@ -150,4 +150,12 @@ fn jobs_url_simplified() {
     let posts = generator::generate_posts(input.to_string()).unwrap();
     let combined = posts.join("\n");
     assert!(combined.contains("[Rust Job Reddit Thread](https://example.com/thread)"));
+}
+
+#[test]
+fn table_compact_format() {
+    let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
+    let posts = generate_posts(input.to_string()).unwrap();
+    assert!(!posts[0].contains("```"));
+    assert!(posts[0].contains("\\|"));
 }
