@@ -1,5 +1,5 @@
 ## Perf
-| (instructions:u)    | mean  | range              | count |
+| (instructions:u)    | mean | range              | count |
 |:--------------------|:----:|:------------------:|------:|
 | Reg x  prim         | 0.4% | [0.1%, 0.9%]       |    47 |
 | Reg x  sec          | 0.8% | [0.1%, 2.7%]       |    69 |
