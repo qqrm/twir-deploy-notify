@@ -1,5 +1,4 @@
 use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
-use unicode_width::UnicodeWidthStr;
 
 use crate::generator::{escape_markdown_url, format_subheading};
 use teloxide::utils::markdown::escape;
@@ -183,33 +182,18 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
             }
             Event::End(Tag::Table(_)) => {
                 if let Some(ref mut sec) = current {
-                    let mut widths: Vec<usize> = vec![];
-                    for r in &table {
-                        for (i, cell) in r.iter().enumerate() {
-                            let w = UnicodeWidthStr::width(cell.as_str());
-                            if i >= widths.len() {
-                                widths.push(w);
-                            } else if widths[i] < w {
-                                widths[i] = w;
-                            }
-                        }
-                    }
-                    let add_fence = !table.is_empty();
-                    if add_fence {
-                        sec.lines.push("```".to_string());
-                    }
                     for r in table.drain(..) {
-                        let mut line = String::from("|");
+                        let mut line = String::new();
                         for (i, cell) in r.into_iter().enumerate() {
-                            let width = widths[i];
-                            let cell_width = UnicodeWidthStr::width(cell.as_str());
-                            let pad = width.saturating_sub(cell_width);
-                            line.push_str(&format!(" {cell}{} |", " ".repeat(pad)));
+                            if i == 0 {
+                                line.push_str("\\| ");
+                            } else {
+                                line.push_str(" \\| ");
+                            }
+                            line.push_str(&cell);
                         }
+                        line.push_str(" \\|");
                         sec.lines.push(line);
-                    }
-                    if add_fence {
-                        sec.lines.push("```".to_string());
                     }
                 }
             }
