@@ -15,8 +15,12 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  TRUSTED_USERS: qqrm,EternaleapFromPit
+
 jobs:
   fmt:
+    if: ${{ github.event_name != 'pull_request' || contains(env.TRUSTED_USERS, github.actor) }}
     runs-on: ubuntu-latest
     env:
       CARGO_TERM_PROGRESS_WHEN: never
@@ -29,6 +33,7 @@ jobs:
       - run: cargo fmt --quiet --all -- --check
 
   check:
+    if: ${{ github.event_name != 'pull_request' || contains(env.TRUSTED_USERS, github.actor) }}
     needs: fmt
     runs-on: ubuntu-latest
     env:
@@ -42,6 +47,7 @@ jobs:
       - run: cargo check --quiet --all-targets --all-features
 
   clippy:
+    if: ${{ github.event_name != 'pull_request' || contains(env.TRUSTED_USERS, github.actor) }}
     needs: check
     runs-on: ubuntu-latest
     env:
@@ -55,6 +61,7 @@ jobs:
       - run: cargo clippy --quiet --all-targets --all-features -- -D warnings
 
   test:
+    if: ${{ github.event_name != 'pull_request' || contains(env.TRUSTED_USERS, github.actor) }}
     needs: clippy
     runs-on: ubuntu-latest
     env:
@@ -68,6 +75,7 @@ jobs:
       - run: cargo test --quiet --lib --bins --all-features -- --test-threads=$(nproc)
 
   machete:
+    if: ${{ github.event_name != 'pull_request' || contains(env.TRUSTED_USERS, github.actor) }}
     needs: test
     runs-on: ubuntu-latest
     env:
@@ -82,7 +90,7 @@ jobs:
       - run: cargo machete
 
   audit:
-    if: github.event_name != 'pull_request' || github.event.inputs.run_audit == 'true'
+    if: github.event_name != 'pull_request' || (github.event.inputs.run_audit == 'true' && contains(env.TRUSTED_USERS, github.actor))
     needs: machete
     runs-on: ubuntu-latest
     env:
@@ -97,6 +105,7 @@ jobs:
       - run: cargo audit --quiet
 
   check-docs:
+    if: ${{ github.event_name != 'pull_request' || contains(env.TRUSTED_USERS, github.actor) }}
     needs: machete
     runs-on: ubuntu-latest
     env:
