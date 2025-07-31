@@ -7,9 +7,12 @@ on:
 permissions:
   actions: write
 
+env:
+  TRUSTED_USERS: qqrm,EternaleapFromPit
+
 jobs:
   cancel:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged == true && contains(env.TRUSTED_USERS, github.event.pull_request.user.login)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
