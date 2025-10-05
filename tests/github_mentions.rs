@@ -15,3 +15,16 @@ fn github_mentions_are_linked() {
     );
     common::assert_valid_markdown(&sections[0].lines[0]);
 }
+
+#[test]
+fn mentions_inside_links_are_preserved() {
+    let input = "## Section\n- [@user on github](https://example.com)";
+    let sections = parse_sections(input);
+    assert_eq!(sections.len(), 1);
+    assert_eq!(sections[0].title, "Section");
+    assert_eq!(
+        sections[0].lines,
+        vec!["• [@user on github](https://example.com)"]
+    );
+    common::assert_valid_markdown(&sections[0].lines[0]);
+}

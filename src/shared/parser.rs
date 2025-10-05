@@ -33,27 +33,45 @@ fn replace_github_mentions(text: &str) -> String {
     let mut result = String::new();
     let chars: Vec<char> = text.chars().collect();
     let mut i = 0;
+    let mut bracket_depth = 0usize;
     while i < chars.len() {
-        if chars[i] == '@' {
-            let prev = if i == 0 { None } else { Some(chars[i - 1]) };
-            let mut j = i + 1;
-            if j < chars.len() && chars[j].is_ascii_alphanumeric() {
-                while j < chars.len() && (chars[j].is_ascii_alphanumeric() || chars[j] == '-') {
-                    j += 1;
+        let ch = chars[i];
+        match ch {
+            '[' => {
+                bracket_depth += 1;
+                result.push(ch);
+                i += 1;
+            }
+            ']' => {
+                bracket_depth = bracket_depth.saturating_sub(1);
+                result.push(ch);
+                i += 1;
+            }
+            '@' if bracket_depth == 0 => {
+                let prev = if i == 0 { None } else { Some(chars[i - 1]) };
+                let mut j = i + 1;
+                if j < chars.len() && chars[j].is_ascii_alphanumeric() {
+                    while j < chars.len() && (chars[j].is_ascii_alphanumeric() || chars[j] == '-') {
+                        j += 1;
+                    }
+                    let next = chars.get(j).copied();
+                    if !prev.is_some_and(|c| c.is_ascii_alphanumeric() || c == '/')
+                        && !next.is_some_and(|c| c.is_ascii_alphanumeric() || c == '-')
+                    {
+                        let user: String = chars[i + 1..j].iter().collect();
+                        result.push_str(&format!("[{user}](https://github.com/{user})"));
+                        i = j;
+                        continue;
+                    }
                 }
-                let next = chars.get(j).copied();
-                if !prev.is_some_and(|c| c.is_ascii_alphanumeric() || c == '/')
-                    && !next.is_some_and(|c| c.is_ascii_alphanumeric() || c == '-')
-                {
-                    let user: String = chars[i + 1..j].iter().collect();
-                    result.push_str(&format!("[{user}](https://github.com/{user})"));
-                    i = j;
-                    continue;
-                }
+                result.push('@');
+                i += 1;
+            }
+            _ => {
+                result.push(ch);
+                i += 1;
             }
         }
-        result.push(chars[i]);
-        i += 1;
     }
     result
 }
