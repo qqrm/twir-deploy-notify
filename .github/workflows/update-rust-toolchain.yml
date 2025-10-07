@@ -1,0 +1,97 @@
+name: TWIR Update Rust toolchain
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: Update Rust toolchain
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Refresh toolchain version
+        id: rust
+        run: |
+          set -euo pipefail
+
+          latest=$(curl -s https://static.rust-lang.org/dist/channel-rust-stable.toml | python - <<'PY'
+import re
+import sys
+
+data = sys.stdin.read()
+match = re.search(r"\[pkg\.rust\]\s+version = \"([^\"]+)\"", data)
+if not match:
+    raise SystemExit("failed to locate stable toolchain version")
+print(match.group(1).split()[0])
+PY
+)
+
+          current=$(python - <<'PY'
+import pathlib
+import re
+
+text = pathlib.Path("rust-toolchain.toml").read_text()
+match = re.search(r'channel\s*=\s*"([^\"]+)"', text)
+if not match:
+    raise SystemExit("rust-toolchain.toml is missing channel entry")
+print(match.group(1))
+PY
+)
+
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+
+          if [ "$latest" = "$current" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          export LATEST="$latest"
+          python - <<'PY'
+import os
+import pathlib
+import re
+
+path = pathlib.Path("rust-toolchain.toml")
+text = path.read_text()
+latest = os.environ["LATEST"]
+new_text = re.sub(r'channel\s*=\s*"[^\"]+"', f'channel = "{latest}"', text, count=1)
+if text == new_text:
+    raise SystemExit("the channel entry was not updated")
+path.write_text(new_text)
+PY
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Create pull request
+        if: steps.rust.outputs.changed == 'true'
+        id: pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/update-rust-toolchain
+          delete-branch: true
+          commit-message: "chore: update Rust toolchain to ${{ steps.rust.outputs.latest }}"
+          title: "chore: update Rust toolchain to ${{ steps.rust.outputs.latest }}"
+          body: |
+            ## Summary
+            - update `rust-toolchain.toml` to Rust ${{ steps.rust.outputs.latest }}
+
+            ## Testing
+            - not run (automation change)
+          labels: maintenance
+          add-paths: rust-toolchain.toml
+
+      - name: Enable auto-merge for toolchain PR
+        if: steps.pr.outputs.pull-request-number && steps.pr.outputs.pull-request-operation != 'closed'
+        uses: peter-evans/enable-pull-request-automerge@v3
+        with:
+          pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
+          merge-method: squash
