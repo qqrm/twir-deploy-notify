@@ -35,12 +35,12 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
     let chars: Vec<char> = text.chars().collect();
     let mut stack: VecDeque<&str> = VecDeque::new();
     let mut in_code_block = false;
-    if let Some(&first) = chars.first() {
-        if matches!(first, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!') {
-            return Err(MarkdownError::InvalidEscape(
-                "Post starts with reserved character".to_string(),
-            ));
-        }
+    if let Some(&first) = chars.first()
+        && matches!(first, '-' | '>' | '#' | '+' | '=' | '{' | '}' | '.' | '!')
+    {
+        return Err(MarkdownError::InvalidEscape(
+            "Post starts with reserved character".to_string(),
+        ));
     }
     let mut i = 0;
     while i < chars.len() {

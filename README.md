@@ -8,7 +8,7 @@ A single GitHub release tagged `latest` always provides the most recent binary.
 
 ## Toolchain
 
-The project requires **Rust 1.88.0** and `rustfmt` **1.8.0**. The `rust-toolchain.toml` file pins the channel and lists the mandatory `clippy` and `rustfmt` components so `rustup` always uses the correct versions. All GitHub Actions workflows are configured with the same toolchain version. If these components are not installed automatically, run:
+All GitHub Actions workflows read the pinned channel from `rust-toolchain.toml` and install the required `clippy` and `rustfmt` components automatically. The scheduled `TWIR Update Rust toolchain` workflow resolves the latest stable release, updates both the manifest and `DOCS/RUST_VERSION.md`, and opens an auto-merged pull request whenever the version changes. This keeps the repository active while ensuring every pipeline runs against the same compiler version. If the components are not installed automatically, run:
 
 ```bash
 rustup component add clippy rustfmt

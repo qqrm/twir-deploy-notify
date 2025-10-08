@@ -12,8 +12,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-        with:
-          toolchain: 1.88.0
 
       - name: Checkout TWIR
         uses: actions/checkout@v4
