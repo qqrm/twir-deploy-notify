@@ -16,15 +16,14 @@ fn fix_bare_link(line: &str) -> String {
     }
     let plain = line.replace('\\', "");
     let trimmed = plain.trim_end();
-    if trimmed.ends_with(')') {
-        if let Some(start) = trimmed
+    if trimmed.ends_with(')')
+        && let Some(start) = trimmed
             .rfind("(https://")
             .or_else(|| trimmed.rfind("(http://"))
-        {
-            let url = &trimmed[start + 1..trimmed.len() - 1];
-            let text = trimmed[..start].trim_end();
-            return format!("[{}]({})", escape(text), escape_markdown_url(url));
-        }
+    {
+        let url = &trimmed[start + 1..trimmed.len() - 1];
+        let text = trimmed[..start].trim_end();
+        return format!("[{}]({})", escape(text), escape_markdown_url(url));
     }
     line.to_string()
 }
