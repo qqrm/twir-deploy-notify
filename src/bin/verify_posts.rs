@@ -25,16 +25,17 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut last_update = 0i64;
     if let Some(arr) = resp["result"].as_array() {
         for upd in arr {
-            if let Some(id) = upd["update_id"].as_i64() {
-                if id > last_update {
-                    last_update = id;
-                }
+            if let Some(id) = upd["update_id"].as_i64()
+                && id > last_update
+            {
+                last_update = id;
             }
         }
     }
     let chat_id_num = chat_id_norm.as_ref().parse::<i64>().ok();
-    for p in &posts {
-        send_to_telegram(&[p.clone()], &base, &token, &chat_id_raw, true, false)?;
+    for (idx, post) in posts.iter().enumerate() {
+        let single = &posts[idx..idx + 1];
+        send_to_telegram(single, &base, &token, &chat_id_raw, true, false)?;
         let updates_url = format!(
             "{}/bot{}/getUpdates?offset={}",
             base.trim_end_matches('/'),
@@ -45,10 +46,10 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let mut last_text = None;
         if let Some(arr) = resp["result"].as_array() {
             for upd in arr {
-                if let Some(id) = upd["update_id"].as_i64() {
-                    if id > last_update {
-                        last_update = id;
-                    }
+                if let Some(id) = upd["update_id"].as_i64()
+                    && id > last_update
+                {
+                    last_update = id;
                 }
                 let msg = upd.get("channel_post").or_else(|| upd.get("message"));
                 if let Some(m) = msg
@@ -61,7 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             }
         }
         let received = last_text.ok_or("No message from Telegram")?;
-        if &received != p {
+        if received != *post {
             return Err("Telegram message mismatch".into());
         }
     }

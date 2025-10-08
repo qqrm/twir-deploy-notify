@@ -38,8 +38,6 @@ jobs:
 
       - name: Setup Rust environment
         uses: ./.github/actions/setup-rust
-        with:
-          toolchain: 1.88.0
 
       - name: Download last_sent artifact from previous successful run
         env:
