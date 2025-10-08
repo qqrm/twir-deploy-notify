@@ -120,11 +120,11 @@ fn simplify_jobs_section(section: &mut Section) {
     for line in &mut section.lines {
         if let Some(start) = line.find(PAT) {
             let url_start = start + PAT.len();
-            if let Some(rest) = line.get(url_start..) {
-                if let Some(end) = rest.find(')') {
-                    let url = &rest[..end];
-                    *line = format!("🦀 [Rust Job Reddit Thread]({})", escape_markdown_url(url));
-                }
+            if let Some(rest) = line.get(url_start..)
+                && let Some(end) = rest.find(')')
+            {
+                let url = &rest[..end];
+                *line = format!("🦀 [Rust Job Reddit Thread]({})", escape_markdown_url(url));
             }
         }
     }
@@ -200,12 +200,13 @@ pub fn format_heading(title: &str) -> String {
 /// The escaped heading wrapped in bold markers.
 pub fn format_subheading(title: &str) -> String {
     let trimmed = title.trim();
-    if trimmed.starts_with('[') && trimmed.ends_with(')') {
-        if let Some(idx) = trimmed.find("](") {
-            let text = &trimmed[1..idx];
-            let url = &trimmed[idx + 2..trimmed.len() - 1];
-            return format!("**[{}]({})**", escape(text), escape_markdown_url(url));
-        }
+    if trimmed.starts_with('[')
+        && trimmed.ends_with(')')
+        && let Some(idx) = trimmed.find("](")
+    {
+        let text = &trimmed[1..idx];
+        let url = &trimmed[idx + 2..trimmed.len() - 1];
+        return format!("**[{}]({})**", escape(text), escape_markdown_url(url));
     }
     let lower = trimmed.to_ascii_lowercase();
     if lower == "quote of the week" {
@@ -390,12 +391,12 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
         if !current.is_empty() && !join_next {
             current.push('\n');
         }
-        if current.is_empty() {
-            if let Some(first) = line.chars().next() {
-                if needs_escape(first) && !line.starts_with('\\') {
-                    current.push('\\');
-                }
-            }
+        if current.is_empty()
+            && let Some(first) = line.chars().next()
+            && needs_escape(first)
+            && !line.starts_with('\\')
+        {
+            current.push('\\');
         }
         current.push_str(line);
         if join_next {
@@ -572,12 +573,12 @@ pub fn write_posts(posts: &[String], dir: &Path) -> std::io::Result<()> {
     fs::create_dir_all(dir)?;
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
-        if entry.file_type()?.is_file() {
-            if let Some(name) = entry.file_name().to_str() {
-                if name.starts_with("output_") && name.ends_with(".md") {
-                    fs::remove_file(entry.path())?;
-                }
-            }
+        if entry.file_type()?.is_file()
+            && let Some(name) = entry.file_name().to_str()
+            && name.starts_with("output_")
+            && name.ends_with(".md")
+        {
+            fs::remove_file(entry.path())?;
         }
     }
     for (i, post) in posts.iter().enumerate() {

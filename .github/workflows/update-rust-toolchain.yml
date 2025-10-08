@@ -22,72 +22,77 @@ jobs:
         run: |
           set -euo pipefail
 
-          latest=$(curl -s https://static.rust-lang.org/dist/channel-rust-stable.toml | python - <<'PY'
-import re
-import sys
-
-data = sys.stdin.read()
-match = re.search(r"\[pkg\.rust\]\s+version = \"([^\"]+)\"", data)
-if not match:
-    raise SystemExit("failed to locate stable toolchain version")
-print(match.group(1).split()[0])
-PY
-)
-
-          current=$(python - <<'PY'
-import pathlib
-import re
-
-text = pathlib.Path("rust-toolchain.toml").read_text()
-match = re.search(r'channel\s*=\s*"([^\"]+)"', text)
-if not match:
-    raise SystemExit("rust-toolchain.toml is missing channel entry")
-print(match.group(1))
-PY
-)
-
-          echo "latest=$latest" >> "$GITHUB_OUTPUT"
-          echo "current=$current" >> "$GITHUB_OUTPUT"
-
-          if [ "$latest" = "$current" ]; then
-            echo "changed=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          export LATEST="$latest"
           python - <<'PY'
 import os
 import pathlib
 import re
+import urllib.request
 
-path = pathlib.Path("rust-toolchain.toml")
-text = path.read_text()
-latest = os.environ["LATEST"]
-new_text = re.sub(r'channel\s*=\s*"[^\"]+"', f'channel = "{latest}"', text, count=1)
-if text == new_text:
-    raise SystemExit("the channel entry was not updated")
-path.write_text(new_text)
+DOC_PATH = pathlib.Path('DOCS/RUST_VERSION.md')
+OUTPUT = pathlib.Path(os.environ['GITHUB_OUTPUT'])
+SOURCE_URL = 'https://static.rust-lang.org/dist/channel-rust-stable.toml'
+
+with urllib.request.urlopen(SOURCE_URL) as response:
+    data = response.read().decode()
+
+version_match = re.search(r"\[pkg\.rust\]\s+version = \"([^\"]+)\"", data)
+date_match = re.search(r"^date\s*=\s*\"([^\"]+)\"", data, re.MULTILINE)
+if not version_match:
+    raise SystemExit('failed to locate stable toolchain version')
+if not date_match:
+    raise SystemExit('failed to locate channel release date')
+
+latest = version_match.group(1).split()[0]
+release_date = date_match.group(1)
+
+current = None
+if DOC_PATH.exists():
+    current_match = re.search(r'`([0-9]+\.[0-9]+\.[0-9]+)`', DOC_PATH.read_text())
+    if current_match:
+        current = current_match.group(1)
+
+changed = latest != current
+
+with OUTPUT.open('a', encoding='utf-8') as fh:
+    print(f'latest={latest}', file=fh)
+    print(f'release_date={release_date}', file=fh)
+    print(f'current={current or ""}', file=fh)
+    print(f'changed={str(changed).lower()}', file=fh)
+
+if not changed:
+    raise SystemExit(0)
+
+content = "\n".join([
+    "# Rust Toolchain",
+    "",
+    "The automation tracks the latest stable Rust release used by the workflows.",
+    "",
+    f"- Version: `{latest}`",
+    f"- Source: {SOURCE_URL}",
+    f"- Updated: {release_date}",
+    "",
+])
+
+DOC_PATH.write_text(content)
 PY
-
-          echo "changed=true" >> "$GITHUB_OUTPUT"
 
       - name: Create pull request
         if: steps.rust.outputs.changed == 'true'
         id: pr
         uses: peter-evans/create-pull-request@v6
         with:
-          branch: chore/update-rust-toolchain
+          branch: chore/update-rust-version-doc
           delete-branch: true
-          commit-message: "chore: update Rust toolchain to ${{ steps.rust.outputs.latest }}"
-          title: "chore: update Rust toolchain to ${{ steps.rust.outputs.latest }}"
+          commit-message: "docs: record Rust ${{ steps.rust.outputs.latest }}"
+          title: "docs: record Rust ${{ steps.rust.outputs.latest }}"
           body: |
             ## Summary
-            - update `rust-toolchain.toml` to Rust ${{ steps.rust.outputs.latest }}
+            - record Rust ${{ steps.rust.outputs.latest }} (${{ steps.rust.outputs.release_date }}) in `DOCS/RUST_VERSION.md`
 
             ## Testing
             - not run (automation change)
           labels: maintenance
-          add-paths: rust-toolchain.toml
+          add-paths: DOCS/RUST_VERSION.md
 
       - name: Enable auto-merge for toolchain PR
         if: steps.pr.outputs.pull-request-number && steps.pr.outputs.pull-request-operation != 'closed'

@@ -53,13 +53,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 missing
                                     .push(format!("{}: missing file {p}", entry.path().display()));
                             }
-                        } else if let Some(name) = parse_function(&code) {
-                            if !function_exists(name)? {
-                                missing.push(format!(
-                                    "{}: missing function {name}",
-                                    entry.path().display()
-                                ));
-                            }
+                        } else if let Some(name) = parse_function(&code)
+                            && !function_exists(name)?
+                        {
+                            missing.push(format!(
+                                "{}: missing function {name}",
+                                entry.path().display()
+                            ));
                         }
                     }
                     Event::Code(code) => {
@@ -68,13 +68,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 missing
                                     .push(format!("{}: missing file {p}", entry.path().display()));
                             }
-                        } else if let Some(name) = parse_function(&code) {
-                            if !function_exists(name)? {
-                                missing.push(format!(
-                                    "{}: missing function {name}",
-                                    entry.path().display()
-                                ));
-                            }
+                        } else if let Some(name) = parse_function(&code)
+                            && !function_exists(name)?
+                        {
+                            missing.push(format!(
+                                "{}: missing function {name}",
+                                entry.path().display()
+                            ));
                         }
                     }
                     _ => {}
