@@ -8,7 +8,7 @@ A single GitHub release tagged `latest` always provides the most recent binary.
 
 ## Toolchain
 
-All GitHub Actions workflows resolve the latest stable Rust release at runtime and install the required `clippy` and `rustfmt` components automatically. The scheduled `TWIR Update Rust toolchain` workflow records the detected version in `DOCS/RUST_VERSION.md` once a week and opens an auto-merged pull request whenever the number changes, which keeps the repository active while ensuring every pipeline runs against the same compiler version. If the components are not installed automatically, run:
+All GitHub Actions workflows read the pinned channel from `rust-toolchain.toml` and install the required `clippy` and `rustfmt` components automatically. The scheduled `TWIR Update Rust toolchain` workflow resolves the latest stable release, updates both the manifest and `DOCS/RUST_VERSION.md`, and opens an auto-merged pull request whenever the version changes. This keeps the repository active while ensuring every pipeline runs against the same compiler version. If the components are not installed automatically, run:
 
 ```bash
 rustup component add clippy rustfmt
