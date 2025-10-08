@@ -3,22 +3,50 @@ description: 'Checkout repository, setup cache and toolchain'
 inputs:
   toolchain:
     description: 'Rust toolchain'
-    required: true
+    required: false
+    default: ''
 runs:
   using: 'composite'
   steps:
     - uses: actions/checkout@v4
+    - id: determine
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.toolchain }}" ]; then
+          echo "toolchain=${{ inputs.toolchain }}" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+
+        toolchain=$(python - <<'PY'
+import pathlib
+import re
+
+path = pathlib.Path('rust-toolchain.toml')
+text = path.read_text()
+match = re.search(r'channel\s*=\s*"([^"]+)"', text)
+if not match:
+    raise SystemExit('rust-toolchain.toml is missing channel entry')
+print(match.group(1))
+PY
+)
+
+        if [ -z "$toolchain" ]; then
+          echo 'failed to resolve toolchain version' >&2
+          exit 1
+        fi
+
+        echo "toolchain=$toolchain" >> "$GITHUB_OUTPUT"
     - uses: actions/cache@v4
       with:
         path: |
           ~/.cargo
           target
-        key: ${{ runner.os }}-${{ inputs.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
+        key: ${{ runner.os }}-${{ steps.determine.outputs.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
-          ${{ runner.os }}-${{ inputs.toolchain }}-
+          ${{ runner.os }}-${{ steps.determine.outputs.toolchain }}-
     - uses: actions-rs/toolchain@v1
       with:
-        toolchain: ${{ inputs.toolchain }}
+        toolchain: ${{ steps.determine.outputs.toolchain }}
         profile: minimal
-    - run: rustup component add --toolchain ${{ inputs.toolchain }} clippy rustfmt
+    - run: rustup component add --toolchain ${{ steps.determine.outputs.toolchain }} clippy rustfmt
       shell: bash
