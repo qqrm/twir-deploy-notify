@@ -19,32 +19,32 @@ runs:
 
         if [ -f rust-toolchain.toml ]; then
           toolchain=$(python - <<'PY'
-import pathlib
-import re
+            import pathlib
+            import re
 
-path = pathlib.Path('rust-toolchain.toml')
-text = path.read_text()
-match = re.search(r'channel\s*=\s*"([^\"]+)"', text)
-if not match:
-    raise SystemExit('rust-toolchain.toml is missing channel entry')
-print(match.group(1))
+            path = pathlib.Path('rust-toolchain.toml')
+            text = path.read_text()
+            match = re.search(r'channel\s*=\s*"([^\"]+)"', text)
+            if not match:
+                raise SystemExit('rust-toolchain.toml is missing channel entry')
+            print(match.group(1))
 PY
-)
+          )
         else
           toolchain=$(python - <<'PY'
-import re
-import urllib.request
+            import re
+            import urllib.request
 
-with urllib.request.urlopen('https://static.rust-lang.org/dist/channel-rust-stable.toml') as response:
-    data = response.read().decode()
+            with urllib.request.urlopen('https://static.rust-lang.org/dist/channel-rust-stable.toml') as response:
+                data = response.read().decode()
 
-match = re.search(r"\[pkg\.rust\]\s+version = \"([^\"]+)\"", data)
-if not match:
-    raise SystemExit('failed to resolve stable toolchain version')
+            match = re.search(r"\[pkg\.rust\]\s+version = \"([^\"]+)\"", data)
+            if not match:
+                raise SystemExit('failed to resolve stable toolchain version')
 
-print(match.group(1).split()[0])
+            print(match.group(1).split()[0])
 PY
-)
+          )
         fi
 
         if [ -z "$toolchain" ]; then
