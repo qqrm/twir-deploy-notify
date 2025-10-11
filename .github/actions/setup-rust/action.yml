@@ -12,42 +12,55 @@ runs:
     - id: determine
       shell: bash
       run: |
+        set -euo pipefail
+
         if [ -n "${{ inputs.toolchain }}" ]; then
           echo "toolchain=${{ inputs.toolchain }}" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
-        if [ -f rust-toolchain.toml ]; then
-          toolchain=$(python - <<'PY'
-            import pathlib
-            import re
+        resolve_toolchain() {
+          local toolchain_file="rust-toolchain.toml"
 
-            path = pathlib.Path('rust-toolchain.toml')
-            text = path.read_text()
-            match = re.search(r'channel\s*=\s*"([^\"]+)"', text)
-            if not match:
-                raise SystemExit('rust-toolchain.toml is missing channel entry')
-            print(match.group(1))
-PY
-          )
-        else
-          toolchain=$(python - <<'PY'
-            import re
-            import urllib.request
+          if [ -f "$toolchain_file" ]; then
+            local channel
+            channel=$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"\n]*\)".*/\1/p' "$toolchain_file" | head -n 1)
 
-            with urllib.request.urlopen('https://static.rust-lang.org/dist/channel-rust-stable.toml') as response:
-                data = response.read().decode()
+            if [ -z "$channel" ]; then
+              echo 'rust-toolchain.toml is missing channel entry' >&2
+              return 1
+            fi
 
-            match = re.search(r"\[pkg\.rust\]\s+version = \"([^\"]+)\"", data)
-            if not match:
-                raise SystemExit('failed to resolve stable toolchain version')
+            printf '%s\n' "$channel"
+            return 0
+          fi
 
-            print(match.group(1).split()[0])
-PY
-          )
-        fi
+          local metadata
+          if ! metadata=$(curl -fsSL "https://static.rust-lang.org/dist/channel-rust-stable.toml"); then
+            echo 'failed to download stable channel metadata' >&2
+            return 1
+          fi
 
-        if [ -z "$toolchain" ]; then
+          local version_line
+          version_line=$(printf '%s\n' "$metadata" | awk '
+            /^\[pkg\.rust\]/ { in_pkg = 1; next }
+            /^\[/ { in_pkg = 0 }
+            in_pkg && $1 ~ /^version$/ { print; exit }
+          ')
+
+          local version
+          version=$(printf '%s\n' "$version_line" | sed -n 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"\n]*\)".*/\1/p')
+
+          if [ -z "$version" ]; then
+            echo 'failed to resolve stable toolchain version' >&2
+            return 1
+          fi
+
+          version=${version%% *}
+          printf '%s\n' "$version"
+        }
+
+        if ! toolchain=$(resolve_toolchain); then
           echo 'failed to resolve toolchain version' >&2
           exit 1
         fi
