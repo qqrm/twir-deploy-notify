@@ -47,8 +47,7 @@ jobs:
             -L 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [ -n "$prev" ]; then
             if ! gh run download "$prev" -n last-sent --dir .; then
-              echo "Unable to download last-sent artifact" >&2
-              exit 1
+              echo "Previous run $prev did not publish a last-sent artifact; continuing without cached state." >&2
             fi
           fi
 
