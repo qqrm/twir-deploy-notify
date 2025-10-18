@@ -85,31 +85,53 @@ fn simplify_cfp_section(section: &mut Section) {
 
 fn simplify_quote_section(section: &mut Section) {
     let mut cleaned = Vec::new();
-    let mut in_quote = false;
+    let mut in_quote_section = false;
     for line in &section.lines {
         if line.contains("Quote of the Week") {
             cleaned.push(format_subheading("Quote of the Week"));
-            in_quote = true;
+            in_quote_section = true;
             continue;
         }
-        let lower = line.to_ascii_lowercase();
-        if in_quote {
-            if lower.contains("please submit quotes")
-                || lower.starts_with("thanks to")
-                || lower.starts_with("despite ")
-            {
-                continue;
-            }
-            if line.trim_start().starts_with('–') {
-                in_quote = false;
-                cleaned.push(line.trim_start().to_string());
+        if !in_quote_section {
+            cleaned.push(line.clone());
+            continue;
+        }
+
+        let trimmed = line.trim_start();
+        if trimmed.is_empty() {
+            if cleaned.last().is_some_and(|l| !l.is_empty()) {
                 cleaned.push(String::new());
-                continue;
             }
-            let content = line.trim_start_matches("\\>").trim_start();
-            cleaned.push(format!("_{content}_"));
             continue;
         }
+
+        let lower = trimmed.to_ascii_lowercase();
+        if lower.contains("please submit quotes")
+            || lower.starts_with("thanks to")
+            || lower.starts_with("despite ")
+        {
+            continue;
+        }
+
+        if trimmed.starts_with('–') {
+            cleaned.push(trimmed.to_string());
+            cleaned.push(String::new());
+            continue;
+        }
+
+        let content = trimmed
+            .trim_start_matches("\\>")
+            .trim_start_matches('>')
+            .trim_start();
+        if content.len() != trimmed.len() {
+            if !content.is_empty() {
+                cleaned.push(format!("_{content}_"));
+            } else if cleaned.last().is_some_and(|l| !l.is_empty()) {
+                cleaned.push(String::new());
+            }
+            continue;
+        }
+
         cleaned.push(line.clone());
     }
     section.lines = cleaned;

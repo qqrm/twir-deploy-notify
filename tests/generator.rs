@@ -145,6 +145,44 @@ fn quote_section_spacing() {
 }
 
 #[test]
+fn multiple_quotes_formatted_uniformly() {
+    let input = r#"Title: Test
+Number: 1
+Date: 2025-01-01
+
+## Jobs
+
+# Quote of the Week
+
+> First quote line
+
+– Author One
+
+> Second quote line
+
+– Author Two
+
+Despite a lack of suggestions, we picked these.
+Please submit quotes and vote for next week!
+Thanks to everyone who suggested quotes.
+"#;
+
+    let posts = generator::generate_posts(input.to_string()).unwrap();
+    let combined = posts.join("\n");
+    let quote_block = combined
+        .split("Quote of the Week")
+        .nth(1)
+        .expect("quote section present");
+    assert!(quote_block.contains("_First quote line_"));
+    assert!(quote_block.contains("_Second quote line_"));
+    assert!(quote_block.contains("– Author One"));
+    assert!(quote_block.contains("– Author Two"));
+    assert!(!quote_block.contains("Please submit quotes"));
+    assert!(!quote_block.contains("Thanks to"));
+    assert!(!quote_block.contains("Despite a lack of suggestions"));
+}
+
+#[test]
 fn jobs_url_simplified() {
     let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## Jobs\nPlease see the latest [Who's Hiring thread on r/rust](https://example.com/thread)\n";
     let posts = generator::generate_posts(input.to_string()).unwrap();
