@@ -197,3 +197,20 @@ fn table_compact_format() {
     assert!(!posts[0].contains("```"));
     assert!(posts[0].contains("\\|"));
 }
+
+#[test]
+fn latest_issue_call_for_testing_is_formatted() {
+    let posts =
+        generate_posts(include_str!("2025-10-22-this-week-in-rust.md").to_string()).unwrap();
+    assert!(posts.len() >= 5);
+    let combined = posts.join("\n");
+    assert!(combined.contains(
+        "• [Tracking Issue for cargo\\-script RFC 3424](https://github.com/rust-lang/cargo/issues/12207)"
+    ));
+    assert!(combined.contains(
+        "  • [Testing Steps](https://github.com/rust-lang/cargo/issues/12207#issuecomment-3412997290)"
+    ));
+    assert!(combined.contains(
+        "• No calls for testing were issued this week by [Rust](https://github.com/rust-lang/rust/labels/call-for-testing)"
+    ));
+}

@@ -37,6 +37,22 @@ fn fenced_code_block_round_trip() {
 }
 
 #[test]
+fn loose_list_preserves_parent_items() {
+    let input = "## Section\n[Cargo](https://example.com/cargo)\n* [Parent](https://example.com/parent)\n  * [Child](https://example.com/child)\n\n* *No calls for testing were issued by [Rust](https://example.com/rust).*";
+    let sections = parse_sections(input);
+    assert_eq!(sections.len(), 1);
+    let lines = &sections[0].lines;
+    assert_eq!(lines.len(), 4);
+    assert_eq!(lines[0], "[Cargo](https://example.com/cargo)");
+    assert_eq!(lines[1], "• [Parent](https://example.com/parent)");
+    assert_eq!(lines[2], "  • [Child](https://example.com/child)");
+    assert_eq!(
+        lines[3],
+        "• No calls for testing were issued by [Rust](https://example.com/rust)\\."
+    );
+}
+
+#[test]
 fn regression_table_ascii_aligned() {
     let input = include_str!("regression_table.md");
     let sections = parse_sections(input);

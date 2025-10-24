@@ -687,9 +687,14 @@ pub fn send_to_telegram(
         );
         let safe_url = sanitize_url(&url, token);
         debug!("Posting message {} via {safe_url}", i + 1);
-        let mut form = vec![("chat_id", chat_id.as_ref()), ("text", post)];
-        if use_markdown {
-            form.push(("parse_mode", "MarkdownV2"));
+        let parse_mode = if use_markdown {
+            Some("MarkdownV2")
+        } else {
+            None
+        };
+        let mut form = vec![("chat_id", chat_id.as_ref()), ("text", post.as_str())];
+        if let Some(mode) = parse_mode {
+            form.push(("parse_mode", mode));
         }
         form.push(("disable_web_page_preview", "true"));
 
@@ -709,6 +714,7 @@ pub fn send_to_telegram(
                 .get("description")
                 .and_then(|v| v.as_str())
                 .unwrap_or("");
+
             error!(
                 "Telegram error for post {} to {} via {} {}: {} (status {})",
                 i + 1,
@@ -723,7 +729,7 @@ pub fn send_to_telegram(
             error!("Post snippet: {snippet}");
             return Err(format!("Telegram API error in post {} {}: {}", i + 1, code, desc).into());
         }
-        info!("Post {} sent", i + 1);
+
         if pin_first {
             match raw
                 .get("result")
@@ -743,6 +749,7 @@ pub fn send_to_telegram(
                 None => {}
             }
         }
+        info!("Post {} sent", i + 1);
         if i + 1 < posts.len() {
             thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
         }
