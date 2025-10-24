@@ -228,14 +228,23 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 buffer.clear();
             }
             Event::End(Tag::Paragraph) => {
-                if let Some(ref mut sec) = current {
+                if list_depth > 0 {
+                    let trimmed = buffer.trim_end().to_string();
+                    buffer.clear();
+                    if !trimmed.is_empty() {
+                        buffer.push_str(&trimmed);
+                        buffer.push('\n');
+                    }
+                } else if let Some(ref mut sec) = current {
                     let line = buffer.trim_end();
                     if !line.is_empty() {
                         let fixed = replace_github_mentions(&fix_bare_link(line));
                         sec.lines.push(fixed);
                     }
+                    buffer.clear();
+                } else {
+                    buffer.clear();
                 }
-                buffer.clear();
             }
             Event::Start(Tag::Link(_, dest, _)) => {
                 buffer.push('[');
