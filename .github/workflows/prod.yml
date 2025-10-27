@@ -15,7 +15,16 @@ permissions:
   actions: read
 
 jobs:
-  notify:
+  notify-dev:
+    uses: ./.github/workflows/common-delivery.yml
+    secrets: inherit
+    with:
+      environment: dev
+      send_main: false
+      send_dev: true
+
+  notify-prod:
+    needs: notify-dev
     uses: ./.github/workflows/common-delivery.yml
     secrets: inherit
     with:
