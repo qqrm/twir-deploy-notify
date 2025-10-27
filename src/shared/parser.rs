@@ -101,13 +101,13 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
     let mut link_dest: Option<String> = None;
     let mut list_depth: usize = 0;
     let mut in_code_block = false;
-    let mut in_heading = false;
+    let mut heading_level: Option<HeadingLevel> = None;
     let mut table: Vec<Vec<String>> = Vec::new();
     let mut row: Vec<String> = Vec::new();
     for event in parser {
         match event {
             Event::Start(Tag::Heading(level, ..)) => {
-                in_heading = true;
+                heading_level = Some(level);
                 if level == HeadingLevel::H2 {
                     if let Some(ref mut sec) = current {
                         let line = buffer.trim();
@@ -133,7 +133,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 }
             }
             Event::End(Tag::Heading(level, ..)) => {
-                in_heading = false;
+                heading_level = None;
                 if level == HeadingLevel::H2 {
                     current = Some(Section {
                         title: buffer.trim().to_string(),
@@ -278,7 +278,15 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 buffer.push_str("```");
             }
             Event::Text(t) | Event::Code(t) => {
-                if in_code_block || in_heading {
+                if in_code_block
+                    || matches!(
+                        heading_level,
+                        Some(HeadingLevel::H1)
+                            | Some(HeadingLevel::H2)
+                            | Some(HeadingLevel::H3)
+                            | Some(HeadingLevel::H4)
+                    )
+                {
                     buffer.push_str(&t);
                 } else {
                     buffer.push_str(&escape(&t));

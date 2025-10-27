@@ -969,6 +969,17 @@ mod tests {
     }
 
     #[test]
+    fn escapes_parentheses_in_heading_links() {
+        let input = "Title: T\nNumber: 1\nDate: 2025-01-01\n\n## Section\n##### [Compiler Team](https://example.com) [(MCPs only)](https://example.com/mcp)\n- entry\n";
+        let posts = generate_posts(input.to_string()).unwrap();
+        let combined = posts.join("\n");
+        assert!(combined.contains("\\(MCPs only\\)"));
+        for p in posts {
+            crate::validator::validate_telegram_markdown(&p).unwrap();
+        }
+    }
+
+    #[test]
     fn dash_at_post_boundary() {
         let mut text = "a".repeat(10);
         text.push('\n');
