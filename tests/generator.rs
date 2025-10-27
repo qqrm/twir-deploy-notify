@@ -199,6 +199,16 @@ fn table_compact_format() {
 }
 
 #[test]
+fn heading_parentheses_are_escaped() {
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## Tracking\n##### [Compiler Team](https://example.com) [(MCPs only)](https://example.org)\n* [Issue](https://example.com/issue)\n";
+    let posts = generate_posts(input.to_string()).unwrap();
+    assert!(posts.iter().any(|p| p.contains("\\(MCPs only\\)")));
+    for post in posts {
+        common::assert_valid_markdown(&post);
+    }
+}
+
+#[test]
 fn latest_issue_call_for_testing_is_formatted() {
     let posts =
         generate_posts(include_str!("2025-10-22-this-week-in-rust.md").to_string()).unwrap();

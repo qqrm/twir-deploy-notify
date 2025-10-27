@@ -102,12 +102,16 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
     let mut list_depth: usize = 0;
     let mut in_code_block = false;
     let mut in_heading = false;
+    let mut heading_raw = String::new();
+    let mut heading_sanitized = String::new();
     let mut table: Vec<Vec<String>> = Vec::new();
     let mut row: Vec<String> = Vec::new();
     for event in parser {
         match event {
             Event::Start(Tag::Heading(level, ..)) => {
                 in_heading = true;
+                heading_raw.clear();
+                heading_sanitized.clear();
                 if level == HeadingLevel::H2 {
                     if let Some(ref mut sec) = current {
                         let line = buffer.trim();
@@ -134,9 +138,10 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
             }
             Event::End(Tag::Heading(level, ..)) => {
                 in_heading = false;
+                let raw = heading_raw.trim();
                 if level == HeadingLevel::H2 {
                     current = Some(Section {
-                        title: buffer.trim().to_string(),
+                        title: raw.to_string(),
                         lines: Vec::new(),
                     });
                     buffer.clear();
@@ -144,14 +149,24 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                     level,
                     HeadingLevel::H1 | HeadingLevel::H3 | HeadingLevel::H4
                 ) {
-                    if let Some(ref mut sec) = current {
-                        let heading = buffer.trim();
-                        if !heading.is_empty() {
-                            sec.lines.push(format_subheading(heading));
-                        }
+                    if let Some(ref mut sec) = current
+                        && !raw.is_empty()
+                    {
+                        sec.lines.push(format_subheading(raw));
                     }
                     buffer.clear();
+                } else if let Some(ref mut sec) = current {
+                    let sanitized = heading_sanitized.trim();
+                    if !sanitized.is_empty() {
+                        let fixed = replace_github_mentions(&fix_bare_link(sanitized));
+                        sec.lines.push(fixed);
+                    }
+                    buffer.clear();
+                } else {
+                    buffer.clear();
                 }
+                heading_raw.clear();
+                heading_sanitized.clear();
             }
             Event::Start(Tag::List(_)) => {
                 if let Some(ref mut sec) = current {
@@ -247,14 +262,28 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 }
             }
             Event::Start(Tag::Link(_, dest, _)) => {
-                buffer.push('[');
+                if in_heading {
+                    heading_raw.push('[');
+                    heading_sanitized.push('[');
+                } else {
+                    buffer.push('[');
+                }
                 link_dest = Some(dest.to_string());
             }
             Event::End(Tag::Link(_, _, _)) => {
                 if let Some(d) = link_dest.take() {
-                    buffer.push_str("](");
-                    buffer.push_str(&escape_markdown_url(&d));
-                    buffer.push(')');
+                    if in_heading {
+                        heading_raw.push_str("](");
+                        heading_raw.push_str(&d);
+                        heading_raw.push(')');
+                        heading_sanitized.push_str("](");
+                        heading_sanitized.push_str(&escape_markdown_url(&d));
+                        heading_sanitized.push(')');
+                    } else {
+                        buffer.push_str("](");
+                        buffer.push_str(&escape_markdown_url(&d));
+                        buffer.push(')');
+                    }
                 }
             }
             Event::Start(Tag::BlockQuote) => {
@@ -278,7 +307,10 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 buffer.push_str("```");
             }
             Event::Text(t) | Event::Code(t) => {
-                if in_code_block || in_heading {
+                if in_heading {
+                    heading_raw.push_str(&t);
+                    heading_sanitized.push_str(&escape(&t));
+                } else if in_code_block {
                     buffer.push_str(&t);
                 } else {
                     buffer.push_str(&escape(&t));
@@ -287,13 +319,21 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
             Event::SoftBreak | Event::HardBreak => {
                 if in_code_block {
                     buffer.push('\n');
+                } else if in_heading {
+                    heading_raw.push(' ');
+                    heading_sanitized.push(' ');
                 } else {
                     buffer.push(' ');
                 }
             }
             Event::Html(html) => {
                 if html.trim_start().starts_with("<br") {
-                    buffer.push(' ');
+                    if in_heading {
+                        heading_raw.push(' ');
+                        heading_sanitized.push(' ');
+                    } else {
+                        buffer.push(' ');
+                    }
                 }
             }
             _ => {}
