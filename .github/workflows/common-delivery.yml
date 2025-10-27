@@ -1,0 +1,124 @@
+name: TWIR Common delivery
+
+on:
+  workflow_call:
+    inputs:
+      send_main:
+        required: true
+        type: boolean
+      send_dev:
+        required: false
+        type: boolean
+        default: true
+      rust_log:
+        required: false
+        type: string
+        default: info
+      environment:
+        required: true
+        type: string
+    secrets:
+      TELEGRAM_BOT_TOKEN:
+        required: true
+      TELEGRAM_CHAT_ID:
+        required: true
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    env:
+      CARGO_TERM_PROGRESS_WHEN: never
+      RUST_LOG: ${{ inputs.rust_log }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Setup Rust environment
+        uses: ./.github/actions/setup-rust
+
+      - name: Download last_sent artifact from previous successful run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success \
+            -L 1 --json databaseId -q '.[0].databaseId' || echo "")
+          if [ -n "$prev" ]; then
+            if ! gh run download "$prev" -n last-sent --dir .; then
+              echo "Previous run $prev did not publish a last-sent artifact; continuing without cached state." >&2
+            fi
+          fi
+
+      - name: Checkout TWIR
+        uses: actions/checkout@v4
+        with:
+          repository: rust-lang/this-week-in-rust
+          path: twir
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            content/
+
+      - name: Determine latest post
+        id: prepare
+        run: |
+          latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n1)
+          echo "latest_post=$latest_post" >> "$GITHUB_OUTPUT"
+          last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
+          if [ "$latest_post" != "$last_sent" ]; then
+            echo "send=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "send=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Send to dev chat
+        if: steps.prepare.outputs.send == 'true' && inputs.send_dev == true
+        env:
+          DEV_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          DEV_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          TWIR_SKIP_PRODUCTION_SEND: 'true'
+        run: |
+          rm -f output_*.md
+          cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
+
+      - name: Verify dev delivery
+        if: steps.prepare.outputs.send == 'true' && inputs.send_dev == true && github.event_name == 'schedule'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          cargo run --quiet --bin verify-posts -- "${{ steps.prepare.outputs.latest_post }}"
+
+      - name: Send to main chat
+        if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          TWIR_SKIP_DEVELOPER_SEND: ${{ inputs.send_dev != true }}
+        run: |
+          cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
+          echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
+
+      - name: Save last_sent marker
+        if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
+        run: echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
+
+      - name: Upload generated posts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegram-posts
+          path: output_*.md
+          if-no-files-found: ignore
+
+      - name: Upload last_sent artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: last-sent
+          path: last_sent.txt
+          if-no-files-found: ignore
