@@ -59,14 +59,20 @@ Telegram:
 - `TELEGRAM_BOT_TOKEN` – bot token for the selected environment.
 - `TELEGRAM_CHAT_ID` – identifier of the chat or channel. Numeric IDs are
   automatically prefixed with `-100` when sending requests to Telegram.
-- `DEV_BOT_TOKEN` and `DEV_CHAT_ID` – deprecated variables still recognized by
-  the CLI for local runs.
+- `DEV_BOT_TOKEN` and `DEV_CHAT_ID` – credentials for the developer chat. The
+  CLI falls back to `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` when the
+  dedicated developer variables are not present, which skips the production
+  delivery.
+- `TWIR_SKIP_DEVELOPER_SEND` – optional boolean flag (`true`, `false`, `1`,
+  `0`, etc.) that skips the developer send. Used by the production workflow
+  because it already dispatched a developer run in a separate job.
+- `TWIR_SKIP_PRODUCTION_SEND` – optional boolean flag that skips the production
+  send. The developer workflow enables it to avoid double-posting when only the
+  developer chat should receive messages.
 
-The CLI first uses `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID`, which are
-provided by the GitHub environment (`dev` or `prod`). If
-either variable is unset, it falls back to `DEV_BOT_TOKEN` and `DEV_CHAT_ID` for
-backward compatibility. If no valid credentials are found, the program only
-writes the generated posts to disk.
+If neither pair is fully configured, the CLI terminates with an error. Partial
+configuration (setting only one variable from a pair) is also treated as an
+error and stops the run with an actionable log message.
 
 The first sent message is automatically pinned, and the service notification is
 removed.
