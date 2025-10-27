@@ -22,6 +22,7 @@ jobs:
       environment: dev
       send_main: false
       send_dev: true
+      artifact_scope: dev-prod
 
   notify-prod:
     needs: notify-dev
@@ -31,3 +32,4 @@ jobs:
       environment: prod
       send_main: true
       send_dev: false
+      artifact_scope: prod

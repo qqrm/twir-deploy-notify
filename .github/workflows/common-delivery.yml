@@ -17,6 +17,9 @@ on:
       environment:
         required: true
         type: string
+      artifact_scope:
+        required: false
+        type: string
     secrets:
       TELEGRAM_BOT_TOKEN:
         required: true
@@ -42,11 +45,32 @@ jobs:
       - name: Download last_sent artifact from previous successful run
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACT_SCOPE: ${{ inputs.artifact_scope != '' && inputs.artifact_scope || inputs.environment }}
+          ARTIFACT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
           prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success \
             -L 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [ -n "$prev" ]; then
-            if ! gh run download "$prev" -n last-sent --dir .; then
+            scope="$ARTIFACT_SCOPE"
+            names=("last-sent-$scope")
+            base_from_suffix="${scope%%-*}"
+            if [ "$scope" != "$base_from_suffix" ]; then
+              names+=("last-sent-$base_from_suffix")
+            fi
+            if [ "$scope" != "$ARTIFACT_ENVIRONMENT" ] && [ "$ARTIFACT_ENVIRONMENT" != "$base_from_suffix" ]; then
+              names+=("last-sent-$ARTIFACT_ENVIRONMENT")
+            fi
+            names+=("last-sent")
+
+            success="false"
+            for name in "${names[@]}"; do
+              if gh run download "$prev" -n "$name" --dir .; then
+                success="true"
+                break
+              fi
+            done
+
+            if [ "$success" != "true" ]; then
               echo "Previous run $prev did not publish a last-sent artifact; continuing without cached state." >&2
             fi
           fi
@@ -111,7 +135,7 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: telegram-posts
+          name: ${{ format('telegram-posts-{0}', inputs.artifact_scope != '' && inputs.artifact_scope || inputs.environment) }}
           path: output_*.md
           if-no-files-found: ignore
 
@@ -119,6 +143,6 @@ jobs:
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: last-sent
+          name: ${{ format('last-sent-{0}', inputs.artifact_scope != '' && inputs.artifact_scope || inputs.environment) }}
           path: last_sent.txt
           if-no-files-found: ignore
