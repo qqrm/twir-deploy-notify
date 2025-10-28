@@ -128,7 +128,7 @@ jobs:
           echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
 
       - name: Save last_sent marker
-        if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
+        if: steps.prepare.outputs.send == 'true' && (inputs.send_main == true || inputs.send_dev == true)
         run: echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
 
       - name: Upload generated posts
