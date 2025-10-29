@@ -52,14 +52,42 @@ jobs:
             -L 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [ -n "$prev" ]; then
             scope="$ARTIFACT_SCOPE"
-            names=("last-sent-$scope")
-            base_from_suffix="${scope%%-*}"
-            if [ "$scope" != "$base_from_suffix" ]; then
-              names+=("last-sent-$base_from_suffix")
+            names=()
+
+            if [ -n "$scope" ]; then
+              names+=("last-sent-$scope")
+              IFS='-' read -r -a scope_parts <<< "$scope"
+              for part in "${scope_parts[@]}"; do
+                if [ -n "$part" ]; then
+                  candidate="last-sent-$part"
+                  already="false"
+                  for existing in "${names[@]}"; do
+                    if [ "$existing" = "$candidate" ]; then
+                      already="true"
+                      break
+                    fi
+                  done
+                  if [ "$already" = "false" ]; then
+                    names+=("$candidate")
+                  fi
+                fi
+              done
             fi
-            if [ "$scope" != "$ARTIFACT_ENVIRONMENT" ] && [ "$ARTIFACT_ENVIRONMENT" != "$base_from_suffix" ]; then
-              names+=("last-sent-$ARTIFACT_ENVIRONMENT")
+
+            if [ -n "$ARTIFACT_ENVIRONMENT" ]; then
+              candidate="last-sent-$ARTIFACT_ENVIRONMENT"
+              already="false"
+              for existing in "${names[@]}"; do
+                if [ "$existing" = "$candidate" ]; then
+                  already="true"
+                  break
+                fi
+              done
+              if [ "$already" = "false" ]; then
+                names+=("$candidate")
+              fi
             fi
+
             names+=("last-sent")
 
             success="false"
