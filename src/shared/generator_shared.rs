@@ -249,7 +249,7 @@ pub fn format_subheading(title: &str) -> String {
 /// # Returns
 /// A plain text version with formatting markers removed.
 pub fn markdown_to_plain(text: &str) -> String {
-    use pulldown_cmark::{Event, Options, Parser, Tag};
+    use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
 
     let without_escapes = text.replace('\\', "");
     let parser = Parser::new_ext(&without_escapes, Options::empty());
@@ -260,12 +260,12 @@ pub fn markdown_to_plain(text: &str) -> String {
 
     for event in parser {
         match event {
-            Event::Start(Tag::Link(_, dest, _)) => {
+            Event::Start(Tag::Link { dest_url, .. }) => {
                 in_link = true;
-                link_dest = dest.to_string();
+                link_dest = dest_url.to_string();
                 link_text.clear();
             }
-            Event::End(Tag::Link(_, _, _)) => {
+            Event::End(TagEnd::Link) => {
                 result.push_str(&link_text.replace('•', "-"));
                 result.push_str(" (");
                 result.push_str(&link_dest);

@@ -1,4 +1,4 @@
-use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag};
+use pulldown_cmark::{Event, HeadingLevel, Options, Parser, Tag, TagEnd};
 
 use crate::generator::{escape_markdown_url, format_subheading};
 use teloxide::utils::markdown::escape;
@@ -108,7 +108,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
     let mut row: Vec<String> = Vec::new();
     for event in parser {
         match event {
-            Event::Start(Tag::Heading(level, ..)) => {
+            Event::Start(Tag::Heading { level, .. }) => {
                 in_heading = true;
                 heading_raw.clear();
                 heading_sanitized.clear();
@@ -136,7 +136,7 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                     buffer.clear();
                 }
             }
-            Event::End(Tag::Heading(level, ..)) => {
+            Event::End(TagEnd::Heading(level)) => {
                 in_heading = false;
                 let raw = heading_raw.trim();
                 if level == HeadingLevel::H2 {
@@ -180,13 +180,13 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 }
                 list_depth += 1;
             }
-            Event::End(Tag::List(_)) => {
+            Event::End(TagEnd::List(_)) => {
                 list_depth = list_depth.saturating_sub(1);
             }
             Event::Start(Tag::Item) => {
                 buffer.clear();
             }
-            Event::End(Tag::Item) => {
+            Event::End(TagEnd::Item) => {
                 if let Some(ref mut sec) = current {
                     let line = buffer.trim_end();
                     if !line.is_empty() {
@@ -209,10 +209,10 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
             Event::Start(Tag::TableHead) => {
                 row.clear();
             }
-            Event::End(Tag::TableHead) => {
+            Event::End(TagEnd::TableHead) => {
                 table.push(row.clone());
             }
-            Event::End(Tag::Table(_)) => {
+            Event::End(TagEnd::Table) => {
                 if let Some(ref mut sec) = current {
                     for r in table.drain(..) {
                         let mut line = String::new();
@@ -232,17 +232,17 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
             Event::Start(Tag::TableRow) => {
                 row.clear();
             }
-            Event::End(Tag::TableRow) => {
+            Event::End(TagEnd::TableRow) => {
                 table.push(row.clone());
             }
             Event::Start(Tag::TableCell) => {
                 buffer.clear();
             }
-            Event::End(Tag::TableCell) => {
+            Event::End(TagEnd::TableCell) => {
                 row.push(normalize_table_text(buffer.trim()).to_string());
                 buffer.clear();
             }
-            Event::End(Tag::Paragraph) => {
+            Event::End(TagEnd::Paragraph) => {
                 if list_depth > 0 {
                     let trimmed = buffer.trim_end().to_string();
                     buffer.clear();
@@ -261,16 +261,16 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                     buffer.clear();
                 }
             }
-            Event::Start(Tag::Link(_, dest, _)) => {
+            Event::Start(Tag::Link { dest_url, .. }) => {
                 if in_heading {
                     heading_raw.push('[');
                     heading_sanitized.push('[');
                 } else {
                     buffer.push('[');
                 }
-                link_dest = Some(dest.to_string());
+                link_dest = Some(dest_url.to_string());
             }
-            Event::End(Tag::Link(_, _, _)) => {
+            Event::End(TagEnd::Link) => {
                 if let Some(d) = link_dest.take() {
                     if in_heading {
                         heading_raw.push_str("](");
@@ -286,20 +286,20 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                     }
                 }
             }
-            Event::Start(Tag::BlockQuote) => {
+            Event::Start(Tag::BlockQuote(_)) => {
                 if !buffer.is_empty() && !buffer.ends_with('\n') {
                     buffer.push('\n');
                 }
                 buffer.push_str("\\> ");
             }
-            Event::End(Tag::BlockQuote) => {
+            Event::End(TagEnd::BlockQuote(_)) => {
                 buffer.push('\n');
             }
             Event::Start(Tag::CodeBlock(_)) => {
                 in_code_block = true;
                 buffer.push_str("```\n");
             }
-            Event::End(Tag::CodeBlock(_)) => {
+            Event::End(TagEnd::CodeBlock) => {
                 in_code_block = false;
                 if !buffer.ends_with('\n') {
                     buffer.push('\n');
