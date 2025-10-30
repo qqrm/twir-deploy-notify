@@ -15,7 +15,51 @@ permissions:
   actions: read
 
 jobs:
+  evaluate-latest:
+    runs-on: ubuntu-latest
+    outputs:
+      should_send: ${{ steps.decide.outputs.should_send }}
+      latest_post: ${{ steps.decide.outputs.latest_post }}
+    steps:
+      - name: Download last_sent artifact from previous production run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success \
+            -L 1 --json databaseId -q '.[0].databaseId' || echo "")
+          if [ -n "$prev" ]; then
+            for name in last-sent-prod last-sent-dev-prod last-sent; do
+              if gh run download "$prev" -n "$name" --dir .; then
+                break
+              fi
+            done
+          fi
+
+      - name: Checkout TWIR
+        uses: actions/checkout@v4
+        with:
+          repository: rust-lang/this-week-in-rust
+          path: twir
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout: |
+            content/
+
+      - name: Decide whether to send notifications
+        id: decide
+        run: |
+          latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n1)
+          last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
+          echo "latest_post=$latest_post" >> "$GITHUB_OUTPUT"
+          if [ -n "$latest_post" ] && [ "$latest_post" != "$last_sent" ]; then
+            echo "should_send=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_send=false" >> "$GITHUB_OUTPUT"
+          fi
+
   notify-dev:
+    needs: evaluate-latest
+    if: needs.evaluate-latest.outputs.should_send == 'true'
     uses: ./.github/workflows/common-delivery.yml
     secrets: inherit
     with:
@@ -25,7 +69,10 @@ jobs:
       artifact_scope: dev-prod
 
   notify-prod:
-    needs: notify-dev
+    needs:
+      - evaluate-latest
+      - notify-dev
+    if: needs.evaluate-latest.outputs.should_send == 'true'
     uses: ./.github/workflows/common-delivery.yml
     secrets: inherit
     with:
