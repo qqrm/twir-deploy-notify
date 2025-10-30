@@ -28,7 +28,7 @@ jobs:
           prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success \
             -L 1 --json databaseId -q '.[0].databaseId' || echo "")
           if [ -n "$prev" ]; then
-            for name in last-sent-prod last-sent-dev-prod last-sent; do
+            for name in last-sent-prod last-sent; do
               if gh run download "$prev" -n "$name" --dir .; then
                 break
               fi
