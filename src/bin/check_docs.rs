@@ -1,4 +1,4 @@
-use pulldown_cmark::{CodeBlockKind, Event, Parser, Tag};
+use pulldown_cmark::{CodeBlockKind, Event, Parser, Tag, TagEnd};
 use std::{fs, path::Path};
 use walkdir::WalkDir;
 
@@ -46,7 +46,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             for event in parser {
                 match event {
                     Event::Start(Tag::CodeBlock(CodeBlockKind::Fenced(_))) => in_block = true,
-                    Event::End(Tag::CodeBlock(_)) => in_block = false,
+                    Event::End(TagEnd::CodeBlock) => in_block = false,
                     Event::Code(code) | Event::Text(code) if in_block => {
                         if let Some(p) = parse_rs_file(&code) {
                             if !Path::new(p).exists() {
