@@ -1,8 +1,11 @@
 use reqwest::blocking::Client;
 use serde_json::Value;
-use std::{env, fs};
+use std::{collections::VecDeque, env, fs, thread, time::Duration};
 
-use twir_deploy_notify::generator::{generate_posts, normalize_chat_id, send_to_telegram};
+use twir_deploy_notify::generator::{generate_posts, normalize_chat_id};
+
+const MAX_ATTEMPTS: usize = 10;
+const POLL_DELAY: Duration = Duration::from_secs(2);
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let path = std::env::args().nth(1).expect("missing input file");
@@ -24,37 +27,33 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let base =
         env::var("TELEGRAM_API_BASE").unwrap_or_else(|_| "https://api.telegram.org".to_string());
     let client = Client::new();
-    let updates_url = format!("{}/bot{}/getUpdates", base.trim_end_matches('/'), token);
-    let resp: Value = client.get(&updates_url).send()?.json()?;
-    let mut last_update = 0i64;
-    if let Some(arr) = resp["result"].as_array() {
-        for upd in arr {
-            if let Some(id) = upd["update_id"].as_i64()
-                && id > last_update
-            {
-                last_update = id;
-            }
-        }
-    }
     let chat_id_num = chat_id_norm.as_ref().parse::<i64>().ok();
-    for (idx, post) in posts.iter().enumerate() {
-        let single = &posts[idx..idx + 1];
-        send_to_telegram(single, &base, &token, &chat_id_raw, true, false)?;
-        let updates_url = format!(
-            "{}/bot{}/getUpdates?offset={}",
-            base.trim_end_matches('/'),
-            token,
-            last_update + 1
-        );
+    let mut window: VecDeque<String> = VecDeque::with_capacity(posts.len());
+    let mut last_update = None;
+    let mut offset = None;
+
+    for attempt in 0..MAX_ATTEMPTS {
+        let updates_url = match offset {
+            Some(next) => format!(
+                "{}/bot{}/getUpdates?offset={}",
+                base.trim_end_matches('/'),
+                token,
+                next
+            ),
+            None => format!("{}/bot{}/getUpdates", base.trim_end_matches('/'), token),
+        };
         let resp: Value = client.get(&updates_url).send()?.json()?;
-        let mut last_text = None;
+        let mut saw_update = false;
+
         if let Some(arr) = resp["result"].as_array() {
             for upd in arr {
-                if let Some(id) = upd["update_id"].as_i64()
-                    && id > last_update
-                {
-                    last_update = id;
+                if let Some(id) = upd["update_id"].as_i64() {
+                    saw_update = true;
+                    if last_update.is_none_or(|prev| id > prev) {
+                        last_update = Some(id);
+                    }
                 }
+
                 let msg = upd.get("channel_post").or_else(|| upd.get("message"));
                 if let Some(m) = msg {
                     let chat = &m["chat"];
@@ -71,15 +70,48 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                     if (id_matches || username_matches)
                         && let Some(text) = m["text"].as_str()
                     {
-                        last_text = Some(text.to_string());
+                        window.push_back(text.to_string());
+                        while window.len() > posts.len() {
+                            window.pop_front();
+                        }
                     }
                 }
             }
         }
-        let received = last_text.ok_or("No message from Telegram")?;
-        if received != *post {
-            return Err("Telegram message mismatch".into());
+
+        if window.len() == posts.len() && window.iter().eq(posts.iter()) {
+            if let Some(id) = last_update {
+                let ack_url = format!(
+                    "{}/bot{}/getUpdates?offset={}",
+                    base.trim_end_matches('/'),
+                    token,
+                    id + 1
+                );
+                let _ = client.get(&ack_url).send();
+            }
+            return Ok(());
         }
+
+        offset = last_update.map(|id| id + 1);
+
+        if !saw_update && attempt + 1 == MAX_ATTEMPTS {
+            break;
+        }
+
+        thread::sleep(POLL_DELAY);
     }
-    Ok(())
+
+    if window.is_empty() {
+        return Err("No message from Telegram".into());
+    }
+
+    let preview: Vec<String> = window
+        .iter()
+        .map(|text| text.chars().take(50).collect())
+        .collect();
+    Err(format!(
+        "Telegram message mismatch; latest posts: {}",
+        preview.join(" | ")
+    )
+    .into())
 }
