@@ -624,10 +624,18 @@ struct TelegramResponse {
 
 /// Normalize chat identifier to the `-100` prefix used for channels.
 pub fn normalize_chat_id(chat_id: &str) -> Cow<'_, str> {
-    if chat_id.starts_with('@') || chat_id.starts_with("-100") {
-        Cow::Borrowed(chat_id)
+    let trimmed = chat_id.trim();
+    if trimmed.is_empty() {
+        return Cow::Owned(String::new());
+    }
+    if trimmed.starts_with('@') || trimmed.starts_with("-100") {
+        if trimmed.len() == chat_id.len() {
+            Cow::Borrowed(chat_id)
+        } else {
+            Cow::Owned(trimmed.to_string())
+        }
     } else {
-        Cow::Owned(format!("-100{}", chat_id.trim_start_matches('-')))
+        Cow::Owned(format!("-100{}", trimmed.trim_start_matches('-')))
     }
 }
 
@@ -969,6 +977,30 @@ mod tests {
     fn heading_formatter() {
         let formatted = format_heading("My Title");
         assert_eq!(formatted, "📰 **MY TITLE** 📰");
+    }
+
+    #[test]
+    fn normalize_chat_id_trims_whitespace() {
+        assert!(matches!(
+            normalize_chat_id("  -100123  "),
+            Cow::Owned(ref value) if value == "-100123"
+        ));
+        assert!(matches!(
+            normalize_chat_id("  @example  "),
+            Cow::Owned(ref value) if value == "@example"
+        ));
+    }
+
+    #[test]
+    fn normalize_chat_id_adds_prefix() {
+        assert!(matches!(
+            normalize_chat_id("123"),
+            Cow::Owned(ref value) if value == "-100123"
+        ));
+        assert!(matches!(
+            normalize_chat_id("-123"),
+            Cow::Owned(ref value) if value == "-100123"
+        ));
     }
 
     #[test]
