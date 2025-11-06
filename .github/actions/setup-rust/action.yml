@@ -8,7 +8,6 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - uses: actions/checkout@v4
     - id: determine
       shell: bash
       run: |
@@ -74,9 +73,7 @@ runs:
         key: ${{ runner.os }}-${{ steps.determine.outputs.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-${{ steps.determine.outputs.toolchain }}-
-    - uses: actions-rs/toolchain@v1
+    - uses: dtolnay/rust-toolchain@master
       with:
         toolchain: ${{ steps.determine.outputs.toolchain }}
-        profile: minimal
-    - run: rustup component add --toolchain ${{ steps.determine.outputs.toolchain }} clippy rustfmt
-      shell: bash
+        components: clippy, rustfmt
