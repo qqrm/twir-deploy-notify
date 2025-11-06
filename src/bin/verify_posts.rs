@@ -17,6 +17,10 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         return Err("TELEGRAM_CHAT_ID is empty".into());
     }
     let chat_id_norm = normalize_chat_id(&chat_id_raw);
+    let chat_username = chat_id_raw
+        .trim()
+        .strip_prefix('@')
+        .map(|name| name.to_ascii_lowercase());
     let base =
         env::var("TELEGRAM_API_BASE").unwrap_or_else(|_| "https://api.telegram.org".to_string());
     let client = Client::new();
@@ -52,12 +56,23 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
                     last_update = id;
                 }
                 let msg = upd.get("channel_post").or_else(|| upd.get("message"));
-                if let Some(m) = msg
-                    && (m["chat"]["id"].as_i64() == chat_id_num
-                        || m["chat"]["id"].as_str() == Some(chat_id_norm.as_ref()))
-                    && let Some(text) = m["text"].as_str()
-                {
-                    last_text = Some(text.to_string());
+                if let Some(m) = msg {
+                    let chat = &m["chat"];
+                    let id_matches = chat_id_num
+                        .is_some_and(|expected| chat["id"].as_i64() == Some(expected))
+                        || chat["id"].as_str() == Some(chat_id_norm.as_ref());
+                    let username_matches = chat_username.as_ref().is_some_and(|expected| {
+                        chat["username"]
+                            .as_str()
+                            .map(|found| found.eq_ignore_ascii_case(expected))
+                            .unwrap_or(false)
+                    });
+
+                    if (id_matches || username_matches)
+                        && let Some(text) = m["text"].as_str()
+                    {
+                        last_text = Some(text.to_string());
+                    }
                 }
             }
         }
