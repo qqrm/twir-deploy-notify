@@ -658,6 +658,21 @@ fn sanitize_url(url: &str, token: &str) -> String {
 /// # Errors
 /// Returns an error if the HTTP request fails or Telegram responds with an
 /// error code.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DeliveryReport {
+    /// Number of posts acknowledged by Telegram.
+    pub confirmed: usize,
+    /// Message identifiers returned by Telegram for each acknowledged post.
+    pub message_ids: Vec<i64>,
+}
+
+impl DeliveryReport {
+    /// Returns `true` when every expected post was acknowledged by Telegram.
+    pub fn all_confirmed(&self, expected: usize) -> bool {
+        self.confirmed == expected
+    }
+}
+
 pub fn send_to_telegram(
     posts: &[String],
     base_url: &str,
@@ -665,7 +680,7 @@ pub fn send_to_telegram(
     chat_id: &str,
     use_markdown: bool,
     pin_first: bool,
-) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+) -> Result<DeliveryReport, Box<dyn std::error::Error + Send + Sync>> {
     if use_markdown {
         for (i, post) in posts.iter().enumerate() {
             validate_telegram_markdown(post)
@@ -678,6 +693,8 @@ pub fn send_to_telegram(
     info!("Sending {} posts", posts.len());
     let mut first_id: Option<i64> = None;
     let mut last_id: Option<i64> = None;
+    let mut confirmed = 0usize;
+    let mut message_ids = Vec::with_capacity(posts.len());
     for (i, post) in posts.iter().enumerate() {
         info!("Posting {}/{} ({} chars)", i + 1, posts.len(), post.len());
         let url = format!(
@@ -730,26 +747,24 @@ pub fn send_to_telegram(
             return Err(format!("Telegram API error in post {} {}: {}", i + 1, code, desc).into());
         }
 
-        if pin_first {
-            match raw
-                .get("result")
-                .and_then(|v| v.get("message_id"))
-                .and_then(|v| v.as_i64())
-            {
-                Some(id) => {
-                    debug!("Received message_id {id}");
-                    if i == 0 {
-                        first_id = Some(id);
-                    }
-                    last_id = Some(id);
+        if let Some(id) = raw
+            .get("result")
+            .and_then(|v| v.get("message_id"))
+            .and_then(|v| v.as_i64())
+        {
+            debug!("Received message_id {id}");
+            message_ids.push(id);
+            if pin_first {
+                if i == 0 {
+                    first_id = Some(id);
                 }
-                None if i == 0 => {
-                    return Err("Telegram response missing message_id".into());
-                }
-                None => {}
+                last_id = Some(id);
             }
+        } else if pin_first && i == 0 {
+            return Err("Telegram response missing message_id".into());
         }
-        info!("Post {} sent", i + 1);
+        confirmed += 1;
+        info!("Post {} acknowledged", i + 1);
         if i + 1 < posts.len() {
             thread::sleep(Duration::from_millis(TELEGRAM_DELAY_MS));
         }
@@ -814,7 +829,10 @@ pub fn send_to_telegram(
             );
         }
     }
-    Ok(())
+    Ok(DeliveryReport {
+        confirmed,
+        message_ids,
+    })
 }
 
 #[cfg(test)]
@@ -1006,6 +1024,16 @@ mod tests {
         let posts = vec!["bad *text".to_string()];
         let err = send_to_telegram(&posts, "http://example.com", "TOKEN", "42", true, false);
         assert!(err.is_err());
+    }
+
+    #[test]
+    fn delivery_report_all_confirmed() {
+        let report = DeliveryReport {
+            confirmed: 3,
+            message_ids: vec![1, 2, 3],
+        };
+        assert!(report.all_confirmed(3));
+        assert!(!report.all_confirmed(4));
     }
 
     #[test]

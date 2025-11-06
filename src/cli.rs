@@ -71,15 +71,29 @@ pub fn main() -> std::io::Result<()> {
 
         log::debug!("developer chat id: {}", creds.chat_id);
         log::info!("Sending posts to developer Telegram chat");
-        send_to_telegram(
+        let report = send_to_telegram(
             &posts,
             &base,
             &creds.token,
             &creds.chat_id,
             !cli.plain,
-            true,
+            false,
         )
         .map_err(|e| io::Error::other(e.to_string()))?;
+        if !report.all_confirmed(posts.len()) {
+            log::error!(
+                "Developer Telegram acknowledged {} of {} posts",
+                report.confirmed,
+                posts.len()
+            );
+            return Err(io::Error::other(
+                "Developer Telegram failed to confirm every post; aborting production delivery",
+            ));
+        }
+        log::info!(
+            "Developer delivery confirmed for {} posts; preparing production stage",
+            report.confirmed
+        );
 
         Some(creds)
     };
@@ -109,7 +123,7 @@ pub fn main() -> std::io::Result<()> {
 
     log::debug!("production chat id: {}", production_credentials.chat_id);
     log::info!("Sending posts to production Telegram chat");
-    send_to_telegram(
+    let production_report = send_to_telegram(
         &posts,
         &base,
         &production_credentials.token,
@@ -118,6 +132,16 @@ pub fn main() -> std::io::Result<()> {
         true,
     )
     .map_err(|e| io::Error::other(e.to_string()))?;
+    if !production_report.all_confirmed(posts.len()) {
+        log::error!(
+            "Production Telegram acknowledged {} of {} posts",
+            production_report.confirmed,
+            posts.len()
+        );
+        return Err(io::Error::other(
+            "Production Telegram failed to confirm every post",
+        ));
+    }
 
     Ok(())
 }
