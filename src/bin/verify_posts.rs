@@ -1,8 +1,11 @@
 use reqwest::blocking::Client;
 use serde_json::Value;
-use std::{env, fs};
+use std::{env, fs, thread, time::Duration};
 
 use twir_deploy_notify::generator::{generate_posts, normalize_chat_id, send_to_telegram};
+
+const FETCH_RETRIES: usize = 5;
+const FETCH_DELAY_MS: u64 = 1_000;
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let path = std::env::args().nth(1).expect("missing input file");
@@ -36,32 +39,47 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     for (idx, post) in posts.iter().enumerate() {
         let single = &posts[idx..idx + 1];
         send_to_telegram(single, &base, &token, &chat_id_raw, true, false)?;
-        let updates_url = format!(
-            "{}/bot{}/getUpdates?offset={}",
-            base.trim_end_matches('/'),
-            token,
-            last_update + 1
-        );
-        let resp: Value = client.get(&updates_url).send()?.json()?;
-        let mut last_text = None;
-        if let Some(arr) = resp["result"].as_array() {
-            for upd in arr {
-                if let Some(id) = upd["update_id"].as_i64()
-                    && id > last_update
-                {
-                    last_update = id;
-                }
-                let msg = upd.get("channel_post").or_else(|| upd.get("message"));
-                if let Some(m) = msg
-                    && (m["chat"]["id"].as_i64() == chat_id_num
-                        || m["chat"]["id"].as_str() == Some(chat_id_norm.as_ref()))
-                    && let Some(text) = m["text"].as_str()
-                {
-                    last_text = Some(text.to_string());
+        let mut received = None;
+
+        for attempt in 0..FETCH_RETRIES {
+            if attempt > 0 {
+                thread::sleep(Duration::from_millis(FETCH_DELAY_MS));
+            }
+
+            let updates_url = format!(
+                "{}/bot{}/getUpdates?offset={}",
+                base.trim_end_matches('/'),
+                token,
+                last_update + 1
+            );
+            let resp: Value = client.get(&updates_url).send()?.json()?;
+
+            if let Some(arr) = resp["result"].as_array() {
+                for upd in arr {
+                    if let Some(id) = upd["update_id"].as_i64()
+                        && id > last_update
+                    {
+                        last_update = id;
+                    }
+
+                    let msg = upd.get("channel_post").or_else(|| upd.get("message"));
+                    if let Some(m) = msg
+                        && (m["chat"]["id"].as_i64() == chat_id_num
+                            || m["chat"]["id"].as_str() == Some(chat_id_norm.as_ref()))
+                        && let Some(text) = m["text"].as_str()
+                    {
+                        received = Some(text.to_string());
+                    }
                 }
             }
+
+            if received.is_some() {
+                break;
+            }
         }
-        let received = last_text.ok_or("No message from Telegram")?;
+
+        let received = received
+            .ok_or_else(|| format!("No message from Telegram after {} attempts", FETCH_RETRIES))?;
         if received != *post {
             return Err("Telegram message mismatch".into());
         }
