@@ -21,6 +21,12 @@ The crate turns "This Week in Rust" Markdown into Telegram posts.
 - `split_posts` divides long messages and prefixes later posts with `*Part X/Y*`.
 - The `--plain` flag strips formatting for plain text destinations.
 
+## Telegram Delivery Flow
+1. The CLI always sends posts to the developer chat first. Every part is delivered sequentially, the response payload is parsed to confirm `ok == true`, and the next post is sent only after the acknowledgement arrives.
+2. The sender sleeps for `TELEGRAM_DELAY_MS` (currently one second) between posts to avoid spamming Telegram.
+3. Developer deliveries are not pinned; once the final acknowledgement is observed the CLI records the exact acknowledgement count and only proceeds when it matches the number of posts prepared for delivery.
+4. Production credentials are fetched only after the developer delivery succeeds with a full set of acknowledgements. The exact same posts are then sent to the production chat with the same acknowledgement-and-delay semantics. If any send fails or the acknowledgements do not cover every post, the pipeline aborts before touching the production chat.
+
 ## Key crates
 - `pulldown-cmark` for Markdown parsing.
 - `teloxide` and `reqwest` for Telegram interactions.
