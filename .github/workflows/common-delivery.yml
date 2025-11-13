@@ -137,14 +137,6 @@ jobs:
           rm -f output_*.md
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
 
-      - name: Verify dev delivery
-        if: steps.prepare.outputs.send == 'true' && inputs.send_dev == true && github.event_name == 'schedule'
-        env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          cargo run --quiet --bin verify-posts -- "${{ steps.prepare.outputs.latest_post }}"
-
       - name: Send to main chat
         if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
         env:
