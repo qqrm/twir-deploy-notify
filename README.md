@@ -78,8 +78,10 @@ The first sent message is automatically pinned, and the service notification is
 removed.
 Production runs store the last processed file in `last_sent.txt` as an artifact and download it on the next run. The workflow now fails if this artifact cannot be retrieved.
 
-Responses from Telegram are verified with the `verify-posts` binary.
-The `prod.yml` workflow runs hourly on the zeroth minute and publishes the latest post directly to the main chat. The `retro.yml` workflow builds posts for the last ten issues and uploads
+Telegram acknowledgements are validated directly by the CLI, and the `prod.yml`
+workflow waits for the developer delivery job to succeed before the production
+run starts. The workflow runs hourly on the zeroth minute and publishes the
+latest post directly to the main chat. The `retro.yml` workflow builds posts for the last ten issues and uploads
 them as artifacts. All posts are parsed at runtime using the shared parser and generator.
 
 ## Development
