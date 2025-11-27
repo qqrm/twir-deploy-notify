@@ -20,6 +20,10 @@ on:
       artifact_scope:
         required: false
         type: string
+      check_last_sent:
+        required: false
+        type: boolean
+        default: true
     secrets:
       TELEGRAM_BOT_TOKEN:
         required: true
@@ -130,6 +134,12 @@ jobs:
 
           latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n 1)
           echo "latest_post=$latest_post" >> "$GITHUB_OUTPUT"
+
+          check_last_sent="${{ inputs.check_last_sent }}"
+          if [ "$check_last_sent" = "false" ]; then
+            echo "send=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
           last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
           if [ "$latest_post" != "$last_sent" ]; then
