@@ -21,3 +21,4 @@ jobs:
       send_main: false
       send_dev: true
       rust_log: debug
+      check_last_sent: false
