@@ -13,21 +13,22 @@ concurrency:
   group: codex-branch-cleanup-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: false
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   cleanup:
-    name: cleanup
+    name: Cleanup stale Codex branches and PRs
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - name: prune codex branches and pull requests
+      - name: Prune Codex branches and pull requests
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const core = require('@actions/core');
-            const cutoffMs = 24 * 60 * 60 * 1000;
+
+            const HOUR_MS = 60 * 60 * 1000;
+            const cutoffHours = 24;
+            const cutoffMs = cutoffHours * HOUR_MS;
             const now = Date.now();
             const branchPrefix = 'codex/';
             const codexAuthor = 'github-codex[bot]';
@@ -51,8 +52,12 @@ jobs:
             const skippedBranches = [];
             const closedPulls = [];
 
+            const toHours = ms => Math.round(ms / HOUR_MS);
+
             core.info(`Repository default branch: ${defaultBranch}`);
-            core.info(`Evaluating branches with prefix "${branchPrefix}" older than ${cutoffMs / 3600000} hours.`);
+            core.info(
+              `Evaluating branches with prefix "${branchPrefix}" older than ${cutoffHours} hours.`
+            );
 
             const listBranches = await github.paginate(
               github.rest.repos.listBranches,
@@ -113,7 +118,6 @@ jobs:
 
             for (const branch of listBranches) {
               const name = branch.name;
-              const commitDateIso = parseCommitDate(branch);
               if (!name.startsWith(branchPrefix)) {
                 continue;
               }
@@ -123,6 +127,7 @@ jobs:
                 continue;
               }
 
+              const commitDateIso = parseCommitDate(branch);
               if (!commitDateIso) {
                 core.warning(`Skipping branch ${name}: unable to determine commit timestamp.`);
                 skippedBranches.push({ ref: name, reason: 'no-commit-timestamp' });
@@ -138,11 +143,11 @@ jobs:
 
               const ageMs = now - commitTime;
               if (ageMs <= cutoffMs) {
-                core.info(`Branch ${name} age ${Math.round(ageMs / 3600000)}h is within retention.`);
+                core.info(`Branch ${name} age ${toHours(ageMs)}h is within retention.`);
                 continue;
               }
 
-              await deleteBranch(name, `stale (${Math.round(ageMs / 3600000)}h old)`);
+              await deleteBranch(name, `stale (${toHours(ageMs)}h old)`);
             }
 
             const pulls = await github.paginate(
@@ -163,13 +168,21 @@ jobs:
 
               const ageMs = now - created;
               if (ageMs <= cutoffMs) {
-                core.info(`PR #${pr.number} is ${Math.round(ageMs / 3600000)}h old; within retention.`);
+                core.info(`PR #${pr.number} is ${toHours(ageMs)}h old; within retention.`);
                 continue;
               }
 
-              core.info(`Closing PR #${pr.number} (${pr.title}) opened by ${codexAuthor}; age ${Math.round(ageMs / 3600000)}h.`);
+              core.info(
+                `Closing PR #${pr.number} (${pr.title}) opened by ${codexAuthor}; age ${toHours(ageMs)}h.`
+              );
+
               try {
-                await github.rest.pulls.update({ owner, repo, pull_number: pr.number, state: 'closed' });
+                await github.rest.pulls.update({
+                  owner,
+                  repo,
+                  pull_number: pr.number,
+                  state: 'closed',
+                });
                 closedPulls.push(pr.number);
               } catch (error) {
                 core.warning(`Failed to close PR #${pr.number}: ${error.message}`);
@@ -180,11 +193,14 @@ jobs:
               await deleteBranch(headRef, `closed PR #${pr.number}`);
             }
 
-            core.info(`Codex cleanup summary:`);
+            core.info('Codex cleanup summary:');
             core.info(`  Deleted branches: ${deletedBranches.join(', ') || 'none'}`);
             core.info(`  Closed pull requests: ${closedPulls.join(', ') || 'none'}`);
+
             if (skippedBranches.length > 0) {
               for (const entry of skippedBranches) {
-                core.info(`  Skipped ${entry.ref}: ${entry.reason}${entry.error ? ` (${entry.error})` : ''}`);
+                core.info(
+                  `  Skipped ${entry.ref}: ${entry.reason}${entry.error ? ` (${entry.error})` : ''}`
+                );
               }
             }
