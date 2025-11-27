@@ -16,23 +16,42 @@ permissions:
 
 jobs:
   evaluate-latest:
+    name: Evaluate latest TWIR post
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       should_send: ${{ steps.decide.outputs.should_send }}
       latest_post: ${{ steps.decide.outputs.latest_post }}
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Download last_sent artifact from previous production run
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success \
-            -L 1 --json databaseId -q '.[0].databaseId' || echo "")
+          set -euo pipefail
+
+          prev=$(
+            gh run list \
+              -w "${{ github.workflow }}" \
+              --branch main \
+              --status success \
+              -L 1 \
+              --json databaseId \
+              -q '.[0].databaseId' \
+            || echo ""
+          )
+
           if [ -n "$prev" ]; then
+            success="false"
             for name in last-sent-prod last-sent; do
               if gh run download "$prev" -n "$name" --dir .; then
+                success="true"
                 break
               fi
             done
+
+            if [ "$success" != "true" ]; then
+              echo "Previous production run $prev did not publish a last-sent artifact; continuing without cached state." >&2
+            fi
           fi
 
       - name: Checkout TWIR
@@ -48,9 +67,12 @@ jobs:
       - name: Decide whether to send notifications
         id: decide
         run: |
-          latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n1)
-          last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
+          set -euo pipefail
+
+          latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n 1)
           echo "latest_post=$latest_post" >> "$GITHUB_OUTPUT"
+
+          last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
           if [ -n "$latest_post" ] && [ "$latest_post" != "$last_sent" ]; then
             echo "should_send=true" >> "$GITHUB_OUTPUT"
           else
@@ -58,6 +80,7 @@ jobs:
           fi
 
   notify-dev:
+    name: TWIR dev summary delivery from prod
     needs: evaluate-latest
     if: needs.evaluate-latest.outputs.should_send == 'true'
     uses: ./.github/workflows/common-delivery.yml
@@ -69,6 +92,7 @@ jobs:
       artifact_scope: dev-prod
 
   notify-prod:
+    name: TWIR prod summary delivery
     needs:
       - evaluate-latest
       - notify-dev
