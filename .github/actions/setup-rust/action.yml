@@ -1,16 +1,16 @@
-name: 'Setup Rust'
-description: 'Checkout repository, setup cache and toolchain'
+name: Setup Rust
+description: Checkout repository, setup cache and toolchain
 
 inputs:
   toolchain:
-    description: 'Rust toolchain'
+    description: Rust toolchain
     required: false
     default: ''
 
 runs:
-  using: 'composite'
+  using: composite
   steps:
-    - name: 'Determine Rust toolchain'
+    - name: Determine Rust toolchain
       id: determine
       shell: bash
       run: |
@@ -75,7 +75,7 @@ runs:
 
         printf 'toolchain=%s\n' "$toolchain" >> "$GITHUB_OUTPUT"
 
-    - name: 'Cache cargo and target'
+    - name: Cache cargo and target
       uses: actions/cache@v4
       with:
         path: |
@@ -85,7 +85,7 @@ runs:
         restore-keys: |
           ${{ runner.os }}-${{ steps.determine.outputs.toolchain }}-
 
-    - name: 'Install Rust toolchain'
+    - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@master
       with:
         toolchain: ${{ steps.determine.outputs.toolchain }}
