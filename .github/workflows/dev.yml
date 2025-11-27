@@ -13,9 +13,11 @@ permissions:
 
 jobs:
   notify:
+    name: TWIR dev summary delivery
     uses: ./.github/workflows/common-delivery.yml
     secrets: inherit
     with:
       environment: dev
       send_main: false
+      send_dev: true
       rust_log: debug
