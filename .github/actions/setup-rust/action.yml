@@ -1,31 +1,36 @@
 name: 'Setup Rust'
 description: 'Checkout repository, setup cache and toolchain'
+
 inputs:
   toolchain:
     description: 'Rust toolchain'
     required: false
     default: ''
+
 runs:
   using: 'composite'
   steps:
-    - id: determine
+    - name: 'Determine Rust toolchain'
+      id: determine
       shell: bash
       run: |
         set -euo pipefail
 
-        if [ -n "${{ inputs.toolchain }}" ]; then
-          echo "toolchain=${{ inputs.toolchain }}" >> "$GITHUB_OUTPUT"
+        if [[ -n "${{ inputs.toolchain }}" ]]; then
+          printf 'toolchain=%s\n' "${{ inputs.toolchain }}" >> "$GITHUB_OUTPUT"
           exit 0
         fi
 
         resolve_toolchain() {
           local toolchain_file="rust-toolchain.toml"
 
-          if [ -f "$toolchain_file" ]; then
+          if [[ -f "$toolchain_file" ]]; then
             local channel
-            channel=$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"\n]*\)".*/\1/p' "$toolchain_file" | head -n 1)
+            channel=$(
+              sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"\n]*\)".*/\1/p' "$toolchain_file" | head -n 1
+            )
 
-            if [ -z "$channel" ]; then
+            if [[ -z "$channel" ]]; then
               echo 'rust-toolchain.toml is missing channel entry' >&2
               return 1
             fi
@@ -35,22 +40,26 @@ runs:
           fi
 
           local metadata
-          if ! metadata=$(curl -fsSL "https://static.rust-lang.org/dist/channel-rust-stable.toml"); then
+          if ! metadata=$(curl -fsSL https://static.rust-lang.org/dist/channel-rust-stable.toml); then
             echo 'failed to download stable channel metadata' >&2
             return 1
           fi
 
           local version_line
-          version_line=$(printf '%s\n' "$metadata" | awk '
-            /^\[pkg\.rust\]/ { in_pkg = 1; next }
-            /^\[/ { in_pkg = 0 }
-            in_pkg && $1 ~ /^version$/ { print; exit }
-          ')
+          version_line=$(
+            awk '
+              /^\[pkg\.rust\]/ { in_pkg = 1; next }
+              /^\[/ { in_pkg = 0 }
+              in_pkg && $1 ~ /^version$/ { print; exit }
+            ' <<< "$metadata"
+          )
 
           local version
-          version=$(printf '%s\n' "$version_line" | sed -n 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"\n]*\)".*/\1/p')
+          version=$(
+            sed -n 's/^[[:space:]]*version[[:space:]]*=[[:space:]]*"\([^"\n]*\)".*/\1/p' <<< "$version_line"
+          )
 
-          if [ -z "$version" ]; then
+          if [[ -z "$version" ]]; then
             echo 'failed to resolve stable toolchain version' >&2
             return 1
           fi
@@ -64,8 +73,10 @@ runs:
           exit 1
         fi
 
-        echo "toolchain=$toolchain" >> "$GITHUB_OUTPUT"
-    - uses: actions/cache@v4
+        printf 'toolchain=%s\n' "$toolchain" >> "$GITHUB_OUTPUT"
+
+    - name: 'Cache cargo and target'
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo
@@ -73,7 +84,9 @@ runs:
         key: ${{ runner.os }}-${{ steps.determine.outputs.toolchain }}-${{ hashFiles('**/Cargo.lock') }}
         restore-keys: |
           ${{ runner.os }}-${{ steps.determine.outputs.toolchain }}-
-    - uses: dtolnay/rust-toolchain@master
+
+    - name: 'Install Rust toolchain'
+      uses: dtolnay/rust-toolchain@master
       with:
         toolchain: ${{ steps.determine.outputs.toolchain }}
         components: clippy, rustfmt
