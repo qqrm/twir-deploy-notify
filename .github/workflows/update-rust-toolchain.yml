@@ -9,19 +9,24 @@ permissions:
   contents: write
   pull-requests: write
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   update:
     name: Update Rust toolchain
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Check out repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Refresh toolchain version
         id: rust
+        shell: bash
         run: |
           set -euo pipefail
-
           python scripts/update_rust_toolchain.py
 
       - name: Create pull request
