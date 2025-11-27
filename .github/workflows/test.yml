@@ -7,114 +7,161 @@ on:
   workflow_dispatch:
     inputs:
       run_audit:
-        description: "Run cargo audit"
+        description: 'Run cargo audit'
         required: false
-        default: "false"
+        default: 'false'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  actions: read
+
+env:
+  CARGO_TERM_PROGRESS_WHEN: never
+
 jobs:
   fmt:
+    name: Rust fmt
     if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
     runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-      - run: cargo fmt --quiet --all -- --check
+
+      - name: Run cargo fmt
+        run: cargo fmt --quiet --all -- --check
 
   check:
+    name: Rust check
     if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
     needs: fmt
     runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-      - run: cargo check --quiet --all-targets --all-features
+
+      - name: Run cargo check
+        run: cargo check --quiet --all-targets --all-features
 
   clippy:
+    name: Rust clippy
     if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
     needs: check
     runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-      - run: cargo clippy --quiet --all-targets --all-features -- -D warnings
+
+      - name: Run cargo clippy
+        run: cargo clippy --quiet --all-targets --all-features -- -D warnings
 
   test:
+    name: Rust tests
     if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
     needs: clippy
     runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-      - run: cargo test --quiet --lib --bins --all-features -- --test-threads=$(nproc)
+
+      - name: Run cargo test
+        run: cargo test --quiet --lib --bins --all-features -- --test-threads=$(nproc)
 
   machete:
+    name: Cargo machete
     if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
     needs: test
     runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-      - run: cargo install cargo-machete --quiet
-      - run: cargo machete
+
+      - name: Install cargo-machete
+        run: cargo install cargo-machete --quiet
+
+      - name: Run cargo machete
+        run: cargo machete
 
   audit:
-    if: github.event_name != 'pull_request' || (github.event.inputs.run_audit == 'true' && contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)))
+    name: Cargo audit
+    if: ${{ github.event_name != 'pull_request' || (github.event.inputs.run_audit == 'true' && contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor))) }}
     needs: machete
     runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
+    timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-      - run: cargo install cargo-audit --locked --quiet
-      - run: cargo audit --quiet
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit --locked --quiet
+
+      - name: Run cargo audit
+        run: cargo audit --quiet
 
   check-docs:
+    name: Docs check
     if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
     needs: machete
     runs-on: ubuntu-latest
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-      - run: cargo run --quiet --bin check-docs
+
+      - name: Run docs check
+        run: cargo run --quiet --bin check-docs
 
   coverage:
-    if: github.event_name != 'pull_request'
+    name: Coverage
+    if: ${{ github.event_name != 'pull_request' }}
     needs: check-docs
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     continue-on-error: true
-    env:
-      CARGO_TERM_PROGRESS_WHEN: never
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Setup Rust
         uses: ./.github/actions/setup-rust
-      - run: cargo install cargo-tarpaulin --quiet
-      - run: cargo tarpaulin --out Lcov --output-dir coverage -- --quiet
-      - uses: actions/upload-artifact@v4
+
+      - name: Install tarpaulin
+        run: cargo install cargo-tarpaulin --quiet
+
+      - name: Run tarpaulin
+        run: cargo tarpaulin --out Lcov --output-dir coverage -- --quiet
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-report
           path: coverage/lcov.info
