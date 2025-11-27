@@ -28,11 +28,19 @@ on:
 
 jobs:
   notify:
+    name: TWIR delivery
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment: ${{ inputs.environment }}
+    concurrency:
+      group: twir-common-delivery-${{ inputs.environment }}
+      cancel-in-progress: false
     env:
       CARGO_TERM_PROGRESS_WHEN: never
       RUST_LOG: ${{ inputs.rust_log }}
+      ARTIFACT_SCOPE: ${{ inputs.artifact_scope != '' && inputs.artifact_scope || inputs.environment }}
+      ARTIFACT_ENVIRONMENT: ${{ inputs.environment }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -45,50 +53,52 @@ jobs:
       - name: Download last_sent artifact from previous successful run
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARTIFACT_SCOPE: ${{ inputs.artifact_scope != '' && inputs.artifact_scope || inputs.environment }}
-          ARTIFACT_ENVIRONMENT: ${{ inputs.environment }}
         run: |
-          prev=$(gh run list -w "${{ github.workflow }}" --branch main --status success \
-            -L 1 --json databaseId -q '.[0].databaseId' || echo "")
+          set -euo pipefail
+
+          prev=$(
+            gh run list \
+              -w "${{ github.workflow }}" \
+              --branch main \
+              --status success \
+              -L 1 \
+              --json databaseId \
+              -q '.[0].databaseId' \
+            || echo ""
+          )
+
           if [ -n "$prev" ]; then
             scope="$ARTIFACT_SCOPE"
             names=()
 
+            append_unique() {
+              local candidate="$1"
+              if [ -z "$candidate" ]; then
+                return 0
+              fi
+              for existing in "${names[@]}"; do
+                if [ "$existing" = "$candidate" ]; then
+                  return 0
+                fi
+              done
+              names+=("$candidate")
+            }
+
             if [ -n "$scope" ]; then
-              names+=("last-sent-$scope")
+              append_unique "last-sent-$scope"
               IFS='-' read -r -a scope_parts <<< "$scope"
               for part in "${scope_parts[@]}"; do
                 if [ -n "$part" ]; then
-                  candidate="last-sent-$part"
-                  already="false"
-                  for existing in "${names[@]}"; do
-                    if [ "$existing" = "$candidate" ]; then
-                      already="true"
-                      break
-                    fi
-                  done
-                  if [ "$already" = "false" ]; then
-                    names+=("$candidate")
-                  fi
+                  append_unique "last-sent-$part"
                 fi
               done
             fi
 
             if [ -n "$ARTIFACT_ENVIRONMENT" ]; then
-              candidate="last-sent-$ARTIFACT_ENVIRONMENT"
-              already="false"
-              for existing in "${names[@]}"; do
-                if [ "$existing" = "$candidate" ]; then
-                  already="true"
-                  break
-                fi
-              done
-              if [ "$already" = "false" ]; then
-                names+=("$candidate")
-              fi
+              append_unique "last-sent-$ARTIFACT_ENVIRONMENT"
             fi
 
-            names+=("last-sent")
+            append_unique "last-sent"
 
             success="false"
             for name in "${names[@]}"; do
@@ -116,8 +126,11 @@ jobs:
       - name: Determine latest post
         id: prepare
         run: |
-          latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n1)
+          set -euo pipefail
+
+          latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n 1)
           echo "latest_post=$latest_post" >> "$GITHUB_OUTPUT"
+
           last_sent=$(cat last_sent.txt 2>/dev/null || echo "")
           if [ "$latest_post" != "$last_sent" ]; then
             echo "send=true" >> "$GITHUB_OUTPUT"
@@ -129,11 +142,13 @@ jobs:
         if: steps.prepare.outputs.send == 'true' && inputs.send_dev == true
         env:
           DEV_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          DEV_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          DEV_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TWIR_SKIP_PRODUCTION_SEND: 'true'
         run: |
+          set -euo pipefail
+
           rm -f output_*.md
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
 
@@ -141,28 +156,32 @@ jobs:
         if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID:  ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           TWIR_SKIP_DEVELOPER_SEND: ${{ inputs.send_dev != true }}
         run: |
+          set -euo pipefail
+
           cargo run --quiet --bin twir-deploy-notify -- "${{ steps.prepare.outputs.latest_post }}"
-          echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
 
       - name: Save last_sent marker
         if: steps.prepare.outputs.send == 'true' && (inputs.send_main == true || inputs.send_dev == true)
-        run: echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
+        run: |
+          set -euo pipefail
+
+          echo "${{ steps.prepare.outputs.latest_post }}" > last_sent.txt
 
       - name: Upload generated posts
-        if: ${{ always() }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('telegram-posts-{0}', inputs.artifact_scope != '' && inputs.artifact_scope || inputs.environment) }}
+          name: telegram-posts-${{ env.ARTIFACT_SCOPE }}
           path: output_*.md
           if-no-files-found: ignore
 
       - name: Upload last_sent artifact
-        if: ${{ always() }}
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ format('last-sent-{0}', inputs.artifact_scope != '' && inputs.artifact_scope || inputs.environment) }}
+          name: last-sent-${{ env.ARTIFACT_SCOPE }}
           path: last_sent.txt
           if-no-files-found: ignore
