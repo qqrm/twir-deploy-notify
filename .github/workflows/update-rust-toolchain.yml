@@ -33,6 +33,7 @@ jobs:
         if: steps.rust.outputs.changed == 'true'
         id: pr
         uses: peter-evans/create-pull-request@v6
+        continue-on-error: true
         with:
           branch: chore/update-rust-version-doc
           delete-branch: true
@@ -49,6 +50,11 @@ jobs:
           add-paths: |
             DOCS/RUST_VERSION.md
             rust-toolchain.toml
+
+      - name: Report pull request failure
+        if: steps.pr.outcome == 'failure'
+        run: |
+          echo "::warning::Pull request creation failed. Ensure the repository allows GitHub Actions to create pull requests or provide a dedicated token."
 
       - name: Enable auto-merge for toolchain PR
         if: steps.pr.outputs.pull-request-number && steps.pr.outputs.pull-request-operation != 'closed'
