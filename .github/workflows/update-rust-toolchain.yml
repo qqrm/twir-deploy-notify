@@ -29,12 +29,20 @@ jobs:
           set -euo pipefail
           python scripts/update_rust_toolchain.py
 
+      - name: Create GitHub App token
+        if: ${{ steps.rust.outputs.changed == 'true' && secrets.TWIR_GITHUB_APP_ID != '' && secrets.TWIR_GITHUB_APP_PRIVATE_KEY != '' }}
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.TWIR_GITHUB_APP_ID }}
+          private-key: ${{ secrets.TWIR_GITHUB_APP_PRIVATE_KEY }}
+
       - name: Create pull request
         if: steps.rust.outputs.changed == 'true'
         id: pr
         uses: peter-evans/create-pull-request@v6
-        continue-on-error: true
         with:
+          token: ${{ steps.app-token.outputs.token || github.token }}
           branch: chore/update-rust-version-doc
           delete-branch: true
           commit-message: "chore: update Rust toolchain to ${{ steps.rust.outputs.latest }}"
@@ -51,14 +59,27 @@ jobs:
             DOCS/RUST_VERSION.md
             rust-toolchain.toml
 
-      - name: Report pull request failure
-        if: steps.pr.outcome == 'failure'
+      - name: Report pull request creation failure
+        if: failure() && steps.rust.outputs.changed == 'true'
         run: |
-          echo "::warning::Pull request creation failed. Ensure the repository allows GitHub Actions to create pull requests or provide a dedicated token."
+          echo "::error::Pull request creation failed. Ensure the repository allows GitHub Actions to create pull requests or provide a dedicated token."
+
+      - name: Ensure pull request was created or updated
+        if: steps.rust.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          pr_number="${{ steps.pr.outputs.pull-request-number }}"
+          pr_operation="${{ steps.pr.outputs.pull-request-operation }}"
+          if [[ -z "${pr_number}" || "${pr_operation}" != "created" && "${pr_operation}" != "updated" ]]; then
+            echo "::error::Pull request was not created or updated (operation: ${pr_operation:-none}). Check workflow permissions or configure a GitHub App token."
+            exit 1
+          fi
 
       - name: Enable auto-merge for toolchain PR
         if: steps.pr.outputs.pull-request-number && steps.pr.outputs.pull-request-operation != 'closed'
         uses: peter-evans/enable-pull-request-automerge@v3
         with:
+          token: ${{ steps.app-token.outputs.token || github.token }}
           pull-request-number: ${{ steps.pr.outputs.pull-request-number }}
           merge-method: squash
