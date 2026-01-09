@@ -5,5 +5,5 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
-      time: "06:00"
-      timezone: "Europe/Amsterdam"
+      time: "12:00"
+      timezone: "Europe/Moscow"
