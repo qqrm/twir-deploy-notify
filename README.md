@@ -56,13 +56,10 @@ compilations target the current machine's CPU features.
 The application expects several environment variables when sending posts to
 Telegram:
 
-- `TELEGRAM_BOT_TOKEN` – bot token for the selected environment.
-- `TELEGRAM_CHAT_ID` – identifier of the chat or channel. Numeric IDs are
-  automatically prefixed with `-100` when sending requests to Telegram.
-- `DEV_BOT_TOKEN` and `DEV_CHAT_ID` – credentials for the developer chat. The
-  CLI falls back to `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` when the
-  dedicated developer variables are not present, which skips the production
-  delivery.
+- `DEV_BOT_TOKEN` and `DEV_CHAT_ID` – credentials for the developer chat.
+- `PROD_BOT_TOKEN` and `PROD_CHAT_ID` – credentials for the production chat.
+  Numeric IDs are automatically prefixed with `-100` when sending requests to
+  Telegram.
 - `TWIR_SKIP_DEVELOPER_SEND` – optional boolean flag (`true`, `false`, `1`,
   `0`, etc.) that skips the developer send. Used by the production workflow
   because it already dispatched a developer run in a separate job.

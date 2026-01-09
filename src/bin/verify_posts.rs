@@ -11,14 +11,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let path = std::env::args().nth(1).expect("missing input file");
     let input = fs::read_to_string(path)?;
     let posts = generate_posts(input).map_err(|e| format!("{e}"))?;
-    let token = env::var("TELEGRAM_BOT_TOKEN").map_err(|_| "TELEGRAM_BOT_TOKEN not set")?;
-    if token.trim().is_empty() {
-        return Err("TELEGRAM_BOT_TOKEN is empty".into());
-    }
-    let chat_id_raw = env::var("TELEGRAM_CHAT_ID").map_err(|_| "TELEGRAM_CHAT_ID not set")?;
-    if chat_id_raw.trim().is_empty() {
-        return Err("TELEGRAM_CHAT_ID is empty".into());
-    }
+    let (token, chat_id_raw) = read_credentials()?;
     let chat_id_norm = normalize_chat_id(&chat_id_raw);
     let chat_username = chat_id_raw
         .trim()
@@ -114,4 +107,44 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         preview.join(" | ")
     )
     .into())
+}
+
+fn read_credentials() -> Result<(String, String), Box<dyn std::error::Error + Send + Sync>> {
+    if let Some(pair) = read_pair(("DEV_BOT_TOKEN", "DEV_CHAT_ID"))? {
+        return Ok(pair);
+    }
+    if let Some(pair) = read_pair(("PROD_BOT_TOKEN", "PROD_CHAT_ID"))? {
+        return Ok(pair);
+    }
+    Err("DEV_BOT_TOKEN/DEV_CHAT_ID or PROD_BOT_TOKEN/PROD_CHAT_ID not set".into())
+}
+
+fn read_pair(
+    names: (&str, &str),
+) -> Result<Option<(String, String)>, Box<dyn std::error::Error + Send + Sync>> {
+    let token = env::var(names.0).ok().map(|value| value.trim().to_string());
+    let chat_id = env::var(names.1).ok().map(|value| value.trim().to_string());
+
+    match (token, chat_id) {
+        (Some(token), Some(chat_id)) => {
+            if token.is_empty() {
+                return Err(format!("{} is empty", names.0).into());
+            }
+            if chat_id.is_empty() {
+                return Err(format!("{} is empty", names.1).into());
+            }
+            Ok(Some((token, chat_id)))
+        }
+        (None, None) => Ok(None),
+        (Some(_), None) => Err(format!(
+            "{} provided without {}; please configure both",
+            names.0, names.1
+        )
+        .into()),
+        (None, Some(_)) => Err(format!(
+            "{} provided without {}; please configure both",
+            names.1, names.0
+        )
+        .into()),
+    }
 }
