@@ -22,12 +22,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install stable toolchain
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+
       - name: Refresh toolchain version
         id: rust
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/update_rust_toolchain.py
+          bash scripts/update_rust_toolchain.sh
 
       - name: Create GitHub App token
         if: ${{ steps.rust.outputs.changed == 'true' && secrets.TWIR_GITHUB_APP_ID != '' && secrets.TWIR_GITHUB_APP_PRIVATE_KEY != '' }}
