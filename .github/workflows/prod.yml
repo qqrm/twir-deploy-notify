@@ -86,7 +86,7 @@ jobs:
     uses: ./.github/workflows/common-delivery.yml
     secrets: inherit
     with:
-      environment: dev
+      scope: dev
       send_main: false
       send_dev: true
       artifact_scope: dev-prod
@@ -100,7 +100,7 @@ jobs:
     uses: ./.github/workflows/common-delivery.yml
     secrets: inherit
     with:
-      environment: prod
+      scope: prod
       send_main: true
       send_dev: false
       artifact_scope: prod
