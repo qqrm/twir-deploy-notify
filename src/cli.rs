@@ -5,15 +5,9 @@ use std::{
     path::Path,
 };
 
-enum CredentialSource {
-    Primary,
-    Fallback,
-}
-
 struct Credentials {
     token: String,
     chat_id: String,
-    source: CredentialSource,
 }
 
 use crate::generator::{generate_posts, markdown_to_plain, send_to_telegram, write_posts};
@@ -57,17 +51,12 @@ pub fn main() -> std::io::Result<()> {
     let base =
         env::var("TELEGRAM_API_BASE").unwrap_or_else(|_| "https://api.telegram.org".to_string());
 
-    let developer_credentials = if skip_developer_send {
+    if skip_developer_send {
         log::info!(
             "Developer Telegram send skipped via TWIR_SKIP_DEVELOPER_SEND environment variable",
         );
-        None
     } else {
-        let creds = read_credentials_pair(
-            ("DEV_BOT_TOKEN", "DEV_CHAT_ID"),
-            Some(("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID")),
-            "developer Telegram",
-        )?;
+        let creds = read_credentials_pair(("DEV_BOT_TOKEN", "DEV_CHAT_ID"), "developer Telegram")?;
 
         log::debug!("developer chat id: {}", creds.chat_id);
         log::info!("Sending posts to developer Telegram chat");
@@ -94,9 +83,7 @@ pub fn main() -> std::io::Result<()> {
             "Developer delivery confirmed for {} posts; preparing production stage",
             report.confirmed
         );
-
-        Some(creds)
-    };
+    }
 
     if skip_production_send {
         log::info!(
@@ -105,21 +92,8 @@ pub fn main() -> std::io::Result<()> {
         return Ok(());
     }
 
-    if developer_credentials
-        .as_ref()
-        .is_some_and(|creds| matches!(creds.source, CredentialSource::Fallback))
-    {
-        log::warn!(
-            "Developer credentials resolved from TELEGRAM_* variables; production send skipped",
-        );
-        return Ok(());
-    }
-
-    let production_credentials = read_credentials_pair(
-        ("TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"),
-        None,
-        "production Telegram",
-    )?;
+    let production_credentials =
+        read_credentials_pair(("PROD_BOT_TOKEN", "PROD_CHAT_ID"), "production Telegram")?;
 
     log::debug!("production chat id: {}", production_credentials.chat_id);
     log::info!("Sending posts to production Telegram chat");
@@ -187,41 +161,14 @@ fn read_bool_flag(name: &str) -> io::Result<bool> {
     }
 }
 
-fn read_credentials_pair(
-    primary: (&str, &str),
-    fallback: Option<(&str, &str)>,
-    label: &str,
-) -> io::Result<Credentials> {
-    match read_pair(primary)? {
-        PairState::Complete(token, chat_id) => Ok(Credentials {
-            token,
-            chat_id,
-            source: CredentialSource::Primary,
-        }),
+fn read_credentials_pair(names: (&str, &str), label: &str) -> io::Result<Credentials> {
+    match read_pair(names)? {
+        PairState::Complete(token, chat_id) => Ok(Credentials { token, chat_id }),
         PairState::Missing => {
-            if let Some(names) = fallback {
-                match read_pair(names)? {
-                    PairState::Complete(token, chat_id) => Ok(Credentials {
-                        token,
-                        chat_id,
-                        source: CredentialSource::Fallback,
-                    }),
-                    PairState::Missing => {
-                        log::error!("{label} credentials not provided");
-                        Err(io::Error::other(format!(
-                            "{label} credentials not provided; aborting deployment"
-                        )))
-                    }
-                    PairState::Partial => Err(io::Error::other(format!(
-                        "{label} credentials incomplete; aborting deployment"
-                    ))),
-                }
-            } else {
-                log::error!("{label} credentials not provided");
-                Err(io::Error::other(format!(
-                    "{label} credentials not provided; aborting deployment"
-                )))
-            }
+            log::error!("{label} credentials not provided");
+            Err(io::Error::other(format!(
+                "{label} credentials not provided; aborting deployment"
+            )))
         }
         PairState::Partial => Err(io::Error::other(format!(
             "{label} credentials incomplete; aborting deployment"

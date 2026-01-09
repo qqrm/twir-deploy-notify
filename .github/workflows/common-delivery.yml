@@ -3,6 +3,9 @@ name: TWIR Common delivery
 on:
   workflow_call:
     inputs:
+      scope:
+        required: true
+        type: string
       send_main:
         required: true
         type: boolean
@@ -14,9 +17,6 @@ on:
         required: false
         type: string
         default: info
-      environment:
-        required: true
-        type: string
       artifact_scope:
         required: false
         type: string
@@ -25,9 +25,13 @@ on:
         type: boolean
         default: true
     secrets:
-      TELEGRAM_BOT_TOKEN:
+      DEV_BOT_TOKEN:
         required: true
-      TELEGRAM_CHAT_ID:
+      DEV_CHAT_ID:
+        required: true
+      PROD_BOT_TOKEN:
+        required: true
+      PROD_CHAT_ID:
         required: true
 
 jobs:
@@ -35,21 +39,19 @@ jobs:
     name: TWIR delivery
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: ${{ inputs.environment }}
     concurrency:
-      group: twir-common-delivery-${{ inputs.environment }}
+      group: twir-common-delivery-${{ inputs.scope }}
       cancel-in-progress: false
     env:
       CARGO_TERM_PROGRESS_WHEN: never
       RUST_LOG: ${{ inputs.rust_log }}
-      ARTIFACT_SCOPE: ${{ inputs.artifact_scope != '' && inputs.artifact_scope || inputs.environment }}
-      ARTIFACT_ENVIRONMENT: ${{ inputs.environment }}
+      ARTIFACT_SCOPE: ${{ inputs.artifact_scope != '' && inputs.artifact_scope || inputs.scope }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          persist-credentials: true
+          persist-credentials: false
 
       - name: Setup Rust environment
         uses: ./.github/actions/setup-rust
@@ -96,10 +98,6 @@ jobs:
                   append_unique "last-sent-$part"
                 fi
               done
-            fi
-
-            if [ -n "$ARTIFACT_ENVIRONMENT" ]; then
-              append_unique "last-sent-$ARTIFACT_ENVIRONMENT"
             fi
 
             append_unique "last-sent"
@@ -151,10 +149,8 @@ jobs:
       - name: Send to dev chat
         if: steps.prepare.outputs.send == 'true' && inputs.send_dev == true
         env:
-          DEV_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          DEV_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          DEV_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
+          DEV_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
           TWIR_SKIP_PRODUCTION_SEND: 'true'
         run: |
           set -euo pipefail
@@ -165,8 +161,8 @@ jobs:
       - name: Send to main chat
         if: steps.prepare.outputs.send == 'true' && inputs.send_main == true
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PROD_BOT_TOKEN: ${{ secrets.PROD_BOT_TOKEN }}
+          PROD_CHAT_ID: ${{ secrets.PROD_CHAT_ID }}
           TWIR_SKIP_DEVELOPER_SEND: ${{ inputs.send_dev != true }}
         run: |
           set -euo pipefail
