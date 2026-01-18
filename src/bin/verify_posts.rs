@@ -11,6 +11,10 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let path = std::env::args().nth(1).expect("missing input file");
     let input = fs::read_to_string(path)?;
     let posts = generate_posts(input).map_err(|e| format!("{e}"))?;
+    if posts.is_empty() {
+        println!("No posts generated; skipping Telegram verification");
+        return Ok(());
+    }
     let (token, chat_id_raw) = read_credentials()?;
     let chat_id_norm = normalize_chat_id(&chat_id_raw);
     let chat_username = chat_id_raw
