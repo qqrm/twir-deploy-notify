@@ -48,6 +48,11 @@ pub fn main() -> std::io::Result<()> {
     log::info!("Writing posts to disk");
     write_posts(&posts, Path::new("."))?;
 
+    if posts.is_empty() {
+        log::info!("No posts generated; skipping Telegram delivery");
+        return Ok(());
+    }
+
     let base =
         env::var("TELEGRAM_API_BASE").unwrap_or_else(|_| "https://api.telegram.org".to_string());
 
