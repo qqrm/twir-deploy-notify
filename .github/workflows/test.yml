@@ -25,7 +25,7 @@ env:
 jobs:
   fmt:
     name: Rust fmt
-    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
+    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,dependabot[bot],', format(',{0},', github.actor)) }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -40,7 +40,7 @@ jobs:
 
   check:
     name: Rust check
-    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
+    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,dependabot[bot],', format(',{0},', github.actor)) }}
     needs: fmt
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -56,7 +56,7 @@ jobs:
 
   clippy:
     name: Rust clippy
-    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
+    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,dependabot[bot],', format(',{0},', github.actor)) }}
     needs: check
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -72,7 +72,7 @@ jobs:
 
   test:
     name: Rust tests
-    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
+    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,dependabot[bot],', format(',{0},', github.actor)) }}
     needs: clippy
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -88,7 +88,7 @@ jobs:
 
   machete:
     name: Cargo machete
-    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
+    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,dependabot[bot],', format(',{0},', github.actor)) }}
     needs: test
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -107,7 +107,7 @@ jobs:
 
   audit:
     name: Cargo audit
-    if: ${{ github.event_name != 'pull_request' || (github.event.inputs.run_audit == 'true' && contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor))) }}
+    if: ${{ github.event_name != 'pull_request' || (github.event.inputs.run_audit == 'true' && contains(',qqrm,dependabot[bot],', format(',{0},', github.actor))) }}
     needs: machete
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -126,7 +126,7 @@ jobs:
 
   check-docs:
     name: Docs check
-    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,EternaleapFromPit,', format(',{0},', github.actor)) }}
+    if: ${{ github.event_name != 'pull_request' || contains(',qqrm,dependabot[bot],', format(',{0},', github.actor)) }}
     needs: machete
     runs-on: ubuntu-latest
     timeout-minutes: 20
