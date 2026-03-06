@@ -58,10 +58,14 @@ fn regression_table_ascii_aligned() {
     let sections = parse_sections(input);
     assert_eq!(sections.len(), 1);
     let lines = &sections[0].lines;
-    assert!(lines.first().is_none_or(|l| l != "```"));
-    for line in lines {
+    assert_eq!(lines.len(), 1);
+    let block = &lines[0];
+    assert!(block.starts_with("```\n"));
+    assert!(block.ends_with("\n```"));
+    let body: Vec<&str> = block.lines().filter(|line| *line != "```").collect();
+    for line in body {
         assert!(line.is_ascii());
-        assert!(line.contains("\\|"));
+        assert!(line.contains('|'));
     }
 }
 
@@ -71,6 +75,10 @@ fn regression_table_compact() {
     let sections = parse_sections(input);
     assert_eq!(sections.len(), 1);
     let lines = &sections[0].lines;
-    assert!(lines.first().is_none_or(|l| l != "```"));
-    assert!(lines.iter().any(|l| l.contains("\\|")));
+    assert_eq!(lines.len(), 1);
+    let block = &lines[0];
+    assert!(block.starts_with("```"));
+    assert!(block.contains("| (instructions:u)"));
+    assert!(block.contains("| -----"));
+    assert!(!block.contains("\\|"));
 }

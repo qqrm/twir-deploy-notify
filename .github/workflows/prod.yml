@@ -24,6 +24,7 @@ jobs:
       latest_post: ${{ steps.decide.outputs.latest_post }}
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
     steps:
       - name: Download last_sent artifact from previous production run
         run: |
@@ -31,6 +32,7 @@ jobs:
 
           prev=$(
             gh run list \
+              -R "$GH_REPO" \
               -w "${{ github.workflow }}" \
               --branch main \
               --status success \
@@ -43,7 +45,7 @@ jobs:
           if [ -n "$prev" ]; then
             success="false"
             for name in last-sent-prod last-sent; do
-              if gh run download "$prev" -n "$name" --dir .; then
+              if gh run download -R "$GH_REPO" "$prev" -n "$name" --dir .; then
                 success="true"
                 break
               fi
@@ -69,7 +71,13 @@ jobs:
         run: |
           set -euo pipefail
 
-          latest_post=$(ls twir/content/*-this-week-in-rust*.md | sort | tail -n 1)
+          shopt -s nullglob
+          candidates=(twir/content/*-this-week-in-rust*.md)
+          if [ ${#candidates[@]} -eq 0 ]; then
+            echo "No TWIR issue candidates found in content/" >&2
+            exit 1
+          fi
+          latest_post=$(printf '%s\n' "${candidates[@]}" | sort | tail -n 1)
           echo "latest_post=$latest_post" >> "$GITHUB_OUTPUT"
 
           last_sent=$(cat last_sent.txt 2>/dev/null || echo "")

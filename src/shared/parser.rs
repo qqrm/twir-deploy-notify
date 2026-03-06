@@ -86,6 +86,83 @@ fn normalize_table_text(text: &str) -> String {
         .replace("secondary", "sec")
 }
 
+fn unescape_telegram_markdown(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut chars = text.chars();
+    while let Some(ch) = chars.next() {
+        if ch == '\\' {
+            if let Some(next) = chars.next() {
+                out.push(next);
+            }
+            continue;
+        }
+        out.push(ch);
+    }
+    out
+}
+
+fn render_table_as_code_block(table: &[Vec<String>]) -> Option<String> {
+    if table.is_empty() {
+        return None;
+    }
+
+    let mut rows: Vec<Vec<String>> = table.to_vec();
+    if rows.len() > 1 && rows[0] == rows[1] {
+        rows.remove(1);
+    }
+
+    let columns = rows.iter().map(Vec::len).max().unwrap_or(0);
+    if columns == 0 {
+        return None;
+    }
+
+    for row in &mut rows {
+        row.resize(columns, String::new());
+        for cell in row {
+            *cell = unescape_telegram_markdown(cell).trim().to_string();
+        }
+    }
+
+    let mut widths = vec![1usize; columns];
+    for row in &rows {
+        for (idx, cell) in row.iter().enumerate() {
+            widths[idx] = widths[idx].max(cell.chars().count());
+        }
+    }
+
+    let mut lines = Vec::with_capacity(rows.len() + 1);
+    for (row_index, row) in rows.iter().enumerate() {
+        let mut line = String::new();
+        line.push('|');
+        for (col_index, cell) in row.iter().enumerate() {
+            let width = widths[col_index];
+            let len = cell.chars().count();
+            line.push(' ');
+            line.push_str(cell);
+            if len < width {
+                line.push_str(&" ".repeat(width - len));
+            }
+            line.push(' ');
+            line.push('|');
+        }
+        lines.push(line);
+
+        if row_index == 0 && rows.len() > 1 {
+            let mut separator = String::new();
+            separator.push('|');
+            for width in &widths {
+                separator.push(' ');
+                separator.push_str(&"-".repeat(*width));
+                separator.push(' ');
+                separator.push('|');
+            }
+            lines.push(separator);
+        }
+    }
+
+    Some(format!("```\n{}\n```", lines.join("\n")))
+}
+
 /// Parse TWIR Markdown into logical sections using `pulldown-cmark`.
 ///
 /// # Parameters
@@ -214,20 +291,11 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
             }
             Event::End(TagEnd::Table) => {
                 if let Some(ref mut sec) = current {
-                    for r in table.drain(..) {
-                        let mut line = String::new();
-                        for (i, cell) in r.into_iter().enumerate() {
-                            if i == 0 {
-                                line.push_str("\\| ");
-                            } else {
-                                line.push_str(" \\| ");
-                            }
-                            line.push_str(&cell);
-                        }
-                        line.push_str(" \\|");
-                        sec.lines.push(line);
+                    if let Some(block) = render_table_as_code_block(&table) {
+                        sec.lines.push(block);
                     }
                 }
+                table.clear();
             }
             Event::Start(Tag::TableRow) => {
                 row.clear();
