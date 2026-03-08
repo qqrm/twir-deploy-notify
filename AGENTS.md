@@ -1,42 +1,23 @@
-# Agent Instructions
+# Agent Instructions Bootstrap
 
-* Responses may be in **Russian** or **English**, as appropriate.
-* All source code, comments, and documentation must be written in **English**.
-* Interpret user requests as tasks and prefer delivering complete solutions (e.g., a pull‑request or full code changes) over short snippets.
+This repository consumes baseline instructions via live fetch from Codex Tools GitHub Pages.
 
-## Pre‑commit Requirements
-
-Before committing or opening a PR, install and verify:
+## Optional Live Fetch Step
+For tasks that need the freshest shared baseline instructions (especially remote or ephemeral agent runs), fetch updates first:
 
 ```bash
-rustup component add clippy rustfmt
+curl -fsSL "https://qqrm.github.io/codex-tools/scripts/PretaskInitialization.sh" \
+  | AGENTS_DEST=".codex/AGENTS.remote.md" bash -s --
 ```
 
-After making changes, ensure all of the following succeed:
+Local development in a stable environment may skip this step.
+If the download fails, continue with local repository instructions and explicitly report the fetch error in the final summary.
 
-1. **Formatting:**
+## Instruction Load Order
+1. If `.codex/AGENTS.remote.md` exists, read it first.
+2. Apply repository overrides from `REPO_AGENTS.md` when the file exists.
+3. Apply additional scoped `AGENTS.md` files in subdirectories when present.
 
-   ```bash
-   cargo fmt --all
-   ```
-2. **Linting:**
-
-   ```bash
-   cargo clippy --all-targets --all-features -- -D warnings
-   ```
-3. **Tests:**
-
-   ```bash
-   cargo test
-   ```
-4. **Dependency analysis:**
-
-   ```bash
-   cargo machete
-   ```
-
-## Documentation and Design
-
-* Review **`DOCS/ARCHITECTURE.md`** and ensure your changes align with the documented design.
-* Follow the guidelines in **`DOCS/PARSING.md`**, especially relying on existing crates for Markdown processing rather than custom parsing.
-* Remove or feature‑gate any unused functions or dead code.
+## Operational Notes
+- Live fetch is recommended for new remote tasks, but optional for local development.
+- Do not commit `.codex/AGENTS.remote.md`.
