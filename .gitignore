@@ -5,3 +5,4 @@ twir/
 last_sent.txt
 
 .codex/AGENTS.remote.md
+.target/
