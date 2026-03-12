@@ -45,6 +45,10 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
     let mut i = 0;
     while i < chars.len() {
         let ch = chars[i];
+        if in_code_block && ch != '`' {
+            i += 1;
+            continue;
+        }
         match ch {
             '*' => {
                 let token = if i + 1 < chars.len() && chars[i + 1] == '*' {
@@ -232,5 +236,11 @@ mod tests {
     #[test]
     fn rejects_single_pipe() {
         assert!(validate_telegram_markdown("a | b").is_err());
+    }
+
+    #[test]
+    fn accepts_table_like_content_inside_code_block() {
+        let text = "```\n| range |\n| [0.4%, 0.5%] |\n| literal * text _ text |\n```";
+        assert!(validate_telegram_markdown(text).is_ok());
     }
 }

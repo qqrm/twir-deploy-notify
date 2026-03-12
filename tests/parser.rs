@@ -58,10 +58,14 @@ fn regression_table_ascii_aligned() {
     let sections = parse_sections(input);
     assert_eq!(sections.len(), 1);
     let lines = &sections[0].lines;
-    assert!(lines.first().is_none_or(|l| l != "```"));
-    for line in lines {
+    assert_eq!(lines.len(), 1);
+    let block = &lines[0];
+    assert!(block.starts_with("```\n"));
+    assert!(block.ends_with("\n```"));
+    let body: Vec<&str> = block.lines().filter(|line| *line != "```").collect();
+    for line in body {
         assert!(line.is_ascii());
-        assert!(line.contains("\\|"));
+        assert!(line.contains('|'));
     }
 }
 
@@ -71,6 +75,29 @@ fn regression_table_compact() {
     let sections = parse_sections(input);
     assert_eq!(sections.len(), 1);
     let lines = &sections[0].lines;
-    assert!(lines.first().is_none_or(|l| l != "```"));
-    assert!(lines.iter().any(|l| l.contains("\\|")));
+    assert_eq!(lines.len(), 1);
+    let block = &lines[0];
+    assert!(block.starts_with("```"));
+    assert!(block.contains("| (instructions:u)"));
+    assert!(block.contains("| -----"));
+    assert!(!block.contains("\\|"));
+}
+
+#[test]
+fn compact_summary_table_without_separator_becomes_code_block() {
+    let input = "## Perf\nSummary:\n| (instructions:u) | mean | range | count |\n| Reg x  (prim) | 0.4% | [0.4%, 0.5%] | 3 |\n| Reg x  (sec) | 0.6% | [0.1%, 1.2%] | 8 |\n| Imp v  (prim) | -0.9% | [-2.5%, -0.1%] | 110 |\n| Imp v  (sec) | -0.8% | [-2.7%, -0.1%] | 77 |\n| All xv (prim) | -0.9% | [-2.5%, 0.5%] | 113 |\n0 Regressions, 6 Improvements, 3 Mixed; 5 of them in rollups\n31 artifact comparisons made in total\n";
+    let sections = parse_sections(input);
+    assert_eq!(sections.len(), 1);
+
+    let lines = &sections[0].lines;
+    assert_eq!(lines[0], "Summary:");
+    assert!(lines[1].starts_with("```\n"));
+    assert!(lines[1].contains("| (instructions:u)"));
+    assert!(lines[1].contains("| Reg x  (prim)"));
+    assert!(lines[1].contains("| ----"));
+    assert_eq!(
+        lines[2],
+        "0 Regressions, 6 Improvements, 3 Mixed; 5 of them in rollups"
+    );
+    assert_eq!(lines[3], "31 artifact comparisons made in total");
 }
