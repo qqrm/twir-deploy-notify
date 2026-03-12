@@ -1,0 +1,50 @@
+*Part 3/5*
+
+📰 **UPDATES FROM THE RUST PROJECT** 📰
+429 pull requests were [merged in the last week](https://github.com/search?q=is%3Apr+org%3Arust-lang+is%3Amerged+merged%3A2025-06-24..2025-07-01)
+
+**Compiler:** 🛠️
+• [add \#\[loop\_match\] for improved DFA codegen](https://github.com/rust-lang/rust/pull/138780)
+• [add runtime check to avoid overwrite arg in Diag](https://github.com/rust-lang/rust/pull/142724)
+• [check CoerceUnsized impl validity before coercing](https://github.com/rust-lang/rust/pull/142976)
+• [compute hard errors without diagnostics in impl\_intersection\_has\_impossible\_obligation](https://github.com/rust-lang/rust/pull/142647)
+• [collapse Analysis\|Borrowck\|PostBorrowckAnalysis when there are no opaques](https://github.com/rust-lang/rust/pull/142802)
+• [encode hir attributes cross\-crate properly](https://github.com/rust-lang/rust/pull/142777)
+• [fast path for WF goals in new solver](https://github.com/rust-lang/rust/pull/142223)
+• [implement parsing of pinned borrows](https://github.com/rust-lang/rust/pull/135731)
+• [improve recovery when users write where:](https://github.com/rust-lang/rust/pull/143065)
+• [introduce ByteSymbol](https://github.com/rust-lang/rust/pull/141875)
+• [new const traits syntax](https://github.com/rust-lang/rust/pull/139858)
+• [only compute recursive callees once](https://github.com/rust-lang/rust/pull/142625)
+• [shallowly bail from coerce\_unsized more](https://github.com/rust-lang/rust/pull/142941)
+• [simplify ObligationCauseCode::IfExpression](https://github.com/rust-lang/rust/pull/139594)
+
+**Library:** 📚
+• [add SIMD funnel shift and round\-to\-even intrinsics](https://github.com/rust-lang/rust/pull/142078)
+• [make RefCell unstably const](https://github.com/rust-lang/rust/pull/137843)
+• [make Sub, Mul, Div and Rem const\_traits](https://github.com/rust-lang/rust/pull/143000)
+
+**Cargo:** 📦
+• [add http\.proxy\-cainfo config for proxy certs](https://github.com/rust-lang/cargo/pull/15374)
+• [expand error messages around path dependency on cargo package and cargo publish](https://github.com/rust-lang/cargo/pull/15705)
+• [override Cargo\.lock checksums when doing a dry\-run publish](https://github.com/rust-lang/cargo/pull/15711)
+• [rework cargo\-test\-support & testsuite to use CARGO\_BIN\_EXE\_\* for Cargo](https://github.com/rust-lang/cargo/pull/15692)
+
+**Rustdoc:** 📖
+• [rustdoc: show attributes on enum variants](https://github.com/rust-lang/rust/pull/142987)
+
+**Clippy:** 🔧
+• [missing\_panics\_doc: Allow unwrap\(\) and expect\(\) inside const\-only contexts](https://github.com/rust-lang/rust-clippy/pull/15170)
+• [zero\_ptr: lint in const context as well](https://github.com/rust-lang/rust-clippy/pull/15152)
+• [consider deref'ed argument as non\-temporary](https://github.com/rust-lang/rust-clippy/pull/15172)
+• [cast\_possible\_truncation should not suggest inside const context](https://github.com/rust-lang/rust-clippy/pull/15164)
+• [fix coerce\_container\_to\_any false positive on autoderef](https://github.com/rust-lang/rust-clippy/pull/15057)
+• [fix disallowed\_script\_idents FP on identifiers with \_](https://github.com/rust-lang/rust-clippy/pull/15123)
+
+**Rust\-Analyzer:** 🤖
+• [de\-arc trait items query](https://github.com/rust-lang/rust-analyzer/pull/20088)
+• [do not append \-\-compile\-time\-deps to overwritten build script commands](https://github.com/rust-lang/rust-analyzer/pull/20121)
+• [drop rustc workspace loading error, if we don't needs its sources](https://github.com/rust-lang/rust-analyzer/pull/20092)
+• [highlighting of return values while the cursor is on match / if / \=\>](https://github.com/rust-lang/rust-analyzer/pull/19546)
+• [fix completion in when typing integer\.\|](https://github.com/rust-lang/rust-analyzer/pull/20110)
+• [prettify AST in PathTransform if it's coming from a macro](https://github.com/rust-lang/rust-analyzer/pull/20103)
