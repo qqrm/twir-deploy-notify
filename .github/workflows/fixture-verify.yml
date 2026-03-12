@@ -7,6 +7,10 @@ on:
         description: Fixture file from tests/ to send and verify in the dev chat
         required: true
         default: 2025-07-02-this-week-in-rust.md
+      verify_updates:
+        description: Attempt getUpdates-based verification after sending (may not work for channel-style chats)
+        required: false
+        default: 'false'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.fixture }}
@@ -49,7 +53,8 @@ jobs:
           rm -f output_*.md
           cargo run --quiet --bin twir-deploy-notify -- "tests/${{ inputs.fixture }}"
 
-      - name: Verify delivered messages
+      - name: Verify delivered messages via getUpdates
+        if: inputs.verify_updates == 'true'
         env:
           DEV_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
           DEV_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
