@@ -6,6 +6,7 @@ use twir_deploy_notify::generator::{generate_posts, normalize_chat_id};
 
 const MAX_ATTEMPTS: usize = 10;
 const POLL_DELAY: Duration = Duration::from_secs(2);
+const ALLOWED_UPDATES: &str = r#"["message","channel_post"]"#;
 
 fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let path = std::env::args().nth(1).expect("missing input file");
@@ -30,16 +31,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let mut offset = None;
 
     for attempt in 0..MAX_ATTEMPTS {
-        let updates_url = match offset {
-            Some(next) => format!(
-                "{}/bot{}/getUpdates?offset={}",
-                base.trim_end_matches('/'),
-                token,
-                next
-            ),
-            None => format!("{}/bot{}/getUpdates", base.trim_end_matches('/'), token),
-        };
-        let resp: Value = client.get(&updates_url).send()?.json()?;
+        let resp = fetch_updates(&client, &base, &token, offset)?;
         let mut saw_update = false;
 
         if let Some(arr) = resp["result"].as_array() {
@@ -78,13 +70,7 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
         if window.len() == posts.len() && window.iter().eq(posts.iter()) {
             if let Some(id) = last_update {
-                let ack_url = format!(
-                    "{}/bot{}/getUpdates?offset={}",
-                    base.trim_end_matches('/'),
-                    token,
-                    id + 1
-                );
-                let _ = client.get(&ack_url).send();
+                let _ = fetch_updates(&client, &base, &token, Some(id + 1));
             }
             return Ok(());
         }
@@ -111,6 +97,21 @@ fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         preview.join(" | ")
     )
     .into())
+}
+
+fn fetch_updates(
+    client: &Client,
+    base: &str,
+    token: &str,
+    offset: Option<i64>,
+) -> Result<Value, Box<dyn std::error::Error + Send + Sync>> {
+    let url = format!("{}/bot{}/getUpdates", base.trim_end_matches('/'), token);
+    let mut query = vec![("allowed_updates".to_string(), ALLOWED_UPDATES.to_string())];
+    if let Some(next) = offset {
+        query.push(("offset".to_string(), next.to_string()));
+    }
+
+    Ok(client.get(url).query(&query).send()?.json()?)
 }
 
 fn read_credentials() -> Result<(String, String), Box<dyn std::error::Error + Send + Sync>> {
