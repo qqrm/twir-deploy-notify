@@ -49,12 +49,19 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           persist-credentials: false
 
-      - name: Setup Rust environment
-        uses: ./.github/actions/setup-rust
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache-bin: false
+          cache-shared-key: delivery
+          cache-workspace-crates: true
+          cache-workspaces: |
+            . -> target
+          rustflags: ""
 
       - name: Download last_sent artifact from previous successful run
         env:
@@ -116,7 +123,7 @@ jobs:
           fi
 
       - name: Checkout TWIR
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: rust-lang/this-week-in-rust
           path: twir
@@ -178,7 +185,7 @@ jobs:
 
       - name: Upload generated posts
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: telegram-posts-${{ env.ARTIFACT_SCOPE }}
           path: output_*.md
@@ -186,7 +193,7 @@ jobs:
 
       - name: Upload last_sent artifact
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: last-sent-${{ env.ARTIFACT_SCOPE }}
           path: last_sent.txt
