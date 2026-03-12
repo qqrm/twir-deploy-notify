@@ -161,16 +161,57 @@ fn find_value(text: &str, prefix: &str) -> Option<String> {
     None
 }
 
-fn find_title(text: &str) -> Option<String> {
-    find_value(text, "Title: ")
-}
-
 fn find_number(text: &str) -> Option<String> {
     find_value(text, "Number: ")
 }
 
 fn find_date(text: &str) -> Option<String> {
     find_value(text, "Date: ")
+}
+
+struct IssueMetadata {
+    number: Option<String>,
+    date: Option<String>,
+    url: Option<String>,
+}
+
+impl IssueMetadata {
+    fn from_input(text: &str) -> Self {
+        let number = find_number(text);
+        let date = find_date(text);
+        let url = match (date.as_deref(), number.as_deref()) {
+            (Some(date), Some(number)) => build_issue_url(date, number),
+            _ => None,
+        };
+
+        Self { number, date, url }
+    }
+
+    fn header(&self) -> String {
+        let mut header = String::new();
+        if let Some(number) = self.number.as_ref() {
+            header.push_str(&format!("\\#{}", escape(number)));
+        }
+        if let Some(date) = self.date.as_ref() {
+            header.push_str(&format!(" — {}", escape(date)));
+        }
+        if !header.is_empty() {
+            header.push_str("\n\n");
+        }
+        header
+    }
+}
+
+fn build_issue_url(date: &str, number: &str) -> Option<String> {
+    let parts: Vec<&str> = date.split('-').collect();
+    if parts.len() < 3 {
+        return None;
+    }
+
+    Some(format!(
+        "https://this-week-in-rust.org/blog/{}/{}/{}/this-week-in-rust-{}/",
+        parts[0], parts[1], parts[2], number
+    ))
 }
 
 fn strip_header(text: &str) -> String {
@@ -434,71 +475,49 @@ pub fn split_posts(text: &str, limit: usize) -> Vec<String> {
     posts
 }
 
-/// Convert a TWIR Markdown file into a series of Telegram posts.
-///
-/// The input may include metadata headers which will be used to build the
-/// leading post and the final link section.
-///
-/// # Parameters
-/// - `input`: Raw Markdown content read from a TWIR issue.
-///
-/// # Returns
-/// A vector of validated Telegram Markdown posts or a `ValidationError` if any
-/// post fails validation.
-#[allow(dead_code)]
-pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError> {
-    let _title = find_title(&input);
-    let number = find_number(&input);
-    let date = find_date(&input);
+fn preprocess_issue_input(input: String) -> String {
+    input.replace("_Полный выпуск: ссылка_", "")
+}
 
-    let url = if let (Some(d), Some(n)) = (date.as_ref(), number.as_ref()) {
-        let parts: Vec<&str> = d.split('-').collect();
-        if parts.len() >= 3 {
-            Some(format!(
-                "https://this-week-in-rust.org/blog/{}/{}/{}/this-week-in-rust-{}/",
-                parts[0], parts[1], parts[2], n
-            ))
-        } else {
-            None
-        }
-    } else {
-        None
-    };
+fn jobs_resources() -> [String; 3] {
+    [
+        format!(
+            "💼 [Rust Jobs chat]({})",
+            escape_markdown_url("https://t.me/rust_jobs")
+        ),
+        format!(
+            "📢 [Rust Jobs feed]({})",
+            escape_markdown_url("https://t.me/rust_jobs_feed")
+        ),
+        format!(
+            "📝 [Rust HH jobs]({})",
+            escape_markdown_url("https://t.me/rusthhjobs")
+        ),
+    ]
+}
 
-    input = input.replace("_Полный выпуск: ссылка_", "");
-
-    let body = strip_header(&input);
-    let mut sections = parse_sections(&body);
-    for sec in &mut sections {
-        if sec.title.eq_ignore_ascii_case("Jobs") && !sec.lines.is_empty() {
-            simplify_jobs_section(sec);
-            let chat = format!(
-                "💼 [Rust Jobs chat]({})",
-                escape_markdown_url("https://t.me/rust_jobs")
-            );
-            let feed = format!(
-                "📢 [Rust Jobs feed]({})",
-                escape_markdown_url("https://t.me/rust_jobs_feed")
-            );
-            let hh = format!(
-                "📝 [Rust HH jobs]({})",
-                escape_markdown_url("https://t.me/rusthhjobs")
-            );
-            sec.lines.insert(1, chat);
-            sec.lines.insert(2, feed);
-            sec.lines.insert(3, hh);
-        }
-        if sec
-            .title
-            .eq_ignore_ascii_case("Call for Participation; projects and speakers")
-        {
-            simplify_cfp_section(sec);
-        }
-        simplify_quote_section(sec);
+fn transform_section(section: &mut Section) {
+    if section.title.eq_ignore_ascii_case("Jobs") && !section.lines.is_empty() {
+        simplify_jobs_section(section);
+        section.lines.splice(1..1, jobs_resources());
     }
-    sections.retain(|s| !s.title.eq_ignore_ascii_case("Upcoming Events"));
+    if section
+        .title
+        .eq_ignore_ascii_case("Call for Participation; projects and speakers")
+    {
+        simplify_cfp_section(section);
+    }
+    simplify_quote_section(section);
+}
 
-    if let Some(link) = url.as_ref() {
+fn prepare_sections(body: &str, web_url: Option<&str>) -> Vec<Section> {
+    let mut sections = parse_sections(body);
+    for section in &mut sections {
+        transform_section(section);
+    }
+    sections.retain(|section| !section.title.eq_ignore_ascii_case("Upcoming Events"));
+
+    if let Some(link) = web_url {
         let mut link_section = Section::default();
         link_section.lines.push(String::new());
         link_section.lines.push(format!(
@@ -508,37 +527,33 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         sections.push(link_section);
     }
 
+    sections
+}
+
+fn render_section_text(section: &Section, index: usize, header: &str) -> String {
+    let mut text = String::new();
+    if index == 0 {
+        text.push_str(header);
+    }
+    if !section.title.is_empty() {
+        if index > 0 {
+            text.push('\n');
+        }
+        text.push_str(&format!("{}\n", format_heading(&section.title)));
+    }
+    for line in &section.lines {
+        text.push_str(line);
+        text.push('\n');
+    }
+    text
+}
+
+fn bundle_sections_into_posts(sections: &[Section], header: &str) -> Vec<String> {
     let mut posts = Vec::new();
-
-    let mut header = String::new();
-    if let Some(ref n) = number {
-        header.push_str(&format!("\\#{}", escape(n)));
-    }
-    if let Some(ref d) = date {
-        header.push_str(&format!(" — {}", escape(d)));
-    }
-    if !header.is_empty() {
-        header.push_str("\n\n");
-    }
-
     let mut current_post = String::new();
 
-    for (idx, sec) in sections.iter().enumerate() {
-        let mut section_text = String::new();
-        if idx == 0 {
-            section_text.push_str(&header);
-        }
-        if !sec.title.is_empty() {
-            if idx > 0 {
-                section_text.push('\n');
-            }
-            section_text.push_str(&format!("{}\n", format_heading(&sec.title)));
-        }
-        for line in &sec.lines {
-            section_text.push_str(line);
-            section_text.push('\n');
-        }
-
+    for (index, section) in sections.iter().enumerate() {
+        let section_text = render_section_text(section, index, header);
         if !current_post.is_empty() && current_post.len() + section_text.len() > TELEGRAM_LIMIT {
             posts.push(current_post);
             current_post = section_text;
@@ -551,6 +566,10 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
         posts.push(current_post);
     }
 
+    posts
+}
+
+fn split_posts_to_telegram_limit(posts: Vec<String>) -> Vec<String> {
     let mut final_posts = Vec::new();
     for post in posts {
         if post.len() > TELEGRAM_LIMIT {
@@ -559,28 +578,54 @@ pub fn generate_posts(mut input: String) -> Result<Vec<String>, ValidationError>
             final_posts.push(post);
         }
     }
+    final_posts
+}
 
-    let total = final_posts.len();
+fn finalize_posts(posts: Vec<String>) -> Result<Vec<String>, ValidationError> {
+    let total = posts.len();
     let mut result = Vec::new();
-    for (i, mut post) in final_posts.into_iter().enumerate() {
+
+    for (index, mut post) in posts.into_iter().enumerate() {
         if !post.ends_with('\n') {
             post.push('\n');
         }
-        let formatted = if i == 0 {
+        let formatted = if index == 0 {
             post.trim_start_matches('\n').to_string()
         } else {
             format!(
                 "*Part {}/{}*\n\n{}",
-                i + 1,
+                index + 1,
                 total,
                 post.trim_start_matches('\n')
             )
         };
         validate_telegram_markdown(&formatted)
-            .map_err(|e| ValidationError(format!("Generated post {} invalid: {e}", i + 1)))?;
+            .map_err(|e| ValidationError(format!("Generated post {} invalid: {e}", index + 1)))?;
         result.push(formatted);
     }
+
     Ok(result)
+}
+
+/// Convert a TWIR Markdown file into a series of Telegram posts.
+///
+/// The input may include metadata headers which will be used to build the
+/// leading post and the final link section.
+///
+/// # Parameters
+/// - `input`: Raw Markdown content read from a TWIR issue.
+///
+/// # Returns
+/// A vector of validated Telegram Markdown posts or a `ValidationError` if any
+/// post fails validation.
+pub fn generate_posts(input: String) -> Result<Vec<String>, ValidationError> {
+    let metadata = IssueMetadata::from_input(&input);
+    let input = preprocess_issue_input(input);
+    let body = strip_header(&input);
+    let sections = prepare_sections(&body, metadata.url.as_deref());
+    let bundled = bundle_sections_into_posts(&sections, &metadata.header());
+    let split = split_posts_to_telegram_limit(bundled);
+    finalize_posts(split)
 }
 
 /// Write generated posts to `output_N.md` files in `dir`.

@@ -1,5 +1,6 @@
 /target
 output_*.md
+!tests/golden/**/output_*.md
 twir/
 
 last_sent.txt

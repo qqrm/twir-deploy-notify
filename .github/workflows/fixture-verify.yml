@@ -1,0 +1,67 @@
+name: TWIR Fixture verify
+
+on:
+  workflow_dispatch:
+    inputs:
+      fixture:
+        description: Fixture file from tests/ to send and verify in the dev chat
+        required: true
+        default: 2025-07-02-this-week-in-rust.md
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.fixture }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  CARGO_TERM_PROGRESS_WHEN: never
+  RUST_LOG: info
+
+jobs:
+  verify:
+    name: Verify fixture delivery
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Validate fixture path
+        run: |
+          set -euo pipefail
+          test -f "tests/${{ inputs.fixture }}"
+
+      - name: Send fixture to dev chat
+        env:
+          DEV_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
+          DEV_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
+          TWIR_SKIP_PRODUCTION_SEND: 'true'
+        run: |
+          set -euo pipefail
+
+          rm -f output_*.md
+          cargo run --quiet --bin twir-deploy-notify -- "tests/${{ inputs.fixture }}"
+
+      - name: Verify delivered messages
+        env:
+          DEV_BOT_TOKEN: ${{ secrets.DEV_BOT_TOKEN }}
+          DEV_CHAT_ID: ${{ secrets.DEV_CHAT_ID }}
+        run: |
+          set -euo pipefail
+
+          cargo run --quiet --bin verify-posts -- "tests/${{ inputs.fixture }}"
+
+      - name: Upload generated posts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verified-fixture-posts
+          path: output_*.md
+          if-no-files-found: ignore
