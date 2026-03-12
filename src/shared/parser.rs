@@ -86,6 +86,203 @@ fn normalize_table_text(text: &str) -> String {
         .replace("secondary", "sec")
 }
 
+fn parse_pipe_row(line: &str) -> Option<Vec<&str>> {
+    let trimmed = line.trim();
+    if !trimmed.starts_with('|') || !trimmed.ends_with('|') {
+        return None;
+    }
+
+    let inner = &trimmed[1..trimmed.len() - 1];
+    let cells: Vec<&str> = inner.split('|').map(str::trim).collect();
+    if cells.len() < 2 {
+        return None;
+    }
+
+    Some(cells)
+}
+
+fn is_alignment_row(line: &str) -> bool {
+    parse_pipe_row(line).is_some_and(|cells| {
+        cells.iter().all(|cell| {
+            !cell.is_empty() && cell.contains('-') && cell.chars().all(|ch| matches!(ch, '-' | ':'))
+        })
+    })
+}
+
+fn make_alignment_row(columns: usize) -> String {
+    let mut row = String::from("|");
+    for _ in 0..columns {
+        row.push_str(" --- |");
+    }
+    row
+}
+
+fn normalize_compact_tables(text: &str) -> String {
+    let source_lines: Vec<&str> = text.lines().collect();
+    let mut lines = Vec::with_capacity(source_lines.len());
+    let mut in_fenced_code_block = false;
+    let mut index = 0usize;
+
+    while index < source_lines.len() {
+        let line = source_lines[index];
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("```") {
+            in_fenced_code_block = !in_fenced_code_block;
+            lines.push(line.to_string());
+            index += 1;
+            continue;
+        }
+
+        if !in_fenced_code_block && let Some(cells) = parse_pipe_row(line) {
+            let next_line = source_lines.get(index + 1).copied();
+            let previous_is_pipe_row =
+                index > 0 && parse_pipe_row(source_lines[index - 1]).is_some();
+            let starts_compact_table = !is_alignment_row(line)
+                && !previous_is_pipe_row
+                && next_line.is_some_and(|candidate| {
+                    !is_alignment_row(candidate)
+                        && parse_pipe_row(candidate)
+                            .is_some_and(|next_cells| next_cells.len() == cells.len())
+                });
+
+            if starts_compact_table {
+                if !lines.last().is_none_or(|last| last.is_empty()) {
+                    lines.push(String::new());
+                }
+
+                lines.push(line.to_string());
+                lines.push(make_alignment_row(cells.len()));
+                index += 1;
+
+                while index < source_lines.len() {
+                    let row_line = source_lines[index];
+                    if let Some(row_cells) = parse_pipe_row(row_line)
+                        && !is_alignment_row(row_line)
+                        && row_cells.len() == cells.len()
+                    {
+                        lines.push(row_line.to_string());
+                        index += 1;
+                        continue;
+                    }
+                    break;
+                }
+
+                if source_lines
+                    .get(index)
+                    .is_some_and(|next| !next.trim().is_empty())
+                {
+                    lines.push(String::new());
+                }
+
+                while source_lines
+                    .get(index)
+                    .is_some_and(|next| !next.trim().is_empty())
+                    && source_lines
+                        .get(index)
+                        .is_some_and(|next| parse_pipe_row(next).is_none())
+                {
+                    lines.push(source_lines[index].to_string());
+                    index += 1;
+
+                    if source_lines
+                        .get(index)
+                        .is_some_and(|next| !next.trim().is_empty())
+                    {
+                        lines.push(String::new());
+                    }
+                }
+                continue;
+            }
+        }
+
+        lines.push(line.to_string());
+        index += 1;
+    }
+
+    let mut normalized = lines.join("\n");
+    if text.ends_with('\n') {
+        normalized.push('\n');
+    }
+    normalized
+}
+
+fn unescape_telegram_markdown(text: &str) -> String {
+    let mut out = String::with_capacity(text.len());
+    let mut chars = text.chars();
+    while let Some(ch) = chars.next() {
+        if ch == '\\' {
+            if let Some(next) = chars.next() {
+                out.push(next);
+            }
+            continue;
+        }
+        out.push(ch);
+    }
+    out
+}
+
+fn render_table_as_code_block(table: &[Vec<String>]) -> Option<String> {
+    if table.is_empty() {
+        return None;
+    }
+
+    let mut rows: Vec<Vec<String>> = table.to_vec();
+    if rows.len() > 1 && rows[0] == rows[1] {
+        rows.remove(1);
+    }
+
+    let columns = rows.iter().map(Vec::len).max().unwrap_or(0);
+    if columns == 0 {
+        return None;
+    }
+
+    for row in &mut rows {
+        row.resize(columns, String::new());
+        for cell in row {
+            *cell = unescape_telegram_markdown(cell).trim().to_string();
+        }
+    }
+
+    let mut widths = vec![1usize; columns];
+    for row in &rows {
+        for (idx, cell) in row.iter().enumerate() {
+            widths[idx] = widths[idx].max(cell.chars().count());
+        }
+    }
+
+    let mut lines = Vec::with_capacity(rows.len() + 1);
+    for (row_index, row) in rows.iter().enumerate() {
+        let mut line = String::new();
+        line.push('|');
+        for (col_index, cell) in row.iter().enumerate() {
+            let width = widths[col_index];
+            let len = cell.chars().count();
+            line.push(' ');
+            line.push_str(cell);
+            if len < width {
+                line.push_str(&" ".repeat(width - len));
+            }
+            line.push(' ');
+            line.push('|');
+        }
+        lines.push(line);
+
+        if row_index == 0 && rows.len() > 1 {
+            let mut separator = String::new();
+            separator.push('|');
+            for width in &widths {
+                separator.push(' ');
+                separator.push_str(&"-".repeat(*width));
+                separator.push(' ');
+                separator.push('|');
+            }
+            lines.push(separator);
+        }
+    }
+
+    Some(format!("```\n{}\n```", lines.join("\n")))
+}
+
 /// Parse TWIR Markdown into logical sections using `pulldown-cmark`.
 ///
 /// # Parameters
@@ -97,7 +294,8 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
     let mut sections = Vec::new();
     let mut current: Option<Section> = None;
     let mut buffer = String::new();
-    let parser = Parser::new_ext(text, Options::ENABLE_TABLES);
+    let normalized = normalize_compact_tables(text);
+    let parser = Parser::new_ext(&normalized, Options::ENABLE_TABLES);
     let mut link_dest: Option<String> = None;
     let mut list_depth: usize = 0;
     let mut in_code_block = false;
@@ -213,21 +411,12 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                 table.push(row.clone());
             }
             Event::End(TagEnd::Table) => {
-                if let Some(ref mut sec) = current {
-                    for r in table.drain(..) {
-                        let mut line = String::new();
-                        for (i, cell) in r.into_iter().enumerate() {
-                            if i == 0 {
-                                line.push_str("\\| ");
-                            } else {
-                                line.push_str(" \\| ");
-                            }
-                            line.push_str(&cell);
-                        }
-                        line.push_str(" \\|");
-                        sec.lines.push(line);
-                    }
+                if let Some(ref mut sec) = current
+                    && let Some(block) = render_table_as_code_block(&table)
+                {
+                    sec.lines.push(block);
                 }
+                table.clear();
             }
             Event::Start(Tag::TableRow) => {
                 row.clear();

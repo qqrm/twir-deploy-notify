@@ -194,8 +194,22 @@ fn jobs_url_simplified() {
 fn table_compact_format() {
     let input = "Title: Test\nNumber: 1\nDate: 2024-01-01\n\n## Table\n| Name | Score |\n|------|------|\n| Foo | 10 |\n| Bar | 20 |\n";
     let posts = generate_posts(input.to_string()).unwrap();
-    assert!(!posts[0].contains("```"));
-    assert!(posts[0].contains("\\|"));
+    assert!(posts[0].contains("```\n"));
+    assert!(posts[0].contains("| Name"));
+    assert!(!posts[0].contains("\\|"));
+    common::assert_valid_markdown(&posts[0]);
+}
+
+#[test]
+fn compact_summary_without_separator_renders_as_code_block() {
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## Perf\nSummary:\n| (instructions:u) | mean | range | count |\n| Reg x  (prim) | 0.4% | [0.4%, 0.5%] | 3 |\n| Reg x  (sec) | 0.6% | [0.1%, 1.2%] | 8 |\n| Imp v  (prim) | -0.9% | [-2.5%, -0.1%] | 110 |\n| Imp v  (sec) | -0.8% | [-2.7%, -0.1%] | 77 |\n| All xv (prim) | -0.9% | [-2.5%, 0.5%] | 113 |\n0 Regressions, 6 Improvements, 3 Mixed; 5 of them in rollups\n31 artifact comparisons made in total\n";
+    let posts = generate_posts(input.to_string()).unwrap();
+    let combined = posts.join("\n");
+    assert!(combined.contains("Summary:"));
+    assert!(combined.contains("```\n| (instructions:u)"));
+    assert!(combined.contains("| Reg x  (prim)"));
+    assert!(combined.contains("0 Regressions, 6 Improvements, 3 Mixed; 5 of them in rollups"));
+    common::assert_valid_markdown(&combined);
 }
 
 #[test]
