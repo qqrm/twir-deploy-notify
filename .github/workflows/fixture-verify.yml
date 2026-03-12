@@ -22,7 +22,6 @@ permissions:
 
 env:
   CARGO_TERM_PROGRESS_WHEN: never
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
   RUST_LOG: info
 
 jobs:
@@ -38,12 +37,17 @@ jobs:
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          cache-bin: false
-          cache-shared-key: fixture-verify
-          cache-workspace-crates: true
-          cache-workspaces: |
-            . -> target
+          cache: false
           rustflags: ""
+
+      - name: Cache Rust workspace
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
+          cache-workspace-crates: true
+          shared-key: fixture-verify
+          workspaces: |
+            . -> target
 
       - name: Validate fixture path
         run: |

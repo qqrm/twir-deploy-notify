@@ -15,7 +15,6 @@ permissions:
 
 env:
   CARGO_TERM_PROGRESS_WHEN: never
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   fmt:
@@ -48,12 +47,17 @@ jobs:
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          cache-bin: false
-          cache-shared-key: ci
-          cache-workspace-crates: true
-          cache-workspaces: |
-            . -> target
+          cache: false
           rustflags: ""
+
+      - name: Cache Rust workspace
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
+          cache-workspace-crates: true
+          shared-key: ci
+          workspaces: |
+            . -> target
 
       - name: Run cargo clippy
         run: cargo clippy --quiet --all-targets --all-features -- -D warnings
@@ -70,12 +74,17 @@ jobs:
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          cache-bin: false
-          cache-shared-key: ci
-          cache-workspace-crates: true
-          cache-workspaces: |
-            . -> target
+          cache: false
           rustflags: ""
+
+      - name: Cache Rust workspace
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
+          cache-workspace-crates: true
+          shared-key: ci
+          workspaces: |
+            . -> target
 
       - name: Run cargo test
         run: cargo test --quiet --lib --bins --all-features -- --test-threads=$(nproc)
@@ -115,12 +124,17 @@ jobs:
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          cache-bin: false
-          cache-shared-key: ci
-          cache-workspace-crates: true
-          cache-workspaces: |
-            . -> target
+          cache: false
           rustflags: ""
+
+      - name: Cache Rust workspace
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
+          cache-workspace-crates: true
+          shared-key: ci
+          workspaces: |
+            . -> target
 
       - name: Run docs check
         run: cargo run --quiet --bin check-docs
@@ -138,12 +152,17 @@ jobs:
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          cache-bin: false
-          cache-shared-key: coverage
-          cache-workspace-crates: true
-          cache-workspaces: |
-            . -> target
+          cache: false
           rustflags: ""
+
+      - name: Cache Rust workspace
+        uses: Swatinem/rust-cache@v2
+        with:
+          cache-bin: false
+          cache-workspace-crates: true
+          shared-key: coverage
+          workspaces: |
+            . -> target
 
       - name: Install tarpaulin
         uses: taiki-e/install-action@v2
