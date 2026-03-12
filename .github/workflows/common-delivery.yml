@@ -44,6 +44,7 @@ jobs:
       cancel-in-progress: false
     env:
       CARGO_TERM_PROGRESS_WHEN: never
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
       RUST_LOG: ${{ inputs.rust_log }}
       ARTIFACT_SCOPE: ${{ inputs.artifact_scope != '' && inputs.artifact_scope || inputs.scope }}
 
