@@ -16,6 +16,7 @@ pub fn assert_fixture_matches_golden(fixture_name: &str) {
         .join(snapshot_name(fixture_name));
 
     let input = fs::read_to_string(&fixture_path)
+        .map(normalize_line_endings)
         .unwrap_or_else(|e| panic!("failed to read fixture {}: {e}", fixture_path.display()));
     let actual = generate_posts(input)
         .unwrap_or_else(|e| panic!("failed to generate posts for {fixture_name}: {e}"));
@@ -65,7 +66,12 @@ fn read_snapshot_posts(dir: &Path) -> Vec<String> {
         .into_iter()
         .map(|path| {
             fs::read_to_string(&path)
+                .map(normalize_line_endings)
                 .unwrap_or_else(|e| panic!("failed to read snapshot {}: {e}", path.display()))
         })
         .collect()
+}
+
+fn normalize_line_endings(input: String) -> String {
+    input.replace("\r\n", "\n")
 }
