@@ -55,7 +55,7 @@ jobs:
           fi
 
       - name: Checkout TWIR
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: rust-lang/this-week-in-rust
           path: twir
