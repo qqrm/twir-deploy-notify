@@ -148,14 +148,12 @@ pub fn validate_telegram_markdown(text: &str) -> Result<(), MarkdownError> {
                     )));
                 }
             }
-            '(' | ')' => {
-                if !in_code_block {
-                    let prev = if i == 0 { None } else { Some(chars[i - 1]) };
-                    if prev != Some('\\') {
-                        return Err(MarkdownError::InvalidEscape(format!(
-                            "Unescaped {ch} at {i}"
-                        )));
-                    }
+            '(' | ')' if !in_code_block => {
+                let prev = if i == 0 { None } else { Some(chars[i - 1]) };
+                if prev != Some('\\') {
+                    return Err(MarkdownError::InvalidEscape(format!(
+                        "Unescaped {ch} at {i}"
+                    )));
                 }
             }
             _ => {}

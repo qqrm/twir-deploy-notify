@@ -515,14 +515,12 @@ pub fn parse_sections(text: &str) -> Vec<Section> {
                     buffer.push(' ');
                 }
             }
-            Event::Html(html) => {
-                if html.trim_start().starts_with("<br") {
-                    if in_heading {
-                        heading_raw.push(' ');
-                        heading_sanitized.push(' ');
-                    } else {
-                        buffer.push(' ');
-                    }
+            Event::Html(html) if html.trim_start().starts_with("<br") => {
+                if in_heading {
+                    heading_raw.push(' ');
+                    heading_sanitized.push(' ');
+                } else {
+                    buffer.push(' ');
                 }
             }
             _ => {}
