@@ -1,0 +1,92 @@
+name: Security Digest
+
+on:
+  schedule:
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-digest
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    name: Report open CVEs and orphaned workflows to Telegram
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Collect findings
+        id: collect
+        env:
+          GH_TOKEN: ${{ secrets.SECURITY_DIGEST_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          # ponytail: no state store, so a still-open alert is reported every
+          # day. Add a seen-set only if the daily repeat becomes noise.
+          repos="$(gh repo list --limit 200 --no-archived --json nameWithOwner --jq '.[].nameWithOwner')"
+
+          alerts=""
+          orphans=""
+
+          for repo in $repos; do
+            counts="$(gh api "repos/$repo/dependabot/alerts?state=open&per_page=100" \
+              --jq '[.[].security_advisory.severity]
+                    | map(select(. == "critical" or . == "high"))
+                    | group_by(.) | map("\(.[0]) \(length)") | join(", ")' 2>/dev/null || true)"
+            [ -n "$counts" ] && alerts="$alerts\n• <b>$repo</b>: $counts"
+
+            # A workflow whose file is still on the default branch but whose
+            # Actions entry is not active never fires again on its own.
+            files="$(gh api "repos/$repo/contents/.github/workflows" --jq '.[].name' 2>/dev/null || true)"
+            for f in $files; do
+              case "$f" in *.yml|*.yaml) ;; *) continue ;; esac
+              state="$(gh api "repos/$repo/actions/workflows/$f" --jq '.state' 2>/dev/null || echo missing)"
+              [ "$state" = "active" ] && continue
+              [ "$state" = "disabled_manually" ] && continue
+              orphans="$orphans\n• <b>$repo</b>: $f ($state)"
+            done
+          done
+
+          message=""
+          [ -n "$alerts" ] && message="$message🔴 <b>Open critical/high CVEs</b>$alerts\n\n"
+          [ -n "$orphans" ] && message="$message⚠️ <b>Workflows that stopped firing</b>$orphans\n"
+
+          if [ -z "$message" ]; then
+            echo "Nothing to report."
+            echo "send=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "send=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "message<<DIGEST_EOF"
+            printf '%b' "$message" | head -c 3800
+            echo
+            echo "DIGEST_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Send to Telegram
+        if: steps.collect.outputs.send == 'true'
+        env:
+          BOT_TOKEN: ${{ secrets.PROD_BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.PROD_CHAT_ID }}
+          MESSAGE: ${{ steps.collect.outputs.message }}
+        run: |
+          set -euo pipefail
+
+          code="$(curl -sS -o /tmp/tg.json -w '%{http_code}' \
+            "https://api.telegram.org/bot${BOT_TOKEN}/sendMessage" \
+            --data-urlencode "chat_id=${CHAT_ID}" \
+            --data-urlencode "text=${MESSAGE}" \
+            --data-urlencode "parse_mode=HTML" \
+            --data-urlencode "disable_web_page_preview=true")"
+
+          if [ "$code" != "200" ]; then
+            echo "::error::Telegram returned HTTP $code"
+            cat /tmp/tg.json
+            exit 1
+          fi
