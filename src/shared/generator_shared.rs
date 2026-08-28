@@ -479,12 +479,8 @@ fn preprocess_issue_input(input: String) -> String {
     input.replace("_Полный выпуск: ссылка_", "")
 }
 
-fn jobs_resources() -> [String; 3] {
+fn jobs_resources() -> [String; 2] {
     [
-        format!(
-            "💼 [Rust Jobs chat]({})",
-            escape_markdown_url("https://t.me/rust_jobs")
-        ),
         format!(
             "📢 [Rust Jobs feed]({})",
             escape_markdown_url("https://t.me/rust_jobs_feed")
