@@ -1,21 +1,124 @@
-name: Dependabot auto-merge
+name: Dependabot Automerge
 
 on:
-  pull_request:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] metadata-only; never checks out or runs PR code
+    types: [opened, reopened, synchronize, ready_for_review]
+  workflow_run:
+    workflows: ["CI", "build", "pdf-validate", "Workflow Security", "CodeQL", "TWIR CI", "TWIR Fixture verify", "TWIR Audit"]
+    types: [completed]
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
 
 permissions:
+  actions: read
   contents: write
   pull-requests: write
+  checks: read
+  statuses: read
+
+concurrency:
+  group: dependabot-automerge-${{ github.event.pull_request.number || github.event.schedule || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
-  enable-automerge:
-    if: github.actor == 'dependabot[bot]'
+  automerge:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      - name: Enable auto-merge for Dependabot PRs
+      - name: Merge green Dependabot pull requests
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
-          gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+          collect_prs() {
+            if [ "$EVENT_NAME" = "pull_request_target" ]; then
+              jq -r '.pull_request.number' "$GITHUB_EVENT_PATH"
+            else
+              gh pr list \
+                --repo "$REPO" \
+                --state open \
+                --limit 100 \
+                --json number,author,headRefName \
+                --jq '.[] | select((.author.login == "app/dependabot" or .author.login == "dependabot[bot]") and (.headRefName | startswith("dependabot/"))) | .number'
+            fi
+          }
+
+          check_pr() {
+            local pr="$1"
+            local pr_json author head_ref head_sha is_draft
+            local attempts checks_json check_count state current_head merge_response
+
+            pr_json="$(gh pr view "$pr" --repo "$REPO" --json author,headRefName,headRefOid,isDraft)"
+            author="$(jq -r '.author.login // ""' <<<"$pr_json")"
+            head_ref="$(jq -r '.headRefName // ""' <<<"$pr_json")"
+            head_sha="$(jq -r '.headRefOid // ""' <<<"$pr_json")"
+            is_draft="$(jq -r '.isDraft' <<<"$pr_json")"
+
+            if { [ "$author" != "app/dependabot" ] && [ "$author" != "dependabot[bot]" ]; } ||
+               [[ "$head_ref" != dependabot/* ]] || [ "$is_draft" = "true" ]; then
+              echo "Skipping PR #$pr: not an eligible Dependabot PR."
+              return 0
+            fi
+
+            attempts=1
+
+            for _ in $(seq 1 "$attempts"); do
+              checks_json="$(gh pr view "$pr" --repo "$REPO" --json statusCheckRollup --jq '
+                [.statusCheckRollup[] |
+                  select((.name // "") != "automerge")]
+              ')"
+              check_count="$(jq 'length' <<<"$checks_json")"
+
+              if [ "$check_count" -eq 0 ]; then
+                state=pending
+              elif jq -e 'any(.[]; (.status != null and .status != "COMPLETED") or (.state != null and (.state == "PENDING" or .state == "EXPECTED")))' <<<"$checks_json" >/dev/null; then
+                state=pending
+              elif jq -e 'any(.[]; (.conclusion != null and (.conclusion != "SUCCESS" and .conclusion != "SKIPPED" and .conclusion != "NEUTRAL")) or (.state != null and .state != "SUCCESS"))' <<<"$checks_json" >/dev/null; then
+                state=failed
+              else
+                state=passed
+              fi
+
+              case "$state" in
+                passed)
+                  current_head="$(gh pr view "$pr" --repo "$REPO" --json headRefOid --jq '.headRefOid')"
+                  if [ "$current_head" != "$head_sha" ]; then
+                    echo "PR #$pr changed while checks were running; waiting for the new run."
+                    return 0
+                  fi
+                  if merge_response="$(gh api --method PUT "repos/$REPO/pulls/$pr/merge" \
+                    -f merge_method=squash \
+                    -f sha="$head_sha")" && jq -e '.merged == true' <<<"$merge_response" >/dev/null; then
+                    echo "Merged Dependabot PR #$pr after $check_count successful checks."
+                  else
+                    echo "PR #$pr passed checks but could not be merged; it will be retried."
+                  fi
+                  return 0
+                  ;;
+                failed)
+                  echo "Leaving PR #$pr open: at least one check failed."
+                  return 0
+                  ;;
+              esac
+
+              echo "Leaving PR #$pr open: checks are missing or still pending."
+              return 0
+            done
+
+            echo "Leaving PR #$pr open: checks are missing or still pending."
+          }
+
+          prs_output="$(collect_prs)"
+          if [ -z "$prs_output" ]; then
+            echo "No open Dependabot PRs found."
+            exit 0
+          fi
+
+          while IFS= read -r pr; do
+            [ -n "$pr" ] && check_pr "$pr"
+          done <<<"$prs_output"
