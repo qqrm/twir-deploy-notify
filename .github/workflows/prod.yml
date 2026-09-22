@@ -79,6 +79,22 @@ jobs:
             echo "should_send=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # A no-op run becomes the next run's lookup target. Preserve the known
+      # marker so that it does not make an already delivered issue look new.
+      - name: Preserve last_sent marker when delivery is not needed
+        if: steps.decide.outputs.should_send == 'false'
+        run: |
+          set -euo pipefail
+          test -s last_sent.txt
+
+      - name: Upload preserved last_sent marker
+        if: steps.decide.outputs.should_send == 'false'
+        uses: actions/upload-artifact@v7
+        with:
+          name: last-sent-prod
+          path: last_sent.txt
+          if-no-files-found: error
+
   notify-dev:
     name: TWIR dev summary delivery from prod
     needs: evaluate-latest
