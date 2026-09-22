@@ -49,6 +49,8 @@ both deliveries when they match. Do not remove, rename, or make the production
 marker conditional on a delivery without updating this contract and its
 regression test. In particular, a no-op run without `last-sent-prod` breaks the
 state chain and can cause the next run to resend an already delivered issue.
+Because the production preflight downloads the marker before checking out any
+repository, its GitHub CLI calls must pass `--repo "${{ github.repository }}"`.
 
 ## Key crates
 - `pulldown-cmark` for Markdown parsing.

@@ -10,6 +10,7 @@ fn production_workflow_preserves_the_marker_across_noop_runs() {
     let production = workflow("prod.yml");
 
     for required in [
+        "--repo \"${{ github.repository }}\"",
         "for name in last-sent-prod last-sent; do",
         "last_sent=$(cat last_sent.txt 2>/dev/null || echo \"\")",
         "- name: Preserve last_sent marker when delivery is not needed",
