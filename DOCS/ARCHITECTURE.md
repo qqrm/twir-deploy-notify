@@ -27,7 +27,29 @@ The crate turns "This Week in Rust" Markdown into Telegram posts.
 3. Developer deliveries are not pinned; once the final acknowledgement is observed the CLI records the exact acknowledgement count and only proceeds when it matches the number of posts prepared for delivery.
 4. Production credentials are fetched only after the developer delivery succeeds with a full set of acknowledgements. The exact same posts are then sent to the production chat with the same acknowledgement-and-delay semantics. If any send fails or the acknowledgements do not cover every post, the pipeline aborts before touching the production chat.
 
+## Delivery State Contract
+
+The production workflow is stateful. Its idempotency depends on the following
+files and GitHub Actions artifacts being present and passed from one successful
+production run to the next:
+
+- `last_sent.txt` contains exactly one path: the TWIR source file successfully
+  delivered to the production chat.
+- `last-sent-prod` is the production artifact containing `last_sent.txt`.
+  Every successful `TWIR Prod summary` run must publish it. A delivery run
+  creates it only after the production delivery succeeds; a no-op run copies
+  forward the marker it downloaded from the preceding successful run.
+- `last-sent-dev-prod` is the developer-stage artifact for a production run.
+  It may be used by the developer stage, but it is not the source of truth for
+  production deduplication.
+
+The next production run downloads `last-sent-prod` before choosing whether to
+send. It must compare the latest TWIR path with the downloaded marker and skip
+both deliveries when they match. Do not remove, rename, or make the production
+marker conditional on a delivery without updating this contract and its
+regression test. In particular, a no-op run without `last-sent-prod` breaks the
+state chain and can cause the next run to resend an already delivered issue.
+
 ## Key crates
 - `pulldown-cmark` for Markdown parsing.
 - `teloxide` and `reqwest` for Telegram interactions.
-
