@@ -31,6 +31,7 @@ jobs:
 
           prev=$(
             gh run list \
+              --repo "${{ github.repository }}" \
               -w "${{ github.workflow }}" \
               --branch main \
               --status success \
@@ -43,7 +44,7 @@ jobs:
           if [ -n "$prev" ]; then
             success="false"
             for name in last-sent-prod last-sent; do
-              if gh run download "$prev" -n "$name" --dir .; then
+              if gh run download "$prev" --repo "${{ github.repository }}" -n "$name" --dir .; then
                 success="true"
                 break
               fi
