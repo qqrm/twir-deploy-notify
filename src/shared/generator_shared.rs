@@ -165,6 +165,17 @@ fn find_number(text: &str) -> Option<String> {
     find_value(text, "Number: ")
 }
 
+/// Extract the TWIR issue number from raw issue Markdown (`Number: N`).
+///
+/// # Parameters
+/// - `input`: Raw Markdown content read from a TWIR issue.
+///
+/// # Returns
+/// The issue number when the header is present and numeric.
+pub fn extract_issue_number(input: &str) -> Option<u64> {
+    find_number(input).and_then(|number| number.trim().parse().ok())
+}
+
 fn find_date(text: &str) -> Option<String> {
     find_value(text, "Date: ")
 }

@@ -10,7 +10,10 @@ struct Credentials {
     chat_id: String,
 }
 
-use crate::generator::{generate_posts, markdown_to_plain, send_to_telegram, write_posts};
+use crate::generator::{
+    extract_issue_number, generate_posts, markdown_to_plain, send_to_telegram, write_posts,
+};
+use crate::shared::pin_guard;
 
 #[derive(ClapParser)]
 struct Cli {
@@ -36,6 +39,7 @@ pub fn main() -> std::io::Result<()> {
 
     log::info!("Reading input file {}", cli.input);
     let input = fs::read_to_string(&cli.input)?;
+    let current_issue_number = extract_issue_number(&input);
     log::info!("Generating posts");
     let mut posts = generate_posts(input).map_err(|e| std::io::Error::other(e.to_string()))?;
     log::info!("Generated {} posts", posts.len());
@@ -101,6 +105,13 @@ pub fn main() -> std::io::Result<()> {
         read_credentials_pair(("PROD_BOT_TOKEN", "PROD_CHAT_ID"), "production Telegram")?;
 
     log::debug!("production chat id: {}", production_credentials.chat_id);
+    pin_guard::enforce_pin_guard(
+        &base,
+        &production_credentials.token,
+        &production_credentials.chat_id,
+        current_issue_number,
+    )
+    .map_err(|e| io::Error::other(e.to_string()))?;
     log::info!("Sending posts to production Telegram chat");
     let production_report = send_to_telegram(
         &posts,

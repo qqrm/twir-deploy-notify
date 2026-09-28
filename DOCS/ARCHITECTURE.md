@@ -52,6 +52,24 @@ state chain and can cause the next run to resend an already delivered issue.
 Because the production preflight downloads the marker before checking out any
 repository, its GitHub CLI calls must pass `--repo "${{ github.repository }}"`.
 
+## Telegram Pin Guard
+
+The marker chain above is necessary but not sufficient: GitHub Actions run
+listings (both `gh run list` and the REST runs endpoint filtered by status)
+intermittently serve stale results, so a run may inherit an outdated or missing
+marker and treat an already delivered issue as new. The pin guard is the
+last line of defence for the production chat.
+
+Before the production send the CLI calls `getChat` on the production channel
+and parses the issue number from the currently pinned message. Every
+production delivery pins the first post of the issue, so the pinned message
+identifies the last delivered issue. When the pinned number is greater than
+or equal to the number of the issue about to be delivered, the CLI aborts
+with `PIN GUARD ENGAGED` before touching the production chat. Reaching that
+failure means the marker chain failed; the run is intentionally left red to
+signal the fallback. Unknown numbers (no pin, non-issue pin, missing header)
+never block a delivery.
+
 ## Key crates
 - `pulldown-cmark` for Markdown parsing.
 - `teloxide` and `reqwest` for Telegram interactions.
