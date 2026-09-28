@@ -9,6 +9,19 @@ fn workflow(name: &str) -> String {
 fn production_workflow_preserves_the_marker_across_noop_runs() {
     let production = workflow("prod.yml");
 
+    // The filtered `gh run list` goes through a search index that is
+    // intermittently stale, so the previous run must be resolved through the
+    // REST endpoint instead.
+    assert!(
+        !production.contains("gh run list"),
+        "production workflow must not resolve the previous run via gh run list (stale index)"
+    );
+    assert!(
+        production
+            .contains("repos/${{ github.repository }}/actions/workflows/prod.yml/runs?status=success&branch=main"),
+        "production workflow is missing the REST lookup of the previous production run"
+    );
+
     for required in [
         "--repo \"${{ github.repository }}\"",
         "for name in last-sent-prod last-sent; do",
@@ -30,6 +43,19 @@ fn production_workflow_preserves_the_marker_across_noop_runs() {
 #[test]
 fn delivery_workflow_writes_the_marker_only_after_a_delivery() {
     let delivery = workflow("common-delivery.yml");
+
+    // The filtered `gh run list` goes through a search index that is
+    // intermittently stale, so the previous run must be resolved through the
+    // REST endpoint instead.
+    assert!(
+        !delivery.contains("gh run list"),
+        "common delivery workflow must not resolve the previous run via gh run list (stale index)"
+    );
+    assert!(
+        delivery
+            .contains("repos/${{ github.repository }}/actions/workflows/prod.yml/runs?status=success&branch=main"),
+        "common delivery workflow is missing the REST lookup of the previous production run"
+    );
 
     for required in [
         "- name: Save last_sent marker",
