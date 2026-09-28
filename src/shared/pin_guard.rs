@@ -22,20 +22,26 @@ pub enum PinGuardVerdict {
     Proceed,
     /// Delivery must not happen: the channel already carries issue `pinned`
     /// whose number is greater than or equal to `current`.
-    Block { pinned: u64, current: u64 },
+    BlockDuplicate { pinned: u64, current: u64 },
+    /// Delivery must not happen: the channel pins issue `pinned` but the
+    /// input carries no readable issue number, so the delivery cannot be
+    /// proven to be anything other than a duplicate.
+    BlockUnproven { pinned: u64 },
 }
 
 /// Decide whether delivering issue `current` would duplicate a delivery the
 /// channel has already seen.
 ///
-/// Blocking is deliberately one-sided: only a provable duplicate (both
-/// numbers known and `current <= pinned`) is blocked. Unknown numbers never
-/// block a delivery.
+/// The production chat must never receive a duplicate, so the decision is
+/// one-sided: a provable duplicate blocks, and an unverifiable input blocks
+/// whenever the channel state is known. Only a known-new issue (or a channel
+/// whose pin carries no issue number at all) proceeds.
 pub fn evaluate_pin_guard(current: Option<u64>, pinned: Option<u64>) -> PinGuardVerdict {
     match (current, pinned) {
         (Some(current), Some(pinned)) if current <= pinned => {
-            PinGuardVerdict::Block { pinned, current }
+            PinGuardVerdict::BlockDuplicate { pinned, current }
         }
+        (None, Some(pinned)) => PinGuardVerdict::BlockUnproven { pinned },
         _ => PinGuardVerdict::Proceed,
     }
 }
@@ -102,9 +108,11 @@ pub fn fetch_pinned_message_text(
 /// duplicate an issue the channel already received.
 ///
 /// Fails (blocking the delivery) when the channel's pinned message carries
-/// an issue number greater than or equal to `current_number`. This is the
-/// fallback signal: reaching this failure means the `last_sent` marker
-/// inherited from the previous pipeline run did not stop the duplicate.
+/// an issue number greater than or equal to `current_number`, and when the
+/// channel pins a known issue but the input's number cannot be read (an
+/// unprovable delivery is treated as a duplicate). This is the fallback
+/// signal: reaching this failure means the `last_sent` marker inherited
+/// from the previous pipeline run did not stop the duplicate.
 pub fn enforce_pin_guard(
     base_url: &str,
     token: &str,
@@ -126,12 +134,21 @@ pub fn enforce_pin_guard(
 
     match evaluate_pin_guard(current_number, pinned_number) {
         PinGuardVerdict::Proceed => Ok(()),
-        PinGuardVerdict::Block { pinned, current } => {
+        PinGuardVerdict::BlockDuplicate { pinned, current } => {
             error!(
                 "PIN GUARD ENGAGED: {chat_id} already has issue #{pinned} pinned; refusing to deliver issue #{current}"
             );
             Err(format!(
                 "PIN GUARD ENGAGED: refusing to deliver issue #{current} to {chat_id} because issue #{pinned} is already pinned there. The last_sent marker inherited from the previous pipeline run failed to prevent this duplicate (unreliable previous-run lookup); Telegram is the source of truth. If issue #{current} is genuinely new, unpin or repin in the channel and re-run.",
+            )
+            .into())
+        }
+        PinGuardVerdict::BlockUnproven { pinned } => {
+            error!(
+                "PIN GUARD ENGAGED: {chat_id} pins issue #{pinned} but the input carries no readable issue number; refusing to deliver unverified content"
+            );
+            Err(format!(
+                "PIN GUARD ENGAGED: refusing to deliver to {chat_id}: the input has no readable TWIR issue number while issue #{pinned} is already pinned there. A delivery that cannot be proven new is treated as a duplicate; fix the input (Number: header) or unpin in the channel and re-run.",
             )
             .into())
         }
@@ -146,7 +163,7 @@ mod tests {
     fn equal_numbers_block_delivery() {
         assert_eq!(
             evaluate_pin_guard(Some(598), Some(598)),
-            PinGuardVerdict::Block {
+            PinGuardVerdict::BlockDuplicate {
                 pinned: 598,
                 current: 598
             }
@@ -157,7 +174,7 @@ mod tests {
     fn older_issue_than_pinned_blocks_delivery() {
         assert_eq!(
             evaluate_pin_guard(Some(597), Some(598)),
-            PinGuardVerdict::Block {
+            PinGuardVerdict::BlockDuplicate {
                 pinned: 598,
                 current: 597
             }
@@ -173,11 +190,15 @@ mod tests {
     }
 
     #[test]
-    fn unknown_numbers_never_block() {
+    fn unreadable_input_number_blocks_when_channel_state_is_known() {
         assert_eq!(
             evaluate_pin_guard(None, Some(598)),
-            PinGuardVerdict::Proceed
+            PinGuardVerdict::BlockUnproven { pinned: 598 }
         );
+    }
+
+    #[test]
+    fn unknown_channel_state_never_blocks() {
         assert_eq!(
             evaluate_pin_guard(Some(598), None),
             PinGuardVerdict::Proceed

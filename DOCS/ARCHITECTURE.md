@@ -67,8 +67,10 @@ identifies the last delivered issue. When the pinned number is greater than
 or equal to the number of the issue about to be delivered, the CLI aborts
 with `PIN GUARD ENGAGED` before touching the production chat. Reaching that
 failure means the marker chain failed; the run is intentionally left red to
-signal the fallback. Unknown numbers (no pin, non-issue pin, missing header)
-never block a delivery.
+signal the fallback. The guard fails closed: when the channel pins a known
+issue but the input carries no readable issue number, the delivery is
+treated as unproven and blocked as well. Only an unknown channel state (no
+pin, or a pin with no issue number) lets an unverifiable input through.
 
 ## Key crates
 - `pulldown-cmark` for Markdown parsing.
