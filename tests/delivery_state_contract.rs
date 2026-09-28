@@ -71,3 +71,20 @@ fn delivery_workflow_writes_the_marker_only_after_a_delivery() {
         );
     }
 }
+
+#[test]
+fn production_send_is_guarded_by_the_channel_pin_check() {
+    let cli = fs::read_to_string("src/cli.rs")
+        .unwrap_or_else(|error| panic!("failed to read src/cli.rs: {error}"));
+
+    let guard_position = cli
+        .find("pin_guard::enforce_pin_guard")
+        .expect("production send must be preceded by the Telegram pin guard");
+    let send_position = cli
+        .find("Sending posts to production Telegram chat")
+        .expect("production send must exist");
+    assert!(
+        guard_position < send_position,
+        "the pin guard must run before the production Telegram send"
+    );
+}
