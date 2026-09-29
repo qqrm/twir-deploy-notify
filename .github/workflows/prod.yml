@@ -38,18 +38,22 @@ jobs:
             || echo ""
           )
 
-          if [ -n "$prev" ]; then
-            success="false"
-            for name in last-sent-prod last-sent; do
-              if gh run download "$prev" --repo "${{ github.repository }}" -n "$name" --dir .; then
-                success="true"
-                break
-              fi
-            done
+          if [ -z "$prev" ]; then
+            echo "::error::No successful production run found; refusing to publish without a last-sent marker."
+            exit 1
+          fi
 
-            if [ "$success" != "true" ]; then
-              echo "Previous production run $prev did not publish a last-sent artifact; continuing without cached state." >&2
+          success="false"
+          for name in last-sent-prod last-sent; do
+            if gh run download "$prev" --repo "${{ github.repository }}" -n "$name" --dir .; then
+              success="true"
+              break
             fi
+          done
+
+          if [ "$success" != "true" ] || [ ! -s last_sent.txt ]; then
+            echo "::error::Previous production run $prev has no valid last-sent marker; refusing to publish."
+            exit 1
           fi
 
       - name: Checkout TWIR

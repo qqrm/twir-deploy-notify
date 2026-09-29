@@ -125,6 +125,11 @@ jobs:
             fi
           fi
 
+          if [ "${{ inputs.send_main }}" = "true" ] && [ ! -s last_sent.txt ]; then
+            echo "::error::Production delivery requires a valid last-sent marker."
+            exit 1
+          fi
+
       - name: Checkout TWIR
         uses: actions/checkout@v7
         with:
