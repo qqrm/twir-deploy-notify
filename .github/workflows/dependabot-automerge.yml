@@ -1,13 +1,9 @@
 name: Dependabot Automerge
 
 on:
-  pull_request_target: # zizmor: ignore[dangerous-triggers] metadata-only; never checks out or runs PR code
-    types: [opened, reopened, synchronize, ready_for_review]
-  workflow_run:
-    workflows: ["CI", "build", "pdf-validate", "Workflow Security", "CodeQL", "TWIR CI", "TWIR Fixture verify", "TWIR Audit"]
-    types: [completed]
   schedule:
-    - cron: "17 * * * *"
+    # Dependabot opens updates on Mondays; review green PRs on Tuesday (UTC).
+    - cron: "17 10 * * 2"
   workflow_dispatch:
 
 permissions:
@@ -18,8 +14,8 @@ permissions:
   statuses: read
 
 concurrency:
-  group: dependabot-automerge-${{ github.event.pull_request.number || github.event.schedule || github.run_id }}
-  cancel-in-progress: true
+  group: dependabot-automerge
+  cancel-in-progress: false
 
 jobs:
   automerge:
@@ -31,21 +27,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          EVENT_NAME: ${{ github.event_name }}
         run: |
           set -euo pipefail
 
           collect_prs() {
-            if [ "$EVENT_NAME" = "pull_request_target" ]; then
-              jq -r '.pull_request.number' "$GITHUB_EVENT_PATH"
-            else
-              gh pr list \
-                --repo "$REPO" \
-                --state open \
-                --limit 100 \
-                --json number,author,headRefName \
-                --jq '.[] | select((.author.login == "app/dependabot" or .author.login == "dependabot[bot]") and (.headRefName | startswith("dependabot/"))) | .number'
-            fi
+            gh pr list \
+              --repo "$REPO" \
+              --state open \
+              --limit 100 \
+              --json number,author,headRefName \
+              --jq '.[] | select((.author.login == "app/dependabot" or .author.login == "dependabot[bot]") and (.headRefName | startswith("dependabot/"))) | .number'
           }
 
           check_pr() {
