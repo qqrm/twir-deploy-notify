@@ -29,32 +29,33 @@ jobs:
         run: |
           set -euo pipefail
 
-          # The filtered run listing intermittently serves a stale search index
-          # that omits recent runs; the REST endpoint is always current.
-          prev=$(
+          # Both the filtered run listing and the REST endpoint intermittently
+          # serve a stale index that names an ancient run as "latest", so a
+          # single lookup cannot be trusted. Ask for several recent successful
+          # runs and restore the marker from the first one that actually
+          # carries a usable artifact.
+          ids=$(
             gh api \
-              "repos/${{ github.repository }}/actions/workflows/prod.yml/runs?status=success&branch=main&per_page=1" \
-              --jq '.workflow_runs[0].id // empty' \
+              "repos/${{ github.repository }}/actions/workflows/prod.yml/runs?status=success&branch=main&per_page=10" \
+              --jq '.workflow_runs[].id' \
             || echo ""
           )
 
-          if [ -z "$prev" ]; then
-            echo "::error::No successful production run found; refusing to publish without a last-sent marker."
-            exit 1
-          fi
-
-          success="false"
-          for name in last-sent-prod last-sent; do
-            if gh run download "$prev" --repo "${{ github.repository }}" -n "$name" --dir .; then
-              success="true"
-              break
-            fi
+          for prev in $ids; do
+            for name in last-sent-prod last-sent; do
+              if gh run download "$prev" --repo "${{ github.repository }}" -n "$name" --dir . && [ -s last_sent.txt ]; then
+                echo "Restored last_sent marker from run $prev (artifact $name)."
+                exit 0
+              fi
+              rm -f last_sent.txt
+            done
           done
 
-          if [ "$success" != "true" ] || [ ! -s last_sent.txt ]; then
-            echo "::error::Previous production run $prev has no valid last-sent marker; refusing to publish."
-            exit 1
-          fi
+          # The marker chain must never break a run: with no inherited marker
+          # the delivery below treats the newest issue as unsent (the pin
+          # guard still blocks a prod duplicate) and this run republishes the
+          # marker, rebuilding the chain for the next run.
+          echo "::warning::No recent production run yielded a last_sent marker; continuing without cached state." >&2
 
       - name: Checkout TWIR
         uses: actions/checkout@v7
@@ -81,13 +82,17 @@ jobs:
             echo "should_send=false" >> "$GITHUB_OUTPUT"
           fi
 
-      # A no-op run becomes the next run's lookup target. Preserve the known
-      # marker so that it does not make an already delivered issue look new.
+      # A no-op run becomes the next run's lookup target: it must always
+      # republish the marker so the chain stays unbroken. If the inherited
+      # marker went missing, materialize it from the latest post — a no-op
+      # decision already means that post counts as delivered.
       - name: Preserve last_sent marker when delivery is not needed
         if: steps.decide.outputs.should_send == 'false'
         run: |
           set -euo pipefail
-          test -s last_sent.txt
+          if [ ! -s last_sent.txt ]; then
+            echo "${{ steps.decide.outputs.latest_post }}" > last_sent.txt
+          fi
 
       - name: Upload preserved last_sent marker
         if: steps.decide.outputs.should_send == 'false'

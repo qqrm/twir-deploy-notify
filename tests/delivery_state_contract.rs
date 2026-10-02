@@ -22,6 +22,19 @@ fn production_workflow_preserves_the_marker_across_noop_runs() {
         "production workflow is missing the REST lookup of the previous production run"
     );
 
+    // The REST endpoint serves stale data too (it once named an April run as
+    // "latest"), so a single lookup is not enough: the workflow must walk the
+    // recent successful runs until one yields a usable marker, and a missing
+    // marker must warn rather than abort — the chain is rebuilt on delivery.
+    assert!(
+        production.contains("per_page=10"),
+        "production workflow must walk several recent runs, not trust one lookup"
+    );
+    assert!(
+        !production.contains("refusing to publish"),
+        "a broken marker chain must warn and rebuild, never abort the run"
+    );
+
     for required in [
         "--repo \"${{ github.repository }}\"",
         "for name in last-sent-prod last-sent; do",
@@ -55,6 +68,21 @@ fn delivery_workflow_writes_the_marker_only_after_a_delivery() {
         delivery
             .contains("repos/${{ github.repository }}/actions/workflows/prod.yml/runs?status=success&branch=main"),
         "common delivery workflow is missing the REST lookup of the previous production run"
+    );
+
+    // Same as the production workflow: walk several recent runs, warn instead
+    // of aborting when the chain is broken.
+    assert!(
+        delivery.contains("per_page=10"),
+        "common delivery workflow must walk several recent runs, not trust one lookup"
+    );
+    assert!(
+        !delivery.contains("refusing to publish") && !delivery.contains("requires a valid last-sent marker"),
+        "a broken marker chain must warn and rebuild, never abort the run"
+    );
+    assert!(
+        !delivery.contains("if: always()\n        uses: actions/upload-artifact@v7\n        with:\n          name: last-sent-"),
+        "the last_sent artifact must be uploaded only by successful runs"
     );
 
     for required in [
