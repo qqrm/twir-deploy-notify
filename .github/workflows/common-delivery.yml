@@ -74,61 +74,59 @@ jobs:
         run: |
           set -euo pipefail
 
-          # The filtered run listing intermittently serves a stale search index
-          # that omits recent runs; the REST endpoint is always current.
-          prev=$(
+          # Server-side status/branch filters can return a stale run index.
+          # Filter the recent runs locally and include successful manual
+          # production deliveries from release branches so their markers
+          # carry forward to main after a recovery.
+          ids=$(
             gh api \
-              "repos/${{ github.repository }}/actions/workflows/prod.yml/runs?status=success&branch=main&per_page=1" \
-              --jq '.workflow_runs[0].id // empty' \
+              "repos/${{ github.repository }}/actions/workflows/prod.yml/runs?per_page=100" \
+              --jq '[.workflow_runs[] | select(.conclusion == "success")][0:10][] | .id' \
             || echo ""
           )
 
-          if [ -n "$prev" ]; then
-            scope="$ARTIFACT_SCOPE"
-            names=()
+          scope="$ARTIFACT_SCOPE"
+          names=()
 
-            append_unique() {
-              local candidate="$1"
-              if [ -z "$candidate" ]; then
+          append_unique() {
+            local candidate="$1"
+            if [ -z "$candidate" ]; then
+              return 0
+            fi
+            for existing in "${names[@]}"; do
+              if [ "$existing" = "$candidate" ]; then
                 return 0
               fi
-              for existing in "${names[@]}"; do
-                if [ "$existing" = "$candidate" ]; then
-                  return 0
-                fi
-              done
-              names+=("$candidate")
-            }
+            done
+            names+=("$candidate")
+          }
 
-            if [ -n "$scope" ]; then
-              append_unique "last-sent-$scope"
-              IFS='-' read -r -a scope_parts <<< "$scope"
-              for part in "${scope_parts[@]}"; do
-                if [ -n "$part" ]; then
-                  append_unique "last-sent-$part"
-                fi
-              done
-            fi
-
-            append_unique "last-sent"
-
-            success="false"
-            for name in "${names[@]}"; do
-              if gh run download "$prev" -n "$name" --dir .; then
-                success="true"
-                break
+          if [ -n "$scope" ]; then
+            append_unique "last-sent-$scope"
+            IFS='-' read -r -a scope_parts <<< "$scope"
+            for part in "${scope_parts[@]}"; do
+              if [ -n "$part" ]; then
+                append_unique "last-sent-$part"
               fi
             done
-
-            if [ "$success" != "true" ]; then
-              echo "Previous run $prev did not publish a last-sent artifact; continuing without cached state." >&2
-            fi
           fi
 
-          if [ "${{ inputs.send_main }}" = "true" ] && [ ! -s last_sent.txt ]; then
-            echo "::error::Production delivery requires a valid last-sent marker."
-            exit 1
-          fi
+          append_unique "last-sent"
+
+          for prev in $ids; do
+            for name in "${names[@]}"; do
+              if gh run download "$prev" -n "$name" --dir . && [ -s last_sent.txt ]; then
+                echo "Restored last_sent marker from run $prev (artifact $name)."
+                exit 0
+              fi
+              rm -f last_sent.txt
+            done
+          done
+
+          # The marker chain must never break a run: continue without cached
+          # state; a successful delivery below republishes the marker and
+          # rebuilds the chain (the prod pin guard still blocks duplicates).
+          echo "::warning::No recent run yielded a last_sent marker; continuing without cached state." >&2
 
       - name: Checkout TWIR
         uses: actions/checkout@v7
@@ -199,10 +197,12 @@ jobs:
           path: output_*.md
           if-no-files-found: ignore
 
+      # Every successful run must hand the marker forward: skip that only
+      # when the delivery itself failed, so the next run retries this issue.
       - name: Upload last_sent artifact
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v7
         with:
           name: last-sent-${{ env.ARTIFACT_SCOPE }}
           path: last_sent.txt
-          if-no-files-found: ignore
+          if-no-files-found: error

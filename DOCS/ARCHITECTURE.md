@@ -52,6 +52,14 @@ state chain and can cause the next run to resend an already delivered issue.
 Because the production preflight downloads the marker before checking out any
 repository, its GitHub CLI calls must pass `--repo "${{ github.repository }}"`.
 
+Marker recovery reads the latest 100 production workflow runs without
+server-side status or branch filters, then selects up to ten successful runs
+locally. Those filters have returned stale run indexes. Successful manual
+production deliveries from release branches are included, so a recovery's
+marker carries forward to scheduled runs on `main`. The first usable marker
+is restored; if none is available, delivery proceeds with the Telegram pin
+guard still enabled. Failed deliveries do not publish a new marker.
+
 ## Telegram Pin Guard
 
 The marker chain above is necessary but not sufficient: GitHub Actions run
