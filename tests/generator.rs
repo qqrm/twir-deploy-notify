@@ -183,6 +183,49 @@ Thanks to everyone who suggested quotes.
 }
 
 #[test]
+fn quote_containing_section_name_is_preserved() {
+    let input = r#"Title: This Week in Rust 672
+Number: 672
+Date: 2026-10-07
+
+## Jobs
+
+# Quote of the Week
+
+> There ain't no rules here in Quote of the Week - it's survival of the wittest
+
+– [Simon Buchan on rust-users](https://users.rust-lang.org/t/twir-quote-of-the-week/328/1814?u=llogiq)
+"#;
+
+    let posts = generate_posts(input.to_string()).unwrap();
+    let combined = posts.join("\n");
+    assert!(combined.contains(
+        r"_There ain't no rules here in Quote of the Week \- it's survival of the wittest_"
+    ));
+    assert_eq!(combined.matches("**Quote of the Week:** 💬").count(), 1);
+    assert!(combined.contains(
+        r"– [Simon Buchan on rust\-users](https://users.rust-lang.org/t/twir-quote-of-the-week/328/1814?u=llogiq)"
+    ));
+    for post in &posts {
+        common::assert_valid_markdown(post);
+    }
+}
+
+#[test]
+fn section_name_in_prose_does_not_start_quote_section() {
+    let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## News\nRead Quote of the Week for more\n\nThanks to our contributors\n";
+
+    let posts = generate_posts(input.to_string()).unwrap();
+    let combined = posts.join("\n");
+    assert!(combined.contains("Read Quote of the Week for more"));
+    assert!(combined.contains("Thanks to our contributors"));
+    assert!(!combined.contains("**Quote of the Week:** 💬"));
+    for post in &posts {
+        common::assert_valid_markdown(post);
+    }
+}
+
+#[test]
 fn jobs_url_simplified() {
     let input = "Title: Test\nNumber: 1\nDate: 2025-01-01\n\n## Jobs\nPlease see the latest [Who's Hiring thread on r/rust](https://example.com/thread)\n";
     let posts = generator::generate_posts(input.to_string()).unwrap();
