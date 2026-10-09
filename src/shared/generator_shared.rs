@@ -86,9 +86,10 @@ fn simplify_cfp_section(section: &mut Section) {
 fn simplify_quote_section(section: &mut Section) {
     let mut cleaned = Vec::new();
     let mut in_quote_section = false;
+    let quote_heading = format_subheading("Quote of the Week");
     for line in &section.lines {
-        if line.contains("Quote of the Week") {
-            cleaned.push(format_subheading("Quote of the Week"));
+        if line == &quote_heading {
+            cleaned.push(line.clone());
             in_quote_section = true;
             continue;
         }
